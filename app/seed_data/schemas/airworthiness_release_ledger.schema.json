@@ -1,0 +1,53 @@
+{
+  "table_name": "airworthiness_release_ledger",
+  "description": "Legal airworthiness sign-off ledger pre-populating UK MOD Form 700 / AFTO Form 781 airworthiness release certificates. Enforces strict Human-in-the-Loop engineering review before an aircraft can return to flight.",
+  "partition_field": null,
+  "cluster_fields": [
+    "release_package_id",
+    "hitl_review_status"
+  ],
+  "fields": [
+    {
+      "name": "release_package_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Primary Key (PK, Cluster Key): Formal airworthiness release package identifier (e.g., AWR-700-20261102-ZM151)."
+    },
+    {
+      "name": "appraisal_report_uri",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Cloud Storage URI pointing to the signed MIL-STD-3001 Structural Appraisal Report PDF (e.g., gs://antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf)."
+    },
+    {
+      "name": "mandated_jtd_task_card",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Mandatory maintenance procedure required prior to flight clearance: 'JTD Task Card 53-11-00-280' (Fastener Torque-Recheck)."
+    },
+    {
+      "name": "disposition_status",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Valid enum values: 'SERVICEABLE_WITH_TORQUE_RECHECK', 'GROUNDED_DEPOT_TEARDOWN', or 'UNRESTRICTED_SERVICEABLE'. Engineering disposition (0.012 in < 0.015 in allowable limit)."
+    },
+    {
+      "name": "hitl_reviewer_role",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Mandatory human authority role required for sign-off: 'Lead Stress Engineer' / 'Chief Technical Officer (CTO) / Lead Stress Engineer'."
+    },
+    {
+      "name": "hitl_review_status",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Cluster Key. State machine gate enum: starts strictly as 'PENDING_HITL_REVIEW', transitioned strictly to 'CONFIRMED_BY_ENGINEER' upon human approval in a subsequent turn."
+    },
+    {
+      "name": "compliance_standard",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Governing military airworthiness certification basis: 'MIL-STD-3001 / DEF STAN 00-970 / MIL-HDBK-516C'."
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "table_name": "airframe_component_telemetry",
+  "description": "Master airframe structural component flight-usage and fatigue tracking ledger for UK F-35 Lightning II aircraft operating at RAF Marham and deployed naval carrier strike groups. Records accumulated component flight hours against mandated structural life limits to support predictive maintenance and tail-swaps.",
+  "partition_field": null,
+  "cluster_fields": [
+    "tail_number",
+    "part_serial_number"
+  ],
+  "fields": [
+    {
+      "name": "telemetry_record_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Primary Key (PK): Unique post-flight sensor upload and usage record identifier (e.g., TEL-ZM151-ACT-99812 or TEL-20261102-0941)."
+    },
+    {
+      "name": "tail_number",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Cluster Key: UK military aircraft registration tail identifier (e.g., ZM151, ZM154) operating under RAF 617 Sqn, 207 Sqn, or 809 NAS."
+    },
+    {
+      "name": "aircraft_variant",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Valid enum values: 'F-35A' (Conventional Take-Off and Landing) or 'F-35B' (Short Take-Off and Vertical Landing STOVL)."
+    },
+    {
+      "name": "base_location",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Current operating station or carrier deployment base: 'RAF Marham' or 'HMS Queen Elizabeth'."
+    },
+    {
+      "name": "part_serial_number",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Cluster Key: Manufacturer serialized component tracking number (e.g., ACT-99812-F for horizontal tail / port electro-hydrostatic actuators)."
+    },
+    {
+      "name": "nsn",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Foreign Key (FK -> global_depot_inventory.nsn): 13-digit NATO Stock Number (e.g., 1680-01-619-4821) referencing global logistics depot records."
+    },
+    {
+      "name": "component_name",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Human-readable aircraft subsystem component nomenclature (e.g., Port Electro-Hydrostatic Actuator (EHA) / Left Horizontal Tail Actuator)."
+    },
+    {
+      "name": "current_flight_hours",
+      "type": "FLOAT64",
+      "mode": "REQUIRED",
+      "description": "Unit: flight hours (hrs). Total accumulated flight hours logged on this specific component post-mission (e.g., 1000.4 hrs)."
+    },
+    {
+      "name": "life_limit_threshold_hrs",
+      "type": "FLOAT64",
+      "mode": "REQUIRED",
+      "description": "Unit: flight hours (hrs). Mandatory safety condemnation limit in flight hours (e.g., 1000.0 hrs). Any component exceeding this limit forces aircraft status to PMC-M (Partial Mission Capable - Maintenance Required)."
+    }
+  ]
+}

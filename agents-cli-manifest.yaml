@@ -1,0 +1,23 @@
+name: "f35-sustainment-agent"
+acli_version: "1.12.0"
+agent_directory: "app"
+region: 'europe-west1'
+base_template: "adk_python"
+generated_at: "2026-11-02T18:56:10.686377+00:00"
+language: "python"
+framework: "google-adk"
+create_params:
+  # The ADK name of the root agent, as rendered into the agent source. Rename
+  # the agent and you must change it in both places: telemetry reports this as
+  # gen_ai.agent.name, and it is what agents-cli reports for the project.
+  root_agent_name: "f35_sustainment_coordinator"
+  deployment_target: "agent_runtime"
+  session_type: "in_memory"
+  cicd_runner: "skip"
+  is_a2a: true
+  agent_gateway: false
+  agent_guidance_filename: "AGENTS.md"
+  agent_runtime:
+    identity_default: "service_account"
+    resource_name: "projects/284046449012/locations/europe-west1/reasoningEngines/5022570215192395776"
+    engine_id: "5022570215192395776"

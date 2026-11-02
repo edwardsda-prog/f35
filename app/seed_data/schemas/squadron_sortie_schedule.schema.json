@@ -1,0 +1,47 @@
+{
+  "table_name": "squadron_sortie_schedule",
+  "description": "Daily flying program and mission sortie schedule for UK F-35 squadrons. Links pilot flight rosters with assigned airframes to facilitate operational tail-swap reallocations when aircraft are grounded by maintenance alerts.",
+  "partition_field": "scheduled_departure_utc",
+  "cluster_fields": [
+    "assigned_tail_number",
+    "sortie_readiness_status"
+  ],
+  "fields": [
+    {
+      "name": "sortie_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Primary Key (PK): Unique daily flying program task identifier (e.g., SRT-MAR-20261103-01)."
+    },
+    {
+      "name": "scheduled_departure_utc",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "Partition Key (DAY): Scheduled engine start and take-off timestamp in UTC (e.g., 2026-11-03T06:30:00Z)."
+    },
+    {
+      "name": "assigned_tail_number",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Foreign Key (FK -> airframe_component_telemetry.tail_number, Cluster Key): Currently planned primary aircraft tail assigned to the sortie (e.g., ZM151)."
+    },
+    {
+      "name": "assigned_pilot_callsign",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Designated combat pilot name and tactical radio callsign (e.g., Flt Lt Henderson / VIPER-1)."
+    },
+    {
+      "name": "spare_tail_candidate",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Pre-designated serviceable spare airframe (e.g., ZM154, 842.0 flight hours, Mission Capable) ready for immediate tail-swap."
+    },
+    {
+      "name": "sortie_readiness_status",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Cluster Key. Valid status enums: 'PMC-M' / 'AT_RISK_MAINTENANCE' (Partial Mission Capable - Maintenance Required), 'MC' / 'MISSION_READY' (Mission Capable), or 'REALLOCATED_SWAP_CONFIRMED'."
+    }
+  ]
+}

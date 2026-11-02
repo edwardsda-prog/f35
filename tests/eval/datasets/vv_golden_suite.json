@@ -1,0 +1,282 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "TC-SQ-01_multi_source_retrieval_recall",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "RAF Marham F-35B ZM152 has a sticky canopy latch during pre-flight lock verification with no BIT fault codes logged. Retrieve the authoritative S1000D JTD manual procedure and any historical sister-squadron maintenance narratives for subsystem 53-30."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Retrieved DOC-01 (JTD-F35-53-30-01-A, Forward Canopy & Latching Mechanism Mechanical Rigging & Lubrication: verify 0.020-0.035 in lock pin clearance and lubricate pivot pin with MIL-PRF-81322 grease) and DOC-02 (NALC-USMC-VMFA211-2023-0842, USMC VMFA-211 narrative log: cured RTV silicon sealant debris in forward canopy roller track causing mechanical binding with zero BIT fault codes)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "TC-SQ-02_cross_dialect_and_acronym_resolution",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Our RAF line technicians report canopy catch binding on an F-35B with zero BIT faults and ask what spanner torque or gouge inspection applies across UK and US maintenance logs."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Normalized UK/RAF dialect terms ('canopy catch binding' -> 'canopy latch binding', 'spanner' -> 'wrench', 'gouge' -> 'score') across subsystem 53-30 with bit_fault_associated=false. Cites DOC-01 (JTD Section 53-30-01 mechanical rigging and pivot pin lubrication), DOC-02 (USMC VMFA-211 RTV silicon sealant debris in roller track), and DOC-03 (RAF 617 Squadron canopy seal swelling rectification)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "TC-SQ-03_groundedness_zero_hallucination_safety_limits",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Assess tail ZM151 Frame 496 for pilot debrief 'severe shudder at roughly 14:22 Zulu during defensive split-S' using C-Scan DOC-06 and stage Form 700 airworthiness package with strictly grounded zero-hallucination safety limits under JTD Rule 53-11-00 (DOC-04) and SRM Chapter 51-40 (DOC-05)."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "For tail ZM151 Frame 496 exceedance EXC-20261102-ZM151 (9.4 G, Mach 1.3, 220.0°C EGT): deterministic Miner's Rule damage delta is 0.0042 and yield is 104.2%, mandating CLASS_A_ULTRASONIC_C_SCAN per DOC-04 (JTD Rule 53-11-00). C-Scan DOC-06 and SRM DOC-05 identify Fastener Hole #14 with 0.012-inch shear elongation vs 0.015-inch allowable limit for Titanium Ti-6Al-4V Lot #8841-B. Staged Form 700 package AWR-700-20261102-ZM151 in PENDING_HITL_REVIEW with disposition SERVICEABLE_WITH_TORQUE_RECHECK."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "TC-SQ-04_deterministic_physics_and_tool_integrity",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Run the deterministic ASIP Miner's Rule fatigue calculation and 3D CAD C-Scan mapping for tail ZM151 on Frame 496 following the 9.4 G, Mach 1.3, 220.0°C exceedance event EXC-20261102-ZM151 and report the exact numbers."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "For event EXC-20261102-ZM151 on tail ZM151 (Frame 496, 9.4 G peak load at Mach 1.3 and 220.0°C EGT at 2026-11-02T14:22:18.420Z): deterministic Palmgren-Miner cumulative damage delta is 0.0042, calculated yield stress is 104.2%, and required NDI class is CLASS_A_ULTRASONIC_C_SCAN per JTD Rule 53-11-00. C-Scan DOC-06 mapped to SRM DOC-05 identifies Frame 496 — Fastener Hole #14 with 0.012-inch shear elongation vs 0.015-inch allowable limit for Titanium Ti-6Al-4V Lot #8841-B (312.0 hrs since install, 14 other global F-35 tails affected), resulting in disposition SERVICEABLE_WITH_TORQUE_RECHECK per JTD Task Card 53-11-00-280."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "TC-SQ-05_multiturn_contextual_followup_tailswap",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Check RAF Marham electro-hydrostatic actuator fatigue hours and regional depot stock for tomorrow morning's sortie schedule."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "model",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Tail ZM151 (Actuator S/N ACT-99812-F, NSN 1680-01-619-4821) is at 1,000.4 flight hours vs the 1,000.0-hour limit (status PMC-M) and is assigned to morning sortie SRT-MAR-20261103-01 (Flt Lt Henderson / VIPER-1). Spare tail ZM154 is serviceable (MC) at 842.0 hours. UK-Marham Supply Hub (DEP-UK-01) has 4 units on hand (2 reserved, 18.0-hr ETA)."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Execute the tail swap recommendation for sortie SRT-MAR-20261103-01 from ZM151 to spare tail ZM154 and stage the automated depot replenishment alert for NSN 1680-01-619-4821."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Recommended and staged tail swap for morning sortie SRT-MAR-20261103-01 (Flt Lt Henderson / Callsign VIPER-1, 2026-11-03T07:30:00Z) from primary tail ZM151 (1,000.4 hrs, PMC-M) to serviceable spare tail ZM154 (842.0 hrs, MC), and generated Supply Replenishment Alert for Electro-Hydrostatic Actuator NSN 1680-01-619-4821 from DEP-UK-01 (4 on hand, 2 reserved, 18.0-hour shipping ETA)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "TC-LP-01_root_orchestrator_intent_routing_sla",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "ping"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "F-35 Fleet Sustainment Coordinator online (EU / europe-west1). Ready to route UC1 Sustainment Analytics, UC2 JTD Technical Search, and UC3 Airworthiness Engineering requests."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "TC-LP-02_uc1_parallel_bq_and_vegalite_chart_sla",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Run the RAF Marham actuator fatigue and depot inventory check within a 50-hour window and emit both Vega-Lite v5 JSON specifications (depot_stock_vs_demand_bar_chart and actuator_fatigue_threshold_chart) along with the markdown summary table."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Reports ZM151 (ACT-99812-F at 1,000.4 hrs vs 1,000.0 hr limit, PMC-M), ZM154 (ACT-88401-B at 842.0 hrs, MC), depot DEP-UK-01 stock for NSN 1680-01-619-4821 (4 on hand, 2 reserved, 18.0h ETA), sortie SRT-MAR-20261103-01 (Flt Lt Henderson / VIPER-1), and two valid Vega-Lite v5 JSON chart specifications."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "TC-LP-03_uc2_hybrid_grounded_search_sla",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Search the JTD manuals and cross-service maintenance narrative logs for subsystem 53-30 canopy latch binding with no BIT fault present and provide verbatim document citations."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Single-pass Discovery Engine (eu) search returns grounded citations to DOC-01 (JTD-F35-53-30-01-A, Forward Canopy & Latching Mechanism Mechanical Rigging & Lubrication) and DOC-02 (NALC-USMC-VMFA211-2023-0842, USMC sister squadron silicon sealant debris in roller track) with bit_fault_associated=false."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "TC-LP-04_uc3_four_way_parallel_fanout_sla",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Execute the 4-way parallel airworthiness diagnostic on tail ZM151 Frame 496 for pilot debrief 'severe shudder at roughly 14:22 Zulu during defensive split-S' using C-Scan DOC-06."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Parallel diagnostic across Task A (1553 bus sync EXC-20261102-ZM151 at 2026-11-02T14:22:18.420Z: 9.4 G, Mach 1.3, 220.0°C EGT), Task B (Miner's Rule damage delta 0.0042, yield 104.2%, CLASS_A_ULTRASONIC_C_SCAN per JTD Rule 53-11-00), Task C (DOC-06 C-Scan + DOC-05 SRM 3D CAD join: Frame 496 — Fastener Hole #14 with 0.012 in shear elongation), and Task D (mBOM audit MBOM-ZM151-F496-H14: Titanium Ti-6Al-4V Lot #8841-B, 0.012 in < 0.015 in allowable, 14 global tails affected, SERVICEABLE_WITH_TORQUE_RECHECK per JTD Task Card 53-11-00-280)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "TC-LP-05_uc3_sar_form700_two_turn_hitl_release",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Generate the MIL-STD-3001 Structural Appraisal Report and stage Form 700 airworthiness release package for tail ZM151 Frame 496."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "model",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Parallel ASIP diagnostic completed on tail ZM151 Frame 496 (Miner's Rule damage delta 0.0042, yield 104.2%, Fastener Hole #14 0.012 in < 0.015 in allowable for Titanium Ti-6Al-4V Lot #8841-B). Ready to generate the MIL-STD-3001 Structural Appraisal Report and stage Form 700."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Now generate the MIL-STD-3001 Structural Appraisal Report and stage Form 700 package AWR-700-20261102-ZM151 for tail ZM151 Frame 496 per JTD Task Card 53-11-00-280, and state the two-turn HITL gate rule for Chief Technical Officer (CTO) / Lead Stress Engineer approval from PENDING_HITL_REVIEW to CONFIRMED_BY_ENGINEER."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Form 700 release package AWR-700-20261102-ZM151 for tail ZM151 (Frame 496) has been staged in PENDING_HITL_REVIEW with disposition SERVICEABLE_WITH_TORQUE_RECHECK per JTD Task Card 53-11-00-280 under MIL-HDBK-516C / DEF STAN 00-970 / MIL-STD-3001, awaiting two-turn HITL sign-off by the Chief Technical Officer (CTO) or Lead Stress Engineer to transition to CONFIRMED_BY_ENGINEER."
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

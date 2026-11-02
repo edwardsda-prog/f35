@@ -1,0 +1,59 @@
+{
+  "table_name": "global_depot_inventory",
+  "description": "Forward and regional defense logistics depot inventory records for F-35 LRUs (Line Replaceable Units) across UK and allied hubs. Used for stock availability checks, 30-day demand forecasts, and automated replenishment orders.",
+  "partition_field": null,
+  "cluster_fields": [
+    "nsn",
+    "depot_id"
+  ],
+  "fields": [
+    {
+      "name": "nsn",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Primary Key (PK, Cluster Key): 13-digit NATO Stock Number uniquely identifying the standard logistics item (e.g., 1680-01-619-4821)."
+    },
+    {
+      "name": "part_name",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Formal military catalog item description (e.g., Port Electro-Hydrostatic Actuator (EHA) / Actuator, Electro-Hydrostatic Horizontal Tail)."
+    },
+    {
+      "name": "depot_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Cluster Key: Depot facility code (e.g., DEPOT-MAR-01 / DEP-UK-01 for RAF Marham Regional Sustainment Hub, DEPOT-QNLZ-02 / DEP-UK-02 for HMS Queen Elizabeth Mobile Spares Group)."
+    },
+    {
+      "name": "depot_name",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Full facility description of the warehouse or afloat forward logistics site (e.g., RAF Marham Regional Sustainment Hub, HMS Queen Elizabeth Mobile Spares Group)."
+    },
+    {
+      "name": "quantity_on_hand",
+      "type": "INT64",
+      "mode": "REQUIRED",
+      "description": "Unit: each (EA). Current serviceable (Condition Code A) parts physically held in storage bins available for immediate requisition."
+    },
+    {
+      "name": "quantity_reserved_30d",
+      "type": "INT64",
+      "mode": "REQUIRED",
+      "description": "Unit: each (EA). Projected squadron demand and reserved allocations over the forward 30-day flying cycle."
+    },
+    {
+      "name": "reorder_point_threshold",
+      "type": "INT64",
+      "mode": "REQUIRED",
+      "description": "Unit: each (EA). Minimum safety inventory level triggering automated logistics procurement alerts when on-hand stock falls to or below this threshold."
+    },
+    {
+      "name": "avg_shipping_eta_hours",
+      "type": "FLOAT64",
+      "mode": "REQUIRED",
+      "description": "Unit: hours (hrs). Mean transit and receipt inspection time in hours required to deliver the part to the squadron hangar (e.g., 18.0 hrs)."
+    }
+  ]
+}

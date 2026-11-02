@@ -49,6 +49,27 @@ htmlcov/
 *~
 .DS_Store
 
-# agents-cli temporary files & caches
+# Node / Frontend build caches
+node_modules/
+
+# agents-cli & ADK temporary files & caches
+.adk/
+.agents-cli/
+.google-agents-cli/
 .agents-cli-cache/
 .agents-cli-temp/
+deployment_metadata.json.lock
+artifacts/
+eval_results*/
+
+# Teamwork & Orchestration Metadata
+.agents/
+PROJECT.md
+TEST_INFRA.md
+TEST_READY.md
+DEAD_ENDS.md
+GATE_STATUS.md
+
+# Local Generated Synthetic Seed Artifacts
+data/synthetic_seed/
+
