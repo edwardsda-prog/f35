@@ -11,10 +11,10 @@
 # Multi-Agent Orchestration
 
 ## 1. The Three-Phase Workflow
-Every major feature request must follow this precise delegation structure:
-- **Phase 1: Plan:** A single orchestrator agent must read the codebase, design the architecture, and present a complete plan for user approval. No subagent delegation is allowed during this phase.
+Every major feature request or bug fix must follow this precise delegation structure:
+- **Phase 1: Plan:** A single orchestrator agent must read the codebase, consult [`docs/issues/INDEX.md`](./docs/issues/INDEX.md) (to review past root causes, guardrail fixes, and rejected approaches), design the architecture, and present a complete plan for user approval. No subagent delegation is allowed during this phase.
 - **Phase 2: Build:** Once the plan is approved, the orchestrator must spin up independent subagents to work in parallel on isolated layers.
-- **Phase 3: Integration:** The orchestrator agent must validate the combined code, run tests, and merge the branches.
+- **Phase 3: Integration & Issue Logging:** The orchestrator agent must validate the combined code, run tests, record any resolved issues, regressions, or performance fixes in [`docs/issues/`](./docs/issues/) using [`docs/issues/TEMPLATE.md`](./docs/issues/TEMPLATE.md) (and register the `ISS-XXX` entry in [`docs/issues/INDEX.md`](./docs/issues/INDEX.md)), and merge the branches.
 
 ## 2. Agent Specialization Boundaries
 Do not allow a single agent to handle multiple domains. Delegate according to directory-level `AGENTS.md` boundaries:
@@ -129,6 +129,12 @@ f35-sustainment-agent/
 │   │   └── AGENTS.md
 │   └── web/                         # Frontend Implementer boundary (AGENTS.md scoped to Vega-Lite/HITL UI)
 │       └── AGENTS.md
+├── docs/                            # Git-tracked engineering documentation & issue knowledge base
+│   └── issues/                      # Referenceable archive of resolved issues, RCAs & fixes
+│       ├── README.md                # Workflow guide for pre-change lookup & post-fix logging
+│       ├── INDEX.md                 # Master searchable index by Issue ID, Domain, & Guardrail
+│       ├── TEMPLATE.md              # Standardized Full Engineering & ADK Lifecycle Issue Fix Template
+│       └── ISS-*.md                 # Chronological issue/fix records (ISS-001, ISS-002, ...)
 ├── scripts/
 │   ├── generate_synthetic_corpus.py # Generates DOC-01..DOC-09 (PDF/XML/JSONL + annotated C-scan PNG DOC-06)
 │   └── setup_demo_infra.py          # Seeds BigQuery (EU) dataset & Discovery Engine (eu) datastores

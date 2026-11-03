@@ -30,4 +30,5 @@ __pycache__/
 .venv/
 .pytest_cache/
 data/synthetic_seed/
+docs/
 

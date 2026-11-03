@@ -17,3 +17,4 @@
 ## Invariants
 - All tests must pass before phase 3 integration merge.
 - Quality score threshold >= 0.85; Latency targets strictly enforced.
+- Consult [`docs/issues/INDEX.md`](../docs/issues/INDEX.md) before modifying test or evaluation harnesses, and log any newly discovered/resolved regression or evaluation issue in [`docs/issues/`](../docs/issues/) using [`docs/issues/TEMPLATE.md`](../docs/issues/TEMPLATE.md) alongside a corresponding regression test.

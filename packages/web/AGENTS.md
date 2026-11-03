@@ -11,3 +11,4 @@
 ## Invariants
 - Visual specifications must strictly conform to Vega-Lite schema `https://vega.github.io/schema/vega-lite/v5.json`.
 - Dual output requirement: every visual artifact must provide both a code-fenced ```` ```vega-lite ```` specification and a formatted Markdown data table.
+- Consult [`docs/issues/INDEX.md`](../../docs/issues/INDEX.md) before modifying frontend components, and document any resolved UI or schema issue in [`docs/issues/`](../../docs/issues/) using [`docs/issues/TEMPLATE.md`](../../docs/issues/TEMPLATE.md).

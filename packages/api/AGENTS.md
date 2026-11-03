@@ -18,3 +18,4 @@
 - In-memory credential caching with `google.auth.default()` singleton (no `gcloud` subprocess calls).
 - Tools must use human-friendly names, display titles, and detailed docstrings.
 - Strict cloud-only execution against BigQuery EU and Discovery Engine `eu`.
+- Consult [`docs/issues/INDEX.md`](../../docs/issues/INDEX.md) before modifying backend/ADK code, and document any resolved bug, regression, or performance fix in [`docs/issues/`](../../docs/issues/) using [`docs/issues/TEMPLATE.md`](../../docs/issues/TEMPLATE.md).
