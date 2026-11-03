@@ -14,7 +14,7 @@ guardrails_impacted:
 vv_test_cases:
   - "TC-SQ-02"
   - "TC-LP-03"
-commit_or_pr: "89e3371"
+commit_or_pr: "b3c9543"
 author: "f35-sustainment-agent-orchestrator"
 ---
 
