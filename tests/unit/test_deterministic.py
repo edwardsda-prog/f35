@@ -552,3 +552,47 @@ class TestConfigAndGuardrailInvariants:
         assert len(exported_models) >= 3, (
             "Expected at least 3 Pydantic domain models in app/schemas.py for UC1, UC2, and UC3"
         )
+
+    def test_iss003_discovery_engine_jsonl_manifest_document_schema(self) -> None:
+        """Verify ISS-003: `generate_synthetic_corpus.py` generates valid `dataSchema='document'` JSONL manifests with PDF content URIs."""
+        import json
+
+        from scripts.generate_synthetic_corpus import (
+            UNSTRUCTURED_DIR,
+            generate_unstructured_corpus,
+        )
+
+        generate_unstructured_corpus()
+        for manifest_name, expected_count in (
+            ("metadata.jsonl", 9),
+            ("jtd_metadata.jsonl", 7),
+            ("narrative_metadata.jsonl", 2),
+        ):
+            manifest_path = UNSTRUCTURED_DIR / manifest_name
+            assert manifest_path.is_file(), f"Missing manifest {manifest_path}"
+            lines = [
+                line.strip()
+                for line in manifest_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            assert len(lines) == expected_count
+            for raw_line in lines:
+                entry = json.loads(raw_line)
+                assert isinstance(entry.get("id"), str) and entry["id"]
+                assert "jsonData" in entry
+                parsed_json_data = json.loads(entry["jsonData"])
+                assert parsed_json_data["_id"] == entry["id"]
+                assert parsed_json_data["chunk_id"] == entry["id"]
+                assert parsed_json_data["doc_id"].startswith("DOC-0")
+                assert "content" in parsed_json_data and "text" in parsed_json_data
+                content_block = entry.get("content", {})
+                assert content_block.get("mimeType") == "application/pdf"
+                assert str(content_block.get("uri", "")).endswith(".pdf")
+
+    def test_iss003_setup_demo_infra_gcs_source_data_schema_document(self) -> None:
+        """Verify ISS-003: `scripts/setup_demo_infra.py` specifies `dataSchema='document'` in `gcsSource` import payload."""
+        source = (REPO_ROOT / "scripts" / "setup_demo_infra.py").read_text(
+            encoding="utf-8"
+        )
+        assert '"gcsSource"' in source
+        assert '"dataSchema": "document"' in source

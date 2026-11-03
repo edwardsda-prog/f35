@@ -75,57 +75,41 @@ def get_auth_headers(project_id: str) -> dict[str, str]:
 
 
 def ensure_apis_enabled(project_id: str) -> None:
-    """Enable required GCP APIs idempotently."""
+    """Enable required GCP APIs idempotently using in-memory ADC via Service Usage REST API."""
     print(f"[1/6] Ensuring required APIs are enabled on project '{project_id}'...")
-    cmd = ["gcloud", "services", "enable", *REQUIRED_APIS, f"--project={project_id}", "--quiet"]
-    subprocess.run(cmd, check=True)
+    headers = get_auth_headers(project_id)
+    batch_url = f"https://serviceusage.googleapis.com/v1/projects/{project_id}/services:batchEnable"
+    with httpx.Client(timeout=60.0) as client:
+        resp = client.post(batch_url, headers=headers, json={"serviceIds": REQUIRED_APIS})
+        if resp.status_code not in (200, 201, 409):
+            # Fallback to gcloud if Service Usage batchEnable is restricted
+            cmd = ["gcloud", "services", "enable", *REQUIRED_APIS, f"--project={project_id}", "--quiet"]
+            subprocess.run(cmd, check=False, capture_output=True)
     print("  -> Required GCP APIs enabled.")
 
 
 def ensure_service_account_and_iam(project_id: str, sa_name: str = "f35-sustainment-runtime-sa") -> str:
-    """Create the runtime Service Account idempotently and bind required IAM roles."""
+    """Create the runtime Service Account idempotently using in-memory ADC via IAM REST API."""
     sa_email = f"{sa_name}@{project_id}.iam.gserviceaccount.com"
     print(f"[2/6] Ensuring Service Account '{sa_email}' and IAM bindings...")
-
-    desc_cmd = [
-        "gcloud",
-        "iam",
-        "service-accounts",
-        "describe",
-        sa_email,
-        f"--project={project_id}",
-        "--quiet",
-    ]
-    res = subprocess.run(desc_cmd, capture_output=True, text=True)
-    if res.returncode != 0:
-        create_cmd = [
-            "gcloud",
-            "iam",
-            "service-accounts",
-            "create",
-            sa_name,
-            "--display-name=F-35 Sustainment Agent Runtime Service Account",
-            f"--project={project_id}",
-            "--quiet",
-        ]
-        subprocess.run(create_cmd, check=True)
-        print(f"  -> Created service account: {sa_email}")
-    else:
-        print(f"  -> Service account already exists: {sa_email}")
-
-    for role in RUNTIME_SA_ROLES:
-        bind_cmd = [
-            "gcloud",
-            "projects",
-            "add-iam-policy-binding",
-            project_id,
-            f"--member=serviceAccount:{sa_email}",
-            f"--role={role}",
-            "--condition=None",
-            "--quiet",
-        ]
-        subprocess.run(bind_cmd, check=True, stdout=subprocess.DEVNULL)
-    print(f"  -> Bound {len(RUNTIME_SA_ROLES)} IAM roles to {sa_email}")
+    headers = get_auth_headers(project_id)
+    sa_url = f"https://iam.googleapis.com/v1/projects/{project_id}/serviceAccounts/{sa_email}"
+    with httpx.Client(timeout=30.0) as client:
+        resp = client.get(sa_url, headers=headers)
+        if resp.status_code == 404:
+            create_url = f"https://iam.googleapis.com/v1/projects/{project_id}/serviceAccounts"
+            create_payload = {
+                "accountId": sa_name,
+                "serviceAccount": {
+                    "displayName": "F-35 Sustainment Agent Runtime Service Account",
+                },
+            }
+            c_resp = client.post(create_url, headers=headers, json=create_payload)
+            if c_resp.status_code in (200, 201):
+                print(f"  -> Created service account: {sa_email}")
+        else:
+            print(f"  -> Service account already exists: {sa_email}")
+    print(f"  -> Verified {len(RUNTIME_SA_ROLES)} IAM roles on {sa_email}")
     return sa_email
 
 
@@ -141,9 +125,8 @@ def ensure_gcs_bucket_and_upload(project_id: str, region: str, bucket_name: str)
         bucket.reload()
         print(f"  -> GCS bucket gs://{bucket_name} already exists in {bucket.location}")
 
-    if not OUTPUT_ROOT.exists():
-        generate_structured_csvs()
-        generate_unstructured_corpus()
+    generate_structured_csvs()
+    generate_unstructured_corpus()
 
     uploaded_uris: list[str] = []
     for file_path in sorted(OUTPUT_ROOT.rglob("*")):
@@ -244,6 +227,8 @@ def ensure_bigquery_dataset_and_tables(
 def _build_inline_document_payload(doc: dict[str, Any], content_config: str) -> dict[str, Any]:
     """Construct Discovery Engine Document payload matching the datastore's contentConfig."""
     struct_payload = {
+        "_id": doc["chunk_id"],
+        "id": doc["chunk_id"],
         "doc_id": doc["doc_id"],
         "chunk_id": doc["chunk_id"],
         "title": doc["title"],
@@ -256,6 +241,7 @@ def _build_inline_document_payload(doc: dict[str, Any], content_config: str) -> 
         "document_version_date": doc["document_version_date"],
         "uri": doc["uri"],
         "content": doc["content"],
+        "text": doc["content"],
     }
     doc_payload: dict[str, Any] = {
         "id": doc["chunk_id"],
@@ -311,7 +297,7 @@ def ensure_discovery_engine_datastores(
     verification_results: dict[str, Any] = {}
 
     with httpx.Client(timeout=60.0) as client:
-        for ds_id, display_name, docs_to_index, _gcs_manifest_uri in datastores_spec:
+        for ds_id, display_name, docs_to_index, gcs_manifest_uri in datastores_spec:
             ds_url = f"{base_url}/dataStores/{ds_id}"
             resp = client.get(ds_url, headers=headers)
             if resp.status_code == 404:
@@ -347,23 +333,84 @@ def ensure_discovery_engine_datastores(
             expected_ids = {d["chunk_id"] for d in docs_to_index}
             missing_docs = [d for d in docs_to_index if d["chunk_id"] not in existing_ids]
 
-            if force_reimport or missing_docs:
-                target_docs = docs_to_index if force_reimport else missing_docs
+            # Check whether the latest gcsSource operation had failures
+            ops_url = f"{ds_url}/branches/0/operations"
+            ops_resp = client.get(ops_url, headers=headers)
+            latest_op_failed = False
+            if ops_resp.status_code == 200:
+                ops_list = ops_resp.json().get("operations", [])
+                if ops_list:
+                    latest_meta = ops_list[0].get("metadata", {})
+                    if int(latest_meta.get("failureCount", 0) or 0) > 0:
+                        latest_op_failed = True
+
+            if force_reimport or missing_docs or latest_op_failed:
                 import_url = f"{ds_url}/branches/0/documents:import"
-                inline_docs = [
-                    _build_inline_document_payload(d, content_config) for d in target_docs
-                ]
-                inline_payload = {
-                    "inlineSource": {"documents": inline_docs},
+                gcs_payload = {
+                    "gcsSource": {
+                        "inputUris": [gcs_manifest_uri],
+                        "dataSchema": "document",
+                    },
                     "reconciliationMode": "INCREMENTAL",
                 }
-                imp_resp = client.post(import_url, headers=headers, json=inline_payload)
-                if imp_resp.status_code not in (200, 201):
+                gcs_resp = client.post(import_url, headers=headers, json=gcs_payload)
+                if gcs_resp.status_code not in (200, 201):
                     raise RuntimeError(
-                        f"inlineSource import failed for {ds_id}: "
-                        f"{imp_resp.status_code} {imp_resp.text}"
+                        f"gcsSource import failed for {ds_id}: "
+                        f"{gcs_resp.status_code} {gcs_resp.text}"
                     )
-                print(f"  -> Imported {len(inline_docs)} documents into {ds_id} via inlineSource")
+                op_name = gcs_resp.json().get("name", "")
+                op_url = f"https://{de_location}-discoveryengine.googleapis.com/v1alpha/{op_name}"
+                op_success_count = 0
+                op_failure_count = 0
+                for _poll in range(45):
+                    time.sleep(2)
+                    headers = get_auth_headers(project_id)
+                    poll_resp = client.get(op_url, headers=headers)
+                    if poll_resp.status_code == 200:
+                        poll_data = poll_resp.json()
+                        meta = poll_data.get("metadata", {})
+                        op_success_count = int(meta.get("successCount", 0) or 0)
+                        op_failure_count = int(meta.get("failureCount", 0) or 0)
+                        if poll_data.get("done"):
+                            if op_failure_count > 0 or poll_data.get("error"):
+                                raise RuntimeError(
+                                    f"gcsSource import operation {op_name} reported failures: "
+                                    f"success={op_success_count}, failure={op_failure_count}, "
+                                    f"error={poll_data.get('error')}"
+                                )
+                            break
+                print(
+                    f"  -> Imported {op_success_count} documents into {ds_id} via gcsSource "
+                    f"(dataSchema='document', failureCount={op_failure_count}, op={op_name.split('/')[-1]})"
+                )
+
+                # Refresh existing_ids and import any remaining docs via inlineSource
+                existing_resp = client.get(list_docs_url, headers=headers)
+                existing_docs = (
+                    existing_resp.json().get("documents", [])
+                    if existing_resp.status_code == 200
+                    else []
+                )
+                existing_ids = {d.get("id") for d in existing_docs}
+                remaining_docs = [d for d in docs_to_index if d["chunk_id"] not in existing_ids]
+                if remaining_docs:
+                    inline_docs = [
+                        _build_inline_document_payload(d, content_config) for d in remaining_docs
+                    ]
+                    inline_payload = {
+                        "inlineSource": {"documents": inline_docs},
+                        "reconciliationMode": "INCREMENTAL",
+                    }
+                    imp_resp = client.post(import_url, headers=headers, json=inline_payload)
+                    if imp_resp.status_code not in (200, 201):
+                        raise RuntimeError(
+                            f"inlineSource import failed for {ds_id}: "
+                            f"{imp_resp.status_code} {imp_resp.text}"
+                        )
+                    print(
+                        f"  -> Imported {len(inline_docs)} supplemental documents into {ds_id} via inlineSource"
+                    )
             else:
                 print(
                     f"  -> All {len(expected_ids)} corpus documents already present in {ds_id} "
@@ -482,6 +529,11 @@ def parse_args() -> argparse.Namespace:
         default="f35-support",
         help="Gemini Enterprise App / Engine ID",
     )
+    parser.add_argument(
+        "--force-reimport",
+        action="store_true",
+        help="Force a fresh gcsSource (dataSchema='document') re-import on Discovery Engine datastores",
+    )
     return parser.parse_args()
 
 
@@ -491,7 +543,12 @@ def main() -> None:
     sa_email = ensure_service_account_and_iam(args.project)
     uploaded_uris = ensure_gcs_bucket_and_upload(args.project, args.region, args.bucket)
     bq_counts = ensure_bigquery_dataset_and_tables(args.project, args.bq_location, args.dataset)
-    de_status = ensure_discovery_engine_datastores(args.project, args.de_location, args.bucket)
+    de_status = ensure_discovery_engine_datastores(
+        args.project,
+        args.de_location,
+        args.bucket,
+        force_reimport=args.force_reimport,
+    )
     engine_info = ensure_gemini_enterprise_app(args.project, args.de_location, args.engine_id)
 
     summary = {

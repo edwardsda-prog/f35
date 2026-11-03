@@ -22,7 +22,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.seed_data.bq_seed_records import BQ_SEED_TABLES, SCHEMAS_DIR  # noqa: E402
-from app.seed_data.jtd_corpus import JTD_CORPUS_DOCUMENTS  # noqa: E402
+from app.seed_data.jtd_corpus import GCS_DOCS_PREFIX, JTD_CORPUS_DOCUMENTS  # noqa: E402
 
 OUTPUT_ROOT = PROJECT_ROOT / "data" / "synthetic_seed"
 STRUCTURED_DIR = OUTPUT_ROOT / "structured"
@@ -332,11 +332,15 @@ def generate_unstructured_corpus() -> list[Path]:
             _render_pdf_document(file_path, doc)
             generated.append(file_path)
 
-        # Build Discovery Engine custom metadata JSONL entry
+        # Build Discovery Engine Document-schema metadata JSONL entry (dataSchema="document")
+        pdf_doc_filename = doc.get("pdf_filename", doc["filename"])
+        gcs_pdf_uri = f"{GCS_DOCS_PREFIX}/{pdf_doc_filename}"
         metadata_entry = {
             "id": doc["chunk_id"],
             "jsonData": json.dumps(
                 {
+                    "_id": doc["chunk_id"],
+                    "id": doc["chunk_id"],
                     "doc_id": doc["doc_id"],
                     "chunk_id": doc["chunk_id"],
                     "title": doc["title"],
@@ -348,12 +352,13 @@ def generate_unstructured_corpus() -> list[Path]:
                     "bit_fault_associated": doc["bit_fault_associated"],
                     "document_version_date": doc["document_version_date"],
                     "uri": doc["uri"],
+                    "content": doc["content"],
                     "text": doc["content"],
                 }
             ),
             "content": {
-                "mimeType": doc["mime_type"],
-                "uri": doc["uri"],
+                "mimeType": "application/pdf",
+                "uri": gcs_pdf_uri,
             },
         }
         line_str = json.dumps(metadata_entry)
