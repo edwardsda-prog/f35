@@ -14,6 +14,7 @@ from typing import Any
 
 import google.auth
 import google.auth.transport.requests
+import google.oauth2.credentials
 import httpx
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
@@ -60,13 +61,30 @@ EXPECTED_BQ_TABLES = (
 )
 
 
+def get_credentials() -> Any:
+    """Obtain credentials from Application Default Credentials or active gcloud config-helper."""
+    try:
+        credentials, _ = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+        auth_req = google.auth.transport.requests.Request()
+        credentials.refresh(auth_req)
+        return credentials
+    except Exception:
+        res = subprocess.run(
+            ["gcloud", "config", "config-helper", "--format=json"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        data = json.loads(res.stdout)
+        token = data["credential"]["access_token"]
+        return google.oauth2.credentials.Credentials(token=token)
+
+
 def get_auth_headers(project_id: str) -> dict[str, str]:
     """Obtain bearer token from in-memory Application Default Credentials."""
-    credentials, _ = google.auth.default(
-        scopes=["https://www.googleapis.com/auth/cloud-platform"]
-    )
-    auth_req = google.auth.transport.requests.Request()
-    credentials.refresh(auth_req)
+    credentials = get_credentials()
     return {
         "Authorization": f"Bearer {credentials.token}",
         "Content-Type": "application/json",
@@ -116,7 +134,7 @@ def ensure_service_account_and_iam(project_id: str, sa_name: str = "f35-sustainm
 def ensure_gcs_bucket_and_upload(project_id: str, region: str, bucket_name: str) -> list[str]:
     """Create regional GCS bucket in europe-west1 idempotently and upload structured & unstructured corpus."""
     print(f"[3/6] Ensuring GCS bucket 'gs://{bucket_name}' in location '{region}'...")
-    storage_client = storage.Client(project=project_id)
+    storage_client = storage.Client(project=project_id, credentials=get_credentials())
     bucket = storage_client.bucket(bucket_name)
     if not bucket.exists():
         bucket = storage_client.create_bucket(bucket_or_name=bucket_name, location=region)
@@ -147,7 +165,11 @@ def ensure_bigquery_dataset_and_tables(
 ) -> dict[str, int]:
     """Create BigQuery EU dataset and populate all 6 tables using declarative schemas."""
     print(f"[4/6] Provisioning BigQuery dataset '{project_id}.{dataset_id}' (location='{bq_location}')...")
-    bq_client = bigquery.Client(project=project_id, location=bq_location)
+    bq_client = bigquery.Client(
+        project=project_id,
+        location=bq_location,
+        credentials=get_credentials(),
+    )
     dataset_ref = bigquery.Dataset(f"{project_id}.{dataset_id}")
     dataset_ref.location = bq_location
     dataset_ref.description = (

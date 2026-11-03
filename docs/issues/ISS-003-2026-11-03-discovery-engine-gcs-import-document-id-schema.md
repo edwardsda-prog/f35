@@ -2,7 +2,7 @@
 issue_id: "ISS-003"
 title: "Discovery Engine EU GCS JSONL Import Fails with 'Custom Document Id (_id) was not found in document' on JTD and Narrative Datastores"
 date: "2026-11-03"
-status: "RESOLVED"
+status: "VERIFIED_IN_PROD"
 severity: "P1-MAJOR"
 domain: "Infra-EU"
 sub_agent: "f35_jtd_search_agent"
@@ -166,8 +166,9 @@ uv run python scripts/setup_demo_infra.py --project antig-dave --region europe-w
 ### 5.2 Before vs. After Telemetry / Verification Metrics
 | Metric / Check | Pre-Fix Baseline | Post-Fix Result | Target / SLA Gate | Verdict |
 | :--- | :---: | :---: | :---: | :---: |
+| `ukd-f35-jtd-ietm-ds` GCS Import (`locations/eu`) | `failureCount: 9`, `successCount: 0` (`op=import-documents-11960787430844625327`) | `successCount: 9`, `failureCount: 0` (`op=import-documents-2972038917204467641`, `5` live search hits) | `9/9` succeeded (`failureCount = 0`) | **✅ PASS** |
+| `ukd-f35-narrative-logs-ds` GCS Import (`locations/eu`) | `failureCount: 2`, `successCount: 0` (`op=import-documents-11746255522693571085`) | `successCount: 2`, `failureCount: 0` (`op=import-documents-8384588076202301195`, `9` stored, `2` live search hits) | `2/2` succeeded (`failureCount = 0`) | **✅ PASS** |
 | `metadata.jsonl` / `narrative_metadata.jsonl` `content.uri` PDF Validity | `7/9` valid (`.jsonl` & `.png` mismatches on `DOC-02`, `DOC-06`) | `9/9` valid `application/pdf` companion URIs | `100%` valid PDF URIs | **✅ PASS** |
-| `setup_demo_infra.py` `gcsSource` `dataSchema` | Omitted (defaulted to `"custom"` -> `code: 3` `_id` error) | Explicit `"dataSchema": "document"` + LRO polling | `"dataSchema": "document"` | **✅ PASS** |
 | Unit & 5-Tier E2E Regression Suite (`pytest`) | `248 passed` | `250 passed` (`+2` `ISS-003` regression tests) | `100%` pass rate | **✅ PASS** |
 
 ---
