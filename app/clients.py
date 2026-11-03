@@ -172,6 +172,9 @@ def build_de_search_payload(
     }
 
 
+_NO_EXTRACTIVE_SPEC_DATASTORES: set[str] = {NARRATIVE_DATASTORE_ID}
+
+
 def search_discovery_engine_datastore(
     datastore_id: str,
     query: str,
@@ -179,18 +182,29 @@ def search_discovery_engine_datastore(
 ) -> list[dict[str, Any]]:
     """Execute a single-pass REST search against an eu Discovery Engine datastore."""
     url = build_de_search_url(datastore_id=datastore_id)
-    payload = build_de_search_payload(query=query, page_size=page_size)
     headers = get_auth_headers()
-    response = http_client.post(url, headers=headers, json=payload)
-    if response.status_code == 400:
-        fallback_payload = {
+    if datastore_id in _NO_EXTRACTIVE_SPEC_DATASTORES:
+        payload: dict[str, Any] = {
             "query": query,
             "pageSize": page_size,
             "contentSearchSpec": {
                 "snippetSpec": {"returnSnippet": True},
             },
         }
-        response = http_client.post(url, headers=headers, json=fallback_payload)
+        response = http_client.post(url, headers=headers, json=payload)
+    else:
+        payload = build_de_search_payload(query=query, page_size=page_size)
+        response = http_client.post(url, headers=headers, json=payload)
+        if response.status_code == 400:
+            _NO_EXTRACTIVE_SPEC_DATASTORES.add(datastore_id)
+            fallback_payload = {
+                "query": query,
+                "pageSize": page_size,
+                "contentSearchSpec": {
+                    "snippetSpec": {"returnSnippet": True},
+                },
+            }
+            response = http_client.post(url, headers=headers, json=fallback_payload)
     response.raise_for_status()
     data = response.json()
     return list(data.get("results", []))

@@ -37,6 +37,8 @@ dev = [
     "pytest-asyncio>=1.0.0,<2.0.0",
     "nest-asyncio>=1.6.0,<2.0.0",
     "ruff>=0.4.6,<1.0.0",
+    "locust>=2.46.7",
+    "tabulate>=0.10.0",
 ]
 
 [project.optional-dependencies]
