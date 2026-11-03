@@ -13,7 +13,7 @@ guardrails_impacted:
 vv_test_cases:
   - "TC-SQ-02"
   - "TC-LP-03"
-commit_or_pr: "HEAD"
+commit_or_pr: "35e1e03"
 author: "F-35 Sustainment Platform Engineering"
 ---
 
