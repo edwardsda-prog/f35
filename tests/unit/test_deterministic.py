@@ -596,3 +596,99 @@ class TestConfigAndGuardrailInvariants:
         )
         assert '"gcsSource"' in source
         assert '"dataSchema": "document"' in source
+
+    def test_iss004_build_de_search_payload_metadata_filter_boost_and_facets(self) -> None:
+        """Verify ISS-004: build_de_search_payload properly constructs filter, boostSpec, and facetSpecs."""
+        from app.clients import build_de_search_payload
+
+        # Basic query
+        p1 = build_de_search_payload("canopy latch", page_size=15)
+        assert p1["query"] == "canopy latch"
+        assert p1["pageSize"] == 15
+        assert "filter" not in p1
+        assert "boostSpec" not in p1
+        assert "facetSpecs" not in p1
+        assert p1["contentSearchSpec"]["snippetSpec"]["returnSnippet"] is True
+        assert p1["contentSearchSpec"]["extractiveContentSpec"]["maxExtractiveAnswerCount"] == 3
+
+        # Advanced query with metadata filter, boost, and facets
+        filter_expr = 'system_subsystem_code: ANY("53-30") AND bit_fault_associated = "false"'
+        boost_spec = {
+            "conditionBoostSpecs": [
+                {"condition": 'service_branch_origin: ANY("RAF", "RN")', "boost": 0.5}
+            ]
+        }
+        facet_specs = [
+            {"facetKey": {"key": "service_branch_origin"}, "limit": 10},
+            {"facetKey": {"key": "system_subsystem_code"}, "limit": 10},
+        ]
+        p2 = build_de_search_payload(
+            "canopy latch",
+            page_size=15,
+            filter_expr=filter_expr,
+            boost_spec=boost_spec,
+            facet_specs=facet_specs,
+            include_extractive=False,
+        )
+        assert p2["filter"] == filter_expr
+        assert p2["boostSpec"] == boost_spec
+        assert p2["facetSpecs"] == facet_specs
+        assert "extractiveContentSpec" not in p2["contentSearchSpec"]
+
+    def test_iss004_build_metadata_filter_syntax_and_quoting(self) -> None:
+        """Verify ISS-004: build_metadata_filter builds valid filter strings conforming to Discovery Engine schema."""
+        from app.tools.uc2_jtd_search import (
+            build_metadata_boost_spec,
+            build_metadata_facet_specs,
+            build_metadata_filter,
+        )
+
+        # When subsystem is provided and bit_fault_present is False
+        f1 = build_metadata_filter(subsystem_filter="53-30", bit_fault_present=False)
+        assert f1 is not None
+        assert 'system_subsystem_code: ANY("53-30")' in f1
+        assert 'bit_fault_associated = "false"' in f1
+        assert " AND " in f1
+
+        # When bit_fault_present is True
+        f2 = build_metadata_filter(subsystem_filter="53-30", bit_fault_present=True)
+        assert f2 is not None
+        assert 'system_subsystem_code: ANY("53-30")' in f2
+        assert "bit_fault_associated" not in f2
+
+        # When aircraft_variant is provided
+        f3 = build_metadata_filter(
+            subsystem_filter="53-11", bit_fault_present=False, aircraft_variant="F-35B"
+        )
+        assert f3 is not None
+        assert 'aircraft_variant_applicability: ANY("F-35B")' in f3
+
+        # Boost spec structure
+        b = build_metadata_boost_spec(preferred_branch="RAF")
+        assert "conditionBoostSpecs" in b
+        assert 'service_branch_origin: ANY("RAF", "RN")' in b["conditionBoostSpecs"][0]["condition"]
+        assert b["conditionBoostSpecs"][0]["boost"] == 0.5
+
+        # Facet specs structure
+        facets = build_metadata_facet_specs()
+        facet_keys = [f["facetKey"]["key"] for f in facets]
+        assert "service_branch_origin" in facet_keys
+        assert "system_subsystem_code" in facet_keys
+        assert "aircraft_variant_applicability" in facet_keys
+
+    def test_iss004_uc2_search_tool_outputs_metadata_specs_and_facets(self) -> None:
+        """Verify ISS-004: search_technical_manuals_and_repair_logs returns metadata_filter, metadata_boost, and metadata_facets."""
+        from app.tools.uc2_jtd_search import search_technical_manuals_and_repair_logs
+
+        res = search_technical_manuals_and_repair_logs(
+            symptom_query="sticky canopy catch during lock verification no BIT fault",
+            bit_fault_present=False,
+            subsystem_filter="53-30",
+        )
+        assert res["status"] == "SUCCESS"
+        assert "metadata_filter" in res
+        assert 'system_subsystem_code: ANY("53-30")' in str(res["metadata_filter"])
+        assert 'bit_fault_associated = "false"' in str(res["metadata_filter"])
+        assert "metadata_boost" in res
+        assert "metadata_facets" in res
+        assert isinstance(res["results"], list) and len(res["results"]) > 0

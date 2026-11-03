@@ -132,6 +132,33 @@ To enable faceted filtering, subsystem routing, and precise citation anchoring i
 | bit\_fault\_associated | BOOLEAN | Filterable | \`false\` (allows boosting mechanical rigging docs when BIT \= None) |
 | document\_version\_date | STRING | Filterable / Sortable | \`2026-10-15\` (ensures retrieval of the latest JTD / SRM revision) |
 
+## 4.3 Discovery Engine Query Architecture: Metadata Filtering, Relevance Boosting & Facet Aggregations
+
+To achieve high precision, zero hallucination, and sub-2-second retrieval (\`TC-LP-03\`) across heterogeneous MoD and DoD technical publications, the UC2 Search Agent (\`f35_jtd_search_agent\`) interfaces with the Gemini Enterprise Discovery Engine EU multi-region endpoint (\`https://eu-discoveryengine.googleapis.com/v1alpha/projects/antig-dave/locations/eu/...\`) using structured metadata query primitives:
+
+### 1. Structured Metadata Filtering (\`filter\`)
+When the maintenance technician reports mechanical symptoms without Built-In-Test (BIT) fault annunciations, the agent constructs server-side filter expressions over the indexed \`jsonData\` schema:
+* **Boolean Quoting Requirement:** In Discovery Engine, boolean values on JSON fields must be passed as quoted string literals: \`bit_fault_associated = "false"\` (unquoted literals return HTTP 400).
+* **Subsystem Scoping:** \`system_subsystem_code: ANY("53-30")\` isolates ATA/S1000D chapters (e.g. Canopy & Framing), filtering out extraneous electrical or engine technical data.
+* **Resilient Two-Stage Execution:** If a strict metadata filter returns zero hits due to an unindexed variant or tag mismatch, the tool automatically executes an immediate fallback query with the filter relaxed to ensure flight-line technicians never receive false-negative empty sets.
+
+### 2. Dynamic Soft Relevance Boosting (\`boostSpec\`)
+Rather than hard-filtering out allied datasets—which would hide critical cross-service precedents such as the US Marine Corps VMFA-211 canopy sealant fix (\`DOC-02\`)—the search agent employs soft relevance boosting:
+* **Host Nation / Service Prioritization:**
+  \`\`\`json
+  {
+    "condition": "service_branch_origin: ANY(\"RAF\", \"RN\")",
+    "boost": 0.5
+  }
+  \`\`\`
+* **Effect:** Promotes UK MoD publications to the top of the ranked list while preserving allied sister squadron findings (\`USMC\`, \`USAF\`) immediately below, facilitating cross-fleet intelligence sharing without manual portal hopping.
+
+### 3. Multi-Faceted Category Aggregations (\`facetSpecs\`)
+To support interactive categorization and facet filtering in Gemini Enterprise Canvas and downstream web components:
+* **Facet Keys:** Requested across \`service_branch_origin\`, \`system_subsystem_code\`, and \`aircraft_variant_applicability\`.
+* **Explicit Limit Invariant:** Every facet specification must supply an explicit limit (e.g. \`"limit": 10\`). In Discovery Engine, omitting \`limit\` defaults to 0, which triggers \`HTTP 400: Facet limit should be between 1 to 300\`.
+* **Output Integration:** Facet bucket counts are surfaced in the tool output payload (\`metadata_facets\`), enabling drill-down counts by service branch and aircraft variant in the UI.
+
 # 5\. Use Case 3 Design: Agentic AI Orchestration (Structured \+ Unstructured Data)
 
 ## 5.1 Operational Narrative & Deterministic Human-in-the-Loop Workflow

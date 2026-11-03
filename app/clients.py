@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import os
 import re
 import threading
 from typing import Any
@@ -44,6 +45,15 @@ _auth_request = google.auth.transport.requests.Request()
 def _init_credentials() -> Any:
     """Initialize Application Default Credentials in memory at module import time."""
     global _cached_credentials
+    env_token = os.environ.get("GOOGLE_OAUTH_ACCESS_TOKEN") or os.environ.get("CLOUDSDK_AUTH_ACCESS_TOKEN")
+    if env_token:
+        try:
+            from google.oauth2.credentials import Credentials
+            creds = Credentials(token=env_token)
+            _cached_credentials = creds
+            return creds
+        except Exception as exc:  # pragma: no cover
+            logger.warning("Environment token initialization warning: %s", exc)
     try:
         creds, _ = google.auth.default(scopes=_CLOUD_PLATFORM_SCOPES)
         _cached_credentials = creds
@@ -85,6 +95,14 @@ def get_access_token() -> str:
             try:
                 _cached_credentials.refresh(_auth_request)
             except Exception as exc:
+                env_token = os.environ.get("GOOGLE_OAUTH_ACCESS_TOKEN") or os.environ.get("CLOUDSDK_AUTH_ACCESS_TOKEN")
+                if env_token:
+                    try:
+                        from google.oauth2.credentials import Credentials
+                        _cached_credentials = Credentials(token=env_token)
+                        return str(_cached_credentials.token)
+                    except Exception:  # pragma: no cover
+                        pass
                 logger.warning("ADC token refresh fallback activated: %s", exc)
                 _cached_credentials.token = "adc-cached-fallback-token-antig-dave-eu"
                 _cached_credentials.expiry = (
@@ -168,16 +186,30 @@ def run_bq_query(
 def build_de_search_payload(
     query: str,
     page_size: int = DISCOVERY_PAGE_SIZE,
+    filter_expr: str | None = None,
+    boost_spec: dict[str, Any] | None = None,
+    facet_specs: list[dict[str, Any]] | None = None,
+    include_extractive: bool = True,
 ) -> dict[str, Any]:
     """Construct the single-pass Discovery Engine search payload (PERF-02, PERF-03)."""
-    return {
+    payload: dict[str, Any] = {
         "query": query,
         "pageSize": page_size,
         "contentSearchSpec": {
             "snippetSpec": {"returnSnippet": True},
-            "extractiveContentSpec": {"maxExtractiveAnswerCount": 3},
         },
     }
+    if include_extractive:
+        payload["contentSearchSpec"]["extractiveContentSpec"] = {
+            "maxExtractiveAnswerCount": 3,
+        }
+    if filter_expr:
+        payload["filter"] = filter_expr
+    if boost_spec:
+        payload["boostSpec"] = boost_spec
+    if facet_specs:
+        payload["facetSpecs"] = facet_specs
+    return payload
 
 
 _NO_EXTRACTIVE_SPEC_DATASTORES: set[str] = {NARRATIVE_DATASTORE_ID}
@@ -187,35 +219,80 @@ def search_discovery_engine_datastore(
     datastore_id: str,
     query: str,
     page_size: int = DISCOVERY_PAGE_SIZE,
+    filter_expr: str | None = None,
+    boost_spec: dict[str, Any] | None = None,
+    facet_specs: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Execute a single-pass REST search against an eu Discovery Engine datastore."""
     url = build_de_search_url(datastore_id=datastore_id)
     headers = get_auth_headers()
-    if datastore_id in _NO_EXTRACTIVE_SPEC_DATASTORES:
-        payload: dict[str, Any] = {
-            "query": query,
-            "pageSize": page_size,
-            "contentSearchSpec": {
-                "snippetSpec": {"returnSnippet": True},
-            },
-        }
-        response = http_client.post(url, headers=headers, json=payload)
-    else:
-        payload = build_de_search_payload(query=query, page_size=page_size)
-        response = http_client.post(url, headers=headers, json=payload)
-        if response.status_code == 400:
-            _NO_EXTRACTIVE_SPEC_DATASTORES.add(datastore_id)
-            fallback_payload = {
-                "query": query,
-                "pageSize": page_size,
-                "contentSearchSpec": {
-                    "snippetSpec": {"returnSnippet": True},
-                },
-            }
-            response = http_client.post(url, headers=headers, json=fallback_payload)
+    include_extractive = datastore_id not in _NO_EXTRACTIVE_SPEC_DATASTORES
+
+    payload = build_de_search_payload(
+        query=query,
+        page_size=page_size,
+        filter_expr=filter_expr,
+        boost_spec=boost_spec,
+        facet_specs=facet_specs,
+        include_extractive=include_extractive,
+    )
+    response = http_client.post(url, headers=headers, json=payload)
+    if response.status_code == 400 and include_extractive:
+        _NO_EXTRACTIVE_SPEC_DATASTORES.add(datastore_id)
+        fallback_payload = build_de_search_payload(
+            query=query,
+            page_size=page_size,
+            filter_expr=filter_expr,
+            boost_spec=boost_spec,
+            facet_specs=facet_specs,
+            include_extractive=False,
+        )
+        response = http_client.post(url, headers=headers, json=fallback_payload)
     response.raise_for_status()
     data = response.json()
     return list(data.get("results", []))
+
+
+def search_discovery_engine_extended(
+    datastore_id: str,
+    query: str,
+    page_size: int = DISCOVERY_PAGE_SIZE,
+    filter_expr: str | None = None,
+    boost_spec: dict[str, Any] | None = None,
+    facet_specs: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Execute search returning results, metadata facets, and total match count."""
+    url = build_de_search_url(datastore_id=datastore_id)
+    headers = get_auth_headers()
+    include_extractive = datastore_id not in _NO_EXTRACTIVE_SPEC_DATASTORES
+
+    payload = build_de_search_payload(
+        query=query,
+        page_size=page_size,
+        filter_expr=filter_expr,
+        boost_spec=boost_spec,
+        facet_specs=facet_specs,
+        include_extractive=include_extractive,
+    )
+    response = http_client.post(url, headers=headers, json=payload)
+    if response.status_code == 400 and include_extractive:
+        _NO_EXTRACTIVE_SPEC_DATASTORES.add(datastore_id)
+        fallback_payload = build_de_search_payload(
+            query=query,
+            page_size=page_size,
+            filter_expr=filter_expr,
+            boost_spec=boost_spec,
+            facet_specs=facet_specs,
+            include_extractive=False,
+        )
+        response = http_client.post(url, headers=headers, json=fallback_payload)
+    response.raise_for_status()
+    data = response.json()
+    return {
+        "results": list(data.get("results", [])),
+        "facets": list(data.get("facets", [])),
+        "total_size": data.get("totalSize", len(data.get("results", []))),
+    }
 
 
 __all__ = [
@@ -242,4 +319,5 @@ __all__ = [
     "http_client",
     "run_bq_query",
     "search_discovery_engine_datastore",
+    "search_discovery_engine_extended",
 ]

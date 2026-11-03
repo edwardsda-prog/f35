@@ -15,6 +15,7 @@ from app.clients import (
     build_de_search_url,
     clean_snippet_text,
     search_discovery_engine_datastore,
+    search_discovery_engine_extended,
 )
 from app.config import (
     DE_LOCATION,
@@ -48,7 +49,46 @@ CROSS_SERVICE_DIALECT_MAP: list[tuple[str, str, list[str]]] = [
     ("oleo", "shock strut", ["landing gear strut"]),
 ]
 
-_DE_SEARCH_CACHE: dict[tuple[str, str], list[dict[str, Any]]] = {}
+_DE_SEARCH_CACHE: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
+
+
+def build_metadata_filter(
+    subsystem_filter: str | None = None,
+    bit_fault_present: bool = False,
+    aircraft_variant: str | None = None,
+) -> str | None:
+    """Build a Discovery Engine filter expression based on structured domain parameters."""
+    conditions: list[str] = []
+    if subsystem_filter and subsystem_filter.strip():
+        conditions.append(f'system_subsystem_code: ANY("{subsystem_filter.strip()}")')
+    if not bit_fault_present:
+        conditions.append('bit_fault_associated = "false"')
+    if aircraft_variant and aircraft_variant.strip():
+        conditions.append(f'aircraft_variant_applicability: ANY("{aircraft_variant.strip()}")')
+    return " AND ".join(conditions) if conditions else None
+
+
+def build_metadata_boost_spec(
+    preferred_branch: str = "RAF",
+) -> dict[str, Any]:
+    """Build a Discovery Engine boostSpec softly prioritizing local MoD branch procedures."""
+    return {
+        "conditionBoostSpecs": [
+            {
+                "condition": f'service_branch_origin: ANY("{preferred_branch}", "RN")',
+                "boost": 0.5,
+            }
+        ]
+    }
+
+
+def build_metadata_facet_specs() -> list[dict[str, Any]]:
+    """Build Discovery Engine facetSpecs for aggregated category distribution."""
+    return [
+        {"facetKey": {"key": "service_branch_origin"}, "limit": 10},
+        {"facetKey": {"key": "system_subsystem_code"}, "limit": 10},
+        {"facetKey": {"key": "aircraft_variant_applicability"}, "limit": 10},
+    ]
 
 
 def normalize_cross_service_terminology(
@@ -121,45 +161,93 @@ def _extract_doc_id_from_de_result(item: dict[str, Any]) -> str | None:
     return None
 
 
-def _query_live_eu_datastores(expanded_query: str) -> dict[str, str]:
-    """Query both eu Discovery Engine datastores in a single 15-doc pass and extract clean snippets."""
+def _query_live_eu_datastores(
+    expanded_query: str,
+    subsystem_filter: str | None = None,
+    bit_fault_present: bool = False,
+    preferred_branch: str = "RAF",
+) -> tuple[dict[str, str], list[dict[str, Any]], dict[str, Any]]:
+    """Query both eu Discovery Engine datastores in a single 15-doc pass with metadata specs."""
     search_q = expanded_query or "F-35 canopy latch binding JTD 53-30"
     snippets_by_doc_id: dict[str, str] = {}
+    aggregated_facets: list[dict[str, Any]] = []
+
+    filter_expr = build_metadata_filter(
+        subsystem_filter=subsystem_filter,
+        bit_fault_present=bit_fault_present,
+    )
+    boost_spec = build_metadata_boost_spec(preferred_branch=preferred_branch)
+    facet_specs = build_metadata_facet_specs()
 
     for ds_id in (JTD_DATASTORE_ID, NARRATIVE_DATASTORE_ID):
-        cache_key = (ds_id, search_q[:120].lower())
+        cache_key = (ds_id, search_q[:120].lower(), filter_expr or "", preferred_branch)
+        raw_results: list[dict[str, Any]] = []
         try:
             if cache_key not in _DE_SEARCH_CACHE:
-                _DE_SEARCH_CACHE[cache_key] = search_discovery_engine_datastore(
+                ext_resp = search_discovery_engine_extended(
                     datastore_id=ds_id,
                     query=search_q,
                     page_size=PAGE_SIZE,
+                    filter_expr=filter_expr,
+                    boost_spec=boost_spec,
+                    facet_specs=facet_specs,
                 )
+                _DE_SEARCH_CACHE[cache_key] = ext_resp.get("results", [])
+                if ext_resp.get("facets"):
+                    aggregated_facets.extend(ext_resp["facets"])
             raw_results = _DE_SEARCH_CACHE[cache_key]
-            for hit in raw_results:
-                doc_id = _extract_doc_id_from_de_result(hit)
-                if not doc_id:
-                    continue
-                derived = (hit.get("document", {}) or {}).get("derivedStructData", {}) or {}
-                snippets = derived.get("snippets", []) or []
-                extractive = derived.get("extractive_answers", []) or []
-                pieces: list[str] = []
-                for s in snippets:
-                    if isinstance(s, dict) and s.get("snippet"):
-                        pieces.append(clean_snippet_text(str(s["snippet"])))
-                for e in extractive:
-                    if isinstance(e, dict) and e.get("content"):
-                        pieces.append(clean_snippet_text(str(e["content"])))
-                if pieces:
-                    snippets_by_doc_id[doc_id] = " ".join(pieces)
         except Exception as exc:
             logger.warning(
-                "Discovery Engine eu query warning on %s: %s",
+                "Discovery Engine eu query with metadata filter warning on %s: %s; falling back to unfiltered search",
                 ds_id,
                 exc,
             )
+            fallback_key = (ds_id, search_q[:120].lower(), "", preferred_branch)
+            try:
+                if fallback_key not in _DE_SEARCH_CACHE:
+                    ext_resp = search_discovery_engine_extended(
+                        datastore_id=ds_id,
+                        query=search_q,
+                        page_size=PAGE_SIZE,
+                        filter_expr=None,
+                        boost_spec=boost_spec,
+                        facet_specs=facet_specs,
+                    )
+                    _DE_SEARCH_CACHE[fallback_key] = ext_resp.get("results", [])
+                    if ext_resp.get("facets"):
+                        aggregated_facets.extend(ext_resp["facets"])
+                raw_results = _DE_SEARCH_CACHE[fallback_key]
+            except Exception as fb_exc:
+                logger.warning(
+                    "Discovery Engine unfiltered fallback warning on %s: %s",
+                    ds_id,
+                    fb_exc,
+                )
+                raw_results = []
 
-    return snippets_by_doc_id
+        for hit in raw_results:
+            doc_id = _extract_doc_id_from_de_result(hit)
+            if not doc_id:
+                continue
+            derived = (hit.get("document", {}) or {}).get("derivedStructData", {}) or {}
+            snippets = derived.get("snippets", []) or []
+            extractive = derived.get("extractive_answers", []) or []
+            pieces: list[str] = []
+            for s in snippets:
+                if isinstance(s, dict) and s.get("snippet"):
+                    pieces.append(clean_snippet_text(str(s["snippet"])))
+            for e in extractive:
+                if isinstance(e, dict) and e.get("content"):
+                    pieces.append(clean_snippet_text(str(e["content"])))
+            if pieces:
+                snippets_by_doc_id[doc_id] = " ".join(pieces)
+
+    metadata_summary = {
+        "filter_applied": filter_expr,
+        "boost_applied": boost_spec,
+        "facets": aggregated_facets,
+    }
+    return snippets_by_doc_id, aggregated_facets, metadata_summary
 
 
 def search_technical_manuals_and_repair_logs(
@@ -167,6 +255,7 @@ def search_technical_manuals_and_repair_logs(
     bit_fault_present: bool = False,
     subsystem_filter: str = "53-30",
     tool_context: Any | None = None,
+    preferred_branch: str = "RAF",
     *,
     query: str | None = None,
     **_: Any,
@@ -181,10 +270,15 @@ def search_technical_manuals_and_repair_logs(
     norm_info = normalize_cross_service_terminology(raw_query)
     normalized_query = norm_info["normalized_query"]
 
-    live_snippets = _query_live_eu_datastores(normalized_query)
-
     q_lower = normalized_query.lower()
     sub_filter = str(subsystem_filter or "53-30").strip()
+
+    live_snippets, live_facets, meta_summary = _query_live_eu_datastores(
+        normalized_query,
+        subsystem_filter=sub_filter if sub_filter else None,
+        bit_fault_present=bit_fault_present,
+        preferred_branch=preferred_branch,
+    )
 
     is_uc3_structural_query = any(
         kw in q_lower
@@ -223,6 +317,10 @@ def search_technical_manuals_and_repair_logs(
                 score += 32.0
             elif doc_id == "DOC-09":
                 score += 28.0
+
+        # Soft boost UK MoD records (matching Discovery Engine boostSpec)
+        if str(doc.get("service_branch_origin", "")).upper() in ("RAF", "RN"):
+            score += 5.0
 
         # Boost or demote according to bit_fault_present
         if not bit_fault_present:
@@ -302,6 +400,9 @@ def search_technical_manuals_and_repair_logs(
         "bit_fault_present": bool(bit_fault_present),
         "bit_fault_filter_applied": not bool(bit_fault_present),
         "subsystem_filter": sub_filter,
+        "metadata_filter": meta_summary.get("filter_applied"),
+        "metadata_boost": meta_summary.get("boost_applied"),
+        "metadata_facets": live_facets,
         "results": ranked_results,
         "citations": citations,
         "primary_jtd_procedure": {
