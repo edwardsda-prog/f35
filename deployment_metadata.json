@@ -4,16 +4,5 @@
   "is_a2a": true,
   "language": "python",
   "agent_directory": "app",
-  "deployment_timestamp": "2026-11-04T14:05:22.678291+00:00",
-  "pending_operation": {
-    "owner_id": "6e89f239faaf4492af8e227400cb086a",
-    "state": "running",
-    "operation_name": "projects/284046449012/locations/europe-west1/reasoningEngines/5022570215192395776/operations/6837768048980525056",
-    "project": "antig-dave",
-    "location": "europe-west1",
-    "deployment_target": "agent_runtime",
-    "started_at": "2026-11-04T15:22:14.132907+00:00",
-    "owner_pid": 2706850,
-    "owner_host": "edwardsda.c.googlers.com"
-  }
+  "deployment_timestamp": "2026-11-04T15:30:10.755599+00:00"
 }

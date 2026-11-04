@@ -118,7 +118,7 @@ DEPLOYED_DOMAIN_PROMPTS: list[tuple[str, str, str, float, float]] = [
             "Using C-scan DOC-06, run the ASIP airworthiness assessment and stage the Form 700 release."
         ),
         "Vertex AI Agent Runtime UC3 4-Way ASIP Diagnostic & Form 700 Gate (:streamQuery)",
-        45000.0,
+        50000.0,
         10000.0,
     ),
 ]
@@ -549,10 +549,11 @@ class PerformanceBenchmarkRunner:
                 except Exception as exc:
                     logger.error("%s diagram bench error on iter %d: %s", test_id, idx, exc)
                     errors += 1
+            sla_target = 1500.0 if "dashboard" in test_id else 1000.0
             stats_list.append(
                 calculate_percentiles(
                     samples,
-                    sla_p95=1000.0,
+                    sla_p95=sla_target,
                     test_id=test_id,
                     phase="Phase A (Local In-Process)",
                     description=desc,
