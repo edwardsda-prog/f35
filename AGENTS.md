@@ -19,12 +19,13 @@ Every major feature request or bug fix must follow this precise delegation struc
 ## 2. Agent Specialization Boundaries
 Do not allow a single agent to handle multiple domains. Delegate according to directory-level `AGENTS.md` boundaries:
 - **Backend Implementer:** Restricted to `/packages/api` (and `app/`, `scripts/` for ADK runtime/data layer). Focuses on database schema, endpoints, ADK domain sub-agents/tools, deterministic physics, and server-side testing.
-  - Within the ADK 2.0 runtime (`app/sub_agents/` & `app/tools/`), domain specialization is strictly enforced across three dedicated ADK sub-agents:
+  - Within the ADK 2.0 runtime (`app/sub_agents/` & `app/tools/`), domain specialization is strictly enforced across four dedicated ADK sub-agents:
+    - **`f35_maintenance_data_agent` (UC0 Specialist)**: Restricted to `app/sub_agents/uc0_maintenance_agent.py` & `app/tools/uc0_maintenance.py` (Dynamic Text-to-SQL over `maintenance_work_orders`, Excel / Google Sheets Card rendering, and automatic GCS `.csv` export).
     - **`f35_analytics_agent` (UC1 Specialist)**: Restricted to `app/sub_agents/uc1_analytics_agent.py` & `app/tools/uc1_analytics.py` (BigQuery telemetry/inventory/sortie joins & Vega-Lite chart specs).
     - **`f35_jtd_search_agent` (UC2 Specialist)**: Restricted to `app/sub_agents/uc2_search_agent.py` & `app/tools/uc2_jtd_search.py` (Discovery Engine `eu` datastore retrieval, cross-service dialect normalization, and verbatim citation anchoring).
     - **`f35_airworthiness_orchestrator` (UC3 Specialist)**: Restricted to `app/sub_agents/uc3_airworthiness_agent.py`, `app/tools/uc3_airworthiness.py`, & `app/physics/asip_engine.py` (Parallel 4-way ASIP fan-out, deterministic Rainflow/Miner's Rule math, C-scan CAD join, mBOM lot audit, and Form 700 HITL workflow).
-- **Frontend Implementer:** Restricted to `/packages/web`. Focuses on components, state management, and UI styling (e.g., Vega-Lite Canvas & HITL Review Studio components).
-- **QA / Test Agent:** Restricted to `/tests` (`tests/unit/` and `tests/eval/`). Responsible exclusively for integration tests, deterministic unit verification, and end-to-end `agents-cli eval` testing hooks (`TC-SQ-01..05` and `TC-LP-01..05`).
+- **Frontend Implementer:** Restricted to `/packages/web`. Focuses on components, state management, and UI styling (e.g., `MaintenanceSheetCard.tsx`, Vega-Lite Canvas & HITL Review Studio components).
+- **QA / Test Agent:** Restricted to `/tests` (`tests/unit/` and `tests/eval/`). Responsible exclusively for integration tests, deterministic unit verification, and end-to-end `agents-cli eval` testing hooks (`TC-SQ-00..05` and `TC-LP-00..05`).
 
 ## 3. Concurrency and Isolation
 - Subagents must use isolated environments or Git worktrees (`Workspace="branch"` or `Workspace="share"`) to prevent overlapping file changes.
@@ -46,8 +47,9 @@ This `AGENTS.md` translates the **F-35 Lightning II Fleet Sustainment Solution D
      - **Gemini Enterprise & Discovery Engine (`ukd-f35-jtd-ietm-ds`, `ukd-f35-narrative-logs-ds`)**: Provisioned in **`eu`** (`locations/eu/collections/default_collection/...`).
    - Deployed as a managed Reasoning Engine on **Agent Runtime** in `europe-west1` (`--deployment-target agent_runtime --region europe-west1`) and published natively to **Gemini Enterprise (`eu`)** via `:streamQuery` (`agents-cli publish gemini --registration-type adk`).
 
-2. **Multi-Agent Domain Specialization (`root_agent` + 3 Specialist Sub-Agents)**:
-   - **`root_agent` (`f35_sustainment_coordinator`)**: Acts strictly as the front-of-house router and coordinator (`gemini-3.8-flash`, `thinking_level="LOW"`, with Tier 1/2 `before_model_callback` fast-path interception). It delegates domain execution to three specialized ADK 2.0 sub-agents (`sub_agents=[f35_analytics_agent, f35_jtd_search_agent, f35_airworthiness_orchestrator]`):
+2. **Multi-Agent Domain Specialization (`root_agent` + 4 Specialist Sub-Agents)**:
+   - **`root_agent` (`f35_sustainment_coordinator`)**: Acts strictly as the front-of-house router and coordinator (`gemini-3.8-flash`, `thinking_level="LOW"`, with Tier 1/2 `before_model_callback` fast-path interception). It delegates domain execution to four specialized ADK 2.0 sub-agents (`sub_agents=[f35_maintenance_data_agent, f35_analytics_agent, f35_jtd_search_agent, f35_airworthiness_orchestrator]`):
+     - **`f35_maintenance_data_agent` (`@F35-Maintenance-Data`)**: Handles UC0 conversational Text-to-SQL over Table 7 (`maintenance_work_orders`), Excel / Google Sheets Card rendering, and automatic GCS `.csv` export.
      - **`f35_analytics_agent` (`@F35-Sustainment-Analytics`)**: Handles UC1 structured BigQuery supply/readiness analytics, inline Vega-Lite charting, and sortie tail-swap recommendations.
      - **`f35_jtd_search_agent` (`@F35-JTD-Search`)**: Handles UC2 unstructured S1000D JTD manual lookup and 5-year cross-service maintenance narrative synthesis with verbatim citations.
      - **`f35_airworthiness_orchestrator` (`@F35-Airworthiness-Agent`)**: Handles UC3 dynamic flight envelope exceedance, executing a parallel fan-out across 1553 bus sync, deterministic Palmgren-Miner's Rule physics, multimodal C-scan 3D CAD mapping, and mBOM lot auditing, followed by the Human-in-the-Loop (HITL) Form 700 release gate.
@@ -109,6 +111,7 @@ f35-sustainment-agent/
 │   ├── schemas.py                   # Pydantic models for UC1 charts, UC2 citations, UC3 SAR & Form 700
 │   ├── sub_agents/                  # Multi-agent specialist definitions (strict domain separation)
 │   │   ├── __init__.py
+│   │   ├── uc0_maintenance_agent.py # f35_maintenance_data_agent (@F35-Maintenance-Data)
 │   │   ├── uc1_analytics_agent.py   # f35_analytics_agent (@F35-Sustainment-Analytics)
 │   │   ├── uc2_search_agent.py      # f35_jtd_search_agent (@F35-JTD-Search)
 │   │   └── uc3_airworthiness_agent.py # f35_airworthiness_orchestrator (@F35-Airworthiness-Agent)
@@ -117,10 +120,11 @@ f35-sustainment-agent/
 │   │   └── asip_engine.py           # Deterministic Rainflow, Palmgren-Miner's Rule & 3D CAD transforms
 │   ├── seed_data/
 │   │   ├── __init__.py
-│   │   ├── bq_seed_records.py       # Authoritative demo rows for BigQuery Tables 1–6
+│   │   ├── bq_seed_records.py       # Authoritative demo rows for BigQuery Tables 1–7
 │   │   └── jtd_corpus.py            # Authoritative content & metadata for DOC-01 through DOC-09
 │   └── tools/
 │       ├── __init__.py
+│       ├── uc0_maintenance.py       # Dynamic Text-to-SQL over maintenance_work_orders, Spreadsheet Card & CSV export
 │       ├── uc1_analytics.py         # Partition-pruned BQ queries, Vega-Lite chart spec generator, sortie swap
 │       ├── uc2_jtd_search.py        # Single-pass Discovery Engine (eu) search + dialect normalization
 │       └── uc3_airworthiness.py     # Parallel fan-out orchestrator, 1553 sync, C-scan CAD join, mBOM, Form 700 HITL
@@ -152,6 +156,16 @@ f35-sustainment-agent/
 ---
 
 ## 7. Specialist Sub-Agents & Domain Tool Contracts
+
+### Sub-Agent 0: `f35_maintenance_data_agent` (`app/sub_agents/uc0_maintenance_agent.py` & `app/tools/uc0_maintenance.py`)
+* **Target Dataset:** `antig-dave.ukd_f35_sustainment_demo` (BigQuery Location: `EU`)
+* **Table:** `maintenance_work_orders` (Table 7, Partitioned on `created_at_utc`, Clustered on `tail_number`, `aircraft_status`)
+* **Human-Friendly Tools:**
+  1. `execute_maintenance_sql(sql_query: str, sheet_title: str = "F35_ODIN_Maintenance_Work_Orders", tool_context: ToolContext = None) -> dict`  
+     *Display Title:* **Execute Maintenance Work Order SQL & Render Spreadsheet Card**  
+     - Validates that `sql_query` is a strictly read-only `SELECT` statement against `antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders` (`location="EU"`).
+     - Executes the query in BigQuery `EU` (with instant local SQL evaluation fallback over `MAINTENANCE_WORK_ORDERS_ROWS`).
+     - Formats an Excel / Google Sheets-like Spreadsheet Card (`spreadsheet_card_markdown` and `spreadsheet_card` JSON) with Column Letters (`A`..`R`), Status Badges (`🟢 FMC`, `🟡 PMC-M`, `🟠 NMC-M`, `🔴 NMC-S (MICAP)`), Formula Summary Footer Row (`=COUNTA()`, `=SUM(logged_man_hours)`, `=AVERAGE(estimated_mttr_hours)`), and automatic CSV upload to `gs://antig-dave-f35-staging-europe-west1/exports/<filename>.csv` with an authenticated browser download link (`[📥 Download .CSV (Excel / Google Sheets)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/...)`).
 
 ### Sub-Agent 1: `f35_analytics_agent` (`app/sub_agents/uc1_analytics_agent.py` & `app/tools/uc1_analytics.py`)
 * **Target Dataset:** `antig-dave.ukd_f35_sustainment_demo` (BigQuery Location: `EU`)

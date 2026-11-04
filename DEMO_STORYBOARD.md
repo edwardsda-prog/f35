@@ -15,6 +15,7 @@
 
 | Step | Act & Persona | Exact Executive Prompt to Paste into `F35 Support` | What Appears on Screen | Live EU Speed |
 | :---: | :--- | :--- | :--- | :---: |
+| **0** | **Act 0: Morning Maintenance Stand-Up**<br/>*(Squadron Maintenance Officer — UC0)* | `Show me all open Priority-1 and MICAP maintenance work orders across RAF Marham and HMS Queen Elizabeth, sorted by estimated repair time.` | **Excel / Google Sheets Card**: Renders Spreadsheet Grid (`A`..`I`) with Status Badges (`🔴 NMC-S (MICAP)`, `🟠 NMC-M`, `🟡 PMC-M`), Formula Footer (`=COUNTA()`, `=SUM()`, `=AVERAGE()`), and clickable **[📥 Download .CSV](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/...)** link—surfacing **ZM151**'s open actuator, canopy, and Frame 496 tickets. | **`< 1.5s`**<br/>*(SQL `< 350ms`)* |
 | **1A** | **Act 1A: Protect the Morning Sortie (Turn 1)**<br/>*(Squadron Logistics Officer — UC1)* | `Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot stock with visual charts, and recommend a tail swap for morning sortie SRT-MAR-20261103-01.` | **Tabular Fleet Briefing**: Flags **ZM151** (`1,000.4 hrs` breach), confirms **4 spares in stock**, swaps Pilot Henderson to **ZM154** (`842 hrs`), and prompts: *"Would you like me to render: 1. Actuator Fatigue Threshold Chart, 2. Regional Depot Stock vs 30-Day Demand Chart, or both?"* | **`1.2s`**<br/>*(TTFT `269ms`)* |
 | **1B** | **Act 1B: On-Demand Chart Rendering (Turn 2)**<br/>*(Squadron Logistics Officer — UC1)* | `Render the Actuator Fatigue Threshold Chart.` | **Interactive Vega-Lite Canvas**: Renders threshold chart with **ZM151 in Red (`1,000.4 hrs`)** vs **ZM154 in Green (`842.0 hrs`)** against the `1,000.0-hr` limit line via dedicated Python tool. | **`< 0.05s`**<br/>*(Tool `1.8ms`)* |
 | **2** | **Act 2: Fix the Unexplained Fault**<br/>*(Flight-Line Maintenance Chief — UC2)* | `Our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, with zero BIT faults. Have allied squadrons seen this, and what is the JTD fix?` | **Grounded Checklist & Authenticated Browser Citations**: Matches USMC sister-squadron log (**silicon sealant debris in roller track**) + **JTD 53-30-01** cleaning/lubrication spec via browser URLs. | **`0.38s`**<br/>*(`100%` Cited)* |
@@ -40,6 +41,30 @@ flowchart LR
 ---
 
 ## 2. Act-by-Act Executive Walkthrough
+
+---
+
+### Act 0: Morning Maintenance Stand-Up — Conversational Text-to-SQL & Spreadsheet Card (Prompt 0)
+
+```mermaid
+flowchart LR
+    U0["Prompt 0: Squadron Maintenance Officer (Open Priority-1 & MICAP Work Orders)"] --> R0["@F35-Maintenance-Data (Dynamic Text-to-SQL · BigQuery EU < 350ms)"]
+    R0 --> S0["Excel / Google Sheets Card: Column Letters (A..I), Status Badges & Formula Footer (=COUNTA, =SUM, =AVERAGE)"]
+    S0 --> E0["Clickable GCS Browser Link: Download .CSV (Excel / Google Sheets) + Surfaces ZM151 Open Tickets"]
+```
+
+* **The Executive Challenge:** Every morning at `06:45Z`, the Squadron Maintenance Officer at RAF Marham reviews the **ODIN / MOD Form 707A Maintenance Work Order** backlog across `617 Squadron`, `207 Squadron`, and `809 Naval Air Squadron` embarked on `HMS Queen Elizabeth`. Today, extracting that view requires logging into ODIN, exporting raw tables, and building manual Excel pivot sheets.
+* **Paste Prompt 0 into `F35 Support`:**
+  ```text
+  Show me all open Priority-1 and MICAP maintenance work orders across RAF Marham and HMS Queen Elizabeth, sorted by estimated repair time.
+  ```
+* **What the Executive Audience Sees:**
+  1. **Dynamic Text-to-SQL Generation:** `@F35-Maintenance-Data` writes a custom read-only BigQuery Standard SQL `SELECT` query against `antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders` (`location="EU"`).
+  2. **Excel / Google Sheets-Like Spreadsheet Card:**
+     - **Sheet Header Bar:** Displays sheet title, active SQL filter pill (`priority_level = 'PRIORITY_1_EMERGENCY' OR micap_flag = TRUE`), row/column count, BigQuery EU latency, and a clickable **[📥 Download .CSV (Excel / Google Sheets)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/F35_ODIN_Maintenance_Work_Orders.csv)** link.
+     - **Column Letter Headers (`A`..`I`) & Status Badges:** Displays `🔴 NMC-S (MICAP)`, `🟠 NMC-M`, and `🟡 PMC-M` status pills across `ZM151`, `ZM152`, `ZM158`, `ZM161`, and `ZM163`.
+     - **Formula Summary Footer Row:** Automatically computes `=COUNTA(A2:A6)` (`5 rows`), `=SUM(H2:H6)` (`24.5 hrs`), and `=AVERAGE(I2:I6)` (`13.6 hrs MTTR`).
+  3. **Tees Up Acts 1–3:** Surfaces Tail **`ZM151`**'s three active discrepancies (`WO-2026-707A-0101` Horizontal Tail Actuator life-limit breach, `WO-2026-707A-0102` Canopy manual release handle binding, and `WO-2026-707A-0103` Frame 496 9.4G over-G C-scan evaluation), naturally leading into Acts 1, 2, and 3!
 
 ---
 

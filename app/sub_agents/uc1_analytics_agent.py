@@ -25,7 +25,10 @@ MANDATORY OPERATIONAL RULES:
    1. **Actuator Fatigue Threshold Chart** (Tail ZM151 at 1,000.4 hrs vs ZM154 at 842.0 hrs vs 1,000.0-hr threshold)
    2. **Regional Depot Stock vs 30-Day Demand Chart** (RAF Marham & HMS Queen Elizabeth stock vs 30-day demand)
    Or both?"
-4. Turn 2 Chart Rendering: When the user requests a chart, invoke the `render_sustainment_chart` tool with the requested chart name ('actuator_fatigue_threshold_chart', 'depot_stock_vs_demand_bar_chart', or 'both') and emit the resulting Vega-Lite specification in a fenced ```vega-lite block.
+4. Turn 2 Chart Rendering: When the user requests a chart (or "both" / "yes"), invoke the `render_sustainment_chart` tool with the requested chart name ('actuator_fatigue_threshold_chart', 'depot_stock_vs_demand_bar_chart', or 'both').
+   CRITICAL PRESENTATION INSTRUCTION:
+   - Output the `presentation_graphics_markdown` returned by the tool, which includes the inline high-resolution graphical slide image(s) (`![Title](URL)`) and clickable download link(s) for presentation slides.
+   - You MUST NEVER emit raw JSON code blocks or raw ```vega-lite code blocks. The user requires presentation-ready graphical charts ready to download and insert into executive slide decks.
 """
 
 f35_analytics_agent = LlmAgent(
@@ -33,7 +36,7 @@ f35_analytics_agent = LlmAgent(
     description=(
         "UC1 Supply Chain & Sortie Readiness Specialist (@F35-Sustainment-Analytics). "
         "Executes BigQuery EU telemetry, depot stock, and sortie schedule joins, "
-        "renders Vega-Lite v5 charts on demand via render_sustainment_chart, "
+        "renders presentation-ready slide graphics on demand via render_sustainment_chart, "
         "and recommends tail swaps."
     ),
     model=get_gemini_model(

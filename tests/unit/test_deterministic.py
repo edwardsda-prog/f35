@@ -896,7 +896,7 @@ class TestSustainmentChartRenderingTool:
         assert "actuator_fatigue_threshold_chart" in res["vega_lite_charts"]
 
     def test_render_sustainment_chart_execution_budget_under_5ms(self) -> None:
-        """Verify on-demand chart rendering completes in < 5 ms when cached or using memory structures."""
+        """Verify on-demand chart spec retrieval completes in < 5 ms when cached."""
         from app.tools.uc1_analytics import (
             check_actuator_fatigue_and_depot_inventory,
             render_sustainment_chart,
@@ -906,12 +906,33 @@ class TestSustainmentChartRenderingTool:
         check_actuator_fatigue_and_depot_inventory(tool_context=ctx)
 
         t0 = time.perf_counter()
-        res = render_sustainment_chart("both", tool_context=ctx)
+        res = render_sustainment_chart("both", tool_context=ctx, render_graphics=False)
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
         assert res["status"] == "SUCCESS"
         assert elapsed_ms < 5.0, (
             f"Chart rendering took {elapsed_ms:.3f} ms, exceeding 5.0 ms budget"
+        )
+
+    def test_render_sustainment_chart_graphics_generation_under_1000ms(self) -> None:
+        """Verify graphical chart rendering and GCS upload completes under 1,000 ms SLA."""
+        from app.tools.uc1_analytics import (
+            check_actuator_fatigue_and_depot_inventory,
+            render_sustainment_chart,
+        )
+
+        ctx = DummyToolContext(state={})
+        check_actuator_fatigue_and_depot_inventory(tool_context=ctx)
+
+        t0 = time.perf_counter()
+        res = render_sustainment_chart("both", tool_context=ctx, render_graphics=True)
+        elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+        assert res["status"] == "SUCCESS"
+        assert len(res["presentation_graphics"]) >= 1
+        assert "storage.cloud.google.com" in res["presentation_graphics_markdown"]
+        assert elapsed_ms < 1000.0, (
+            f"Diagram generation took {elapsed_ms:.2f} ms (> 1,000 ms SLA)"
         )
 
     def test_render_sustainment_chart_state_fallback(self) -> None:

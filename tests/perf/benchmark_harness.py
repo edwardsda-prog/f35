@@ -523,6 +523,45 @@ class PerformanceBenchmarkRunner:
             errors=errors,
         )
 
+    async def benchmark_tc_lp_chart_generation(self) -> list[LatencyStats]:
+        """Benchmark baseline performance metrics for the creation of each diagram (< 1,000 ms SLA)."""
+        diagram_benchmarks = [
+            ("TC-LP-CHART_01_dashboard", "both", "Render 16:9 Executive Briefing Dashboard PNG"),
+            ("TC-LP-CHART_02_fatigue", "actuator_fatigue_threshold_chart", "Render Actuator Fatigue Threshold Chart PNG"),
+            ("TC-LP-CHART_03_depot", "depot_stock_vs_demand_bar_chart", "Render Regional Depot Stock vs Demand Chart PNG"),
+        ]
+        stats_list: list[LatencyStats] = []
+        for test_id, chart_name, desc in diagram_benchmarks:
+            samples: list[float] = []
+            errors = 0
+            runs = min(self.iterations, 10)
+            for idx in range(runs):
+                t0 = time.perf_counter()
+                try:
+                    res = await asyncio.to_thread(
+                        uc1_analytics.render_sustainment_chart,
+                        chart_name=chart_name,
+                        render_graphics=True,
+                    )
+                    t1 = time.perf_counter()
+                    assert res["status"] == "SUCCESS"
+                    samples.append((t1 - t0) * 1000.0)
+                except Exception as exc:
+                    logger.error("%s diagram bench error on iter %d: %s", test_id, idx, exc)
+                    errors += 1
+            stats_list.append(
+                calculate_percentiles(
+                    samples,
+                    sla_p95=1000.0,
+                    test_id=test_id,
+                    phase="Phase A (Local In-Process)",
+                    description=desc,
+                    sla_ttft_p95=400.0,
+                    errors=errors,
+                )
+            )
+        return stats_list
+
     # =========================================================================
     # PHASE B: Live Cloud Infrastructure & Deployed Runtime (50 iterations)
     # =========================================================================
@@ -801,6 +840,8 @@ class PerformanceBenchmarkRunner:
             logger.info("=== Running Phase A: Local In-Process Baseline (%d iterations) ===", self.iterations)
             results.append(await self.benchmark_tc_lp_01_fast_path())
             results.append(await self.benchmark_tc_lp_02_uc1_local())
+            chart_stats = await self.benchmark_tc_lp_chart_generation()
+            results.extend(chart_stats)
             results.append(await self.benchmark_tc_lp_03_uc2_local())
             results.append(await self.benchmark_tc_lp_04_uc3_local())
             results.append(await self.benchmark_tc_lp_05_hitl_local())

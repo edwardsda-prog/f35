@@ -72,6 +72,13 @@ bq_client: bigquery.Client = bigquery.Client(
     location=BQ_LOCATION,
 )
 
+# Pre-warm Cloud Storage client singleton on module load (PERF-07)
+try:
+    from google.cloud import storage
+    storage_client: storage.Client | None = storage.Client(project=PROJECT_ID)
+except Exception:  # pragma: no cover
+    storage_client = None
+
 # Pre-warm synchronous and asynchronous HTTP clients for Discovery Engine (eu) (PERF-07)
 http_client: httpx.Client = httpx.Client(
     base_url=DE_BASE_URL,
@@ -130,6 +137,11 @@ def get_bq_client() -> bigquery.Client:
 def get_bigquery_client() -> bigquery.Client:
     """Alias for get_bq_client()."""
     return bq_client
+
+
+def get_storage_client() -> Any | None:
+    """Return the pre-warmed Cloud Storage client singleton."""
+    return storage_client
 
 
 def get_http_client() -> httpx.Client:
@@ -316,8 +328,10 @@ __all__ = [
     "get_bigquery_client",
     "get_bq_client",
     "get_http_client",
+    "get_storage_client",
     "http_client",
     "run_bq_query",
     "search_discovery_engine_datastore",
     "search_discovery_engine_extended",
+    "storage_client",
 ]

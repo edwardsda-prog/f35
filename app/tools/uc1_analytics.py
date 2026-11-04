@@ -26,6 +26,7 @@ from app.seed_data.bq_seed_records import (
     GLOBAL_DEPOT_INVENTORY_ROWS,
     SQUADRON_SORTIE_SCHEDULE_ROWS,
 )
+from app.tools.chart_painter import generate_sustainment_graphics
 
 logger = logging.getLogger(__name__)
 
@@ -590,15 +591,17 @@ def recommend_tail_swap_and_replenishment(
 def render_sustainment_chart(
     chart_name: str = "both",
     tool_context: Any | None = None,
+    render_graphics: bool = True,
     **_: Any,
 ) -> dict[str, Any]:
-    """Render an interactive Vega-Lite v5 specification on demand for sustainment analytics.
+    """Render high-resolution presentation graphics and Vega-Lite specifications on demand.
 
     Display Title: Render Sustainment Chart
     Args:
         chart_name: Name of the chart to render ('actuator_fatigue_threshold_chart',
                     'depot_stock_vs_demand_bar_chart', or 'both').
         tool_context: ADK 2.0 tool execution context storing BigQuery metrics from Turn 1.
+        render_graphics: Whether to generate and upload presentation PNG charts to GCS.
     """
     t0 = time.perf_counter()
 
@@ -607,6 +610,8 @@ def render_sustainment_chart(
     # Check if metrics are already cached in tool_context state
     depot_chart: dict[str, Any] | None = None
     fatigue_chart: dict[str, Any] | None = None
+    telemetry_rows: list[dict[str, Any]] | None = None
+    inventory_rows: list[dict[str, Any]] | None = None
 
     state = getattr(tool_context, "state", None) if tool_context is not None else None
     if isinstance(state, dict):
@@ -614,6 +619,8 @@ def render_sustainment_chart(
         if isinstance(cached_metrics, dict):
             depot_chart = cached_metrics.get("depot_chart") or cached_metrics.get("depot_stock_vs_demand_bar_chart")
             fatigue_chart = cached_metrics.get("fatigue_chart") or cached_metrics.get("actuator_fatigue_threshold_chart")
+            telemetry_rows = cached_metrics.get("telemetry_rows")
+            inventory_rows = cached_metrics.get("inventory_rows")
 
     # If not found in cache, build deterministically from cached/seed tables
     if depot_chart is None or fatigue_chart is None:
@@ -622,10 +629,14 @@ def render_sustainment_chart(
             depot_chart = _build_depot_stock_bar_chart(bundle["inventory"])
         if fatigue_chart is None:
             fatigue_chart = _build_actuator_fatigue_threshold_chart(bundle["telemetry"])
+        if telemetry_rows is None:
+            telemetry_rows = bundle["telemetry"]
+        if inventory_rows is None:
+            inventory_rows = bundle["inventory"]
 
     is_fatigue = any(k in raw_name for k in ("fatigue", "actuator", "threshold", "1")) or raw_name == "actuator_fatigue_threshold_chart"
     is_depot = any(k in raw_name for k in ("depot", "stock", "demand", "inventory", "2")) or raw_name == "depot_stock_vs_demand_bar_chart"
-    is_both = any(k in raw_name for k in ("both", "all", "3")) or (is_fatigue and is_depot) or raw_name in ("charts", "visualizations")
+    is_both = any(k in raw_name for k in ("both", "all", "3", "dashboard", "slide")) or (is_fatigue and is_depot) or raw_name in ("charts", "visualizations")
 
     if is_both:
         resolved_name = "both"
@@ -650,16 +661,58 @@ def render_sustainment_chart(
             "depot_stock_vs_demand_bar_chart": depot_chart,
         }
 
+    # Generate high-resolution presentation graphics (PNG) and upload to GCS
+    graphics_res: dict[str, Any] = {}
+    if render_graphics:
+        # Check if already generated and cached in state
+        cached_graphics = state.get(f"cached_graphics_{resolved_name}") if isinstance(state, dict) else None
+        if isinstance(cached_graphics, dict):
+            graphics_res = cached_graphics
+        else:
+            graphics_res = generate_sustainment_graphics(
+                chart_name=resolved_name,
+                telemetry_rows=telemetry_rows,
+                inventory_rows=inventory_rows,
+            )
+            if isinstance(state, dict):
+                state[f"cached_graphics_{resolved_name}"] = graphics_res
+
     elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+    charts_list = graphics_res.get("charts", [])
+    markdown_lines: list[str] = ["### 📊 Presentation Briefing Graphics (Ready for Slide Decks)\n"]
+    download_links: list[str] = []
+    image_urls: list[str] = []
+
+    for c in charts_list:
+        markdown_lines.append(f"{c['markdown_img']}\n")
+        download_links.append(c["download_link"])
+        image_urls.append(c["url"])
+
+    if download_links:
+        markdown_lines.append("\n**Download Assets for Presentation Slides:**\n" + "\n".join(f"* {link}" for link in download_links))
+
+    presentation_markdown = "\n".join(markdown_lines)
 
     res = {
         "status": "SUCCESS",
         "chart_name": resolved_name,
         "requested_name": chart_name,
         "generation_time_ms": round(elapsed_ms, 3),
+        "render_latency_ms": round(graphics_res.get("render_latency_ms", 0.0), 2),
+        "upload_latency_ms": round(graphics_res.get("upload_latency_ms", 0.0), 2),
+        "total_latency_ms": round(elapsed_ms, 2),
+        "presentation_graphics": charts_list,
+        "presentation_graphics_markdown": presentation_markdown,
+        "download_links": download_links,
+        "image_urls": image_urls,
+        "instruction_for_agent": (
+            "CRITICAL: Present the graphical chart images and download links using the provided markdown. "
+            "Do NOT output raw Vega-Lite JSON code blocks to the user."
+        ),
         "vega_lite_spec": vega_spec,
         "vega_lite_charts": rendered_charts,
-        "description": f"Successfully rendered {resolved_name} specification in {elapsed_ms:.2f} ms.",
+        "description": f"Successfully rendered {resolved_name} graphics and specification in {elapsed_ms:.2f} ms.",
     }
     res.update(rendered_charts)
     return res

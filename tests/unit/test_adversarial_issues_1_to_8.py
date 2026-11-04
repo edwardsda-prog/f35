@@ -290,14 +290,29 @@ class TestRenderSustainmentChartAdversarial:
         check_actuator_fatigue_and_depot_inventory(tool_context=ctx)
         assert "last_uc1_metrics" in ctx.state
 
-        # Run Turn 2 tool
+        # Run Turn 2 tool (spec retrieval without graphics rendering for latency check)
         t0 = time.perf_counter()
-        turn2_res = render_sustainment_chart(chart_name="both", tool_context=ctx)
+        turn2_res = render_sustainment_chart(chart_name="both", tool_context=ctx, render_graphics=False)
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
         assert turn2_res["status"] == "SUCCESS"
         assert turn2_res["chart_name"] == "both"
         assert elapsed_ms < 5.0, f"Cached chart rendering took {elapsed_ms:.2f} ms (> 5.0 ms SLA)"
+
+    def test_presentation_graphics_generation_and_sla(self) -> None:
+        """Verify presentation graphics generate high-res slide images within 1,000 ms SLA."""
+        ctx = MockToolContext()
+        check_actuator_fatigue_and_depot_inventory(tool_context=ctx)
+
+        t0 = time.perf_counter()
+        turn2_res = render_sustainment_chart(chart_name="both", tool_context=ctx, render_graphics=True)
+        elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+        assert turn2_res["status"] == "SUCCESS"
+        assert "presentation_graphics" in turn2_res
+        assert len(turn2_res["presentation_graphics"]) == 1
+        assert "f35_sustainment_executive_dashboard.png" in turn2_res["presentation_graphics"][0]["url"]
+        assert elapsed_ms < 1000.0, f"Graphics generation took {elapsed_ms:.2f} ms (> 1000 ms SLA)"
 
     def test_vega_lite_v5_json_syntax_and_schema_conformance(self) -> None:
         """Validate that all produced specifications are valid JSON and conform to Vega-Lite v5 schemas."""
