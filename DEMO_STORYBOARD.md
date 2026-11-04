@@ -16,8 +16,8 @@
 | Step | Act & Persona | Exact Executive Prompt to Paste into `F35 Support` | What Appears on Screen | Live EU Speed |
 | :---: | :--- | :--- | :--- | :---: |
 | **0** | **Act 0: Morning Maintenance Stand-Up**<br/>*(Squadron Maintenance Officer — UC0)* | `Show me all open Priority-1 and MICAP maintenance work orders across RAF Marham and HMS Queen Elizabeth, sorted by estimated repair time.` | **Excel / Google Sheets Card**: Renders Spreadsheet Grid (`A`..`I`) with Status Badges (`🔴 NMC-S (MICAP)`, `🟠 NMC-M`, `🟡 PMC-M`), Formula Footer (`=COUNTA()`, `=SUM()`, `=AVERAGE()`), and clickable **[📥 Download .CSV](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/...)** link—surfacing **ZM151**'s open actuator, canopy, and Frame 496 tickets. | **`< 1.5s`**<br/>*(SQL `< 350ms`)* |
-| **1A** | **Act 1A: Protect the Morning Sortie (Turn 1)**<br/>*(Squadron Logistics Officer — UC1)* | `Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot stock with visual charts, and recommend a tail swap for morning sortie SRT-MAR-20261103-01.` | **Tabular Fleet Briefing**: Flags **ZM151** (`1,000.4 hrs` breach), confirms **4 spares in stock**, swaps Pilot Henderson to **ZM154** (`842 hrs`), and prompts: *"Would you like me to render: 1. Actuator Fatigue Threshold Chart, 2. Regional Depot Stock vs 30-Day Demand Chart, or both?"* | **`1.2s`**<br/>*(TTFT `269ms`)* |
-| **1B** | **Act 1B: On-Demand Chart Rendering (Turn 2)**<br/>*(Squadron Logistics Officer — UC1)* | `Render the Actuator Fatigue Threshold Chart.` | **Interactive Vega-Lite Canvas**: Renders threshold chart with **ZM151 in Red (`1,000.4 hrs`)** vs **ZM154 in Green (`842.0 hrs`)** against the `1,000.0-hr` limit line via dedicated Python tool. | **`< 0.05s`**<br/>*(Tool `1.8ms`)* |
+| **1A** | **Act 1A: Protect the Morning Sortie (Turn 1)**<br/>*(Squadron Logistics Officer — UC1)* | `Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot stock with visual charts, and recommend a tail swap for morning sortie SRT-MAR-20261103-01.` | **Tabular Fleet Briefing**: Flags **ZM151** (`1,000.4 hrs` breach), confirms **4 spares in stock**, swaps Pilot Henderson to **ZM154** (`842 hrs`), and prompts: *"Would you like me to render: 1. Actuator Fatigue Threshold Chart, 2. Regional Depot Stock vs 30-Day Demand Chart, or the full 16:9 Executive Briefing Dashboard for your presentation slide deck?"* | **`1.2s`**<br/>*(TTFT `269ms`)* |
+| **1B** | **Act 1B: On-Demand Slide Graphic Rendering (Turn 2)**<br/>*(Squadron Logistics Officer — UC1)* | `Render the full 16:9 Executive Briefing Dashboard for my presentation slide deck.` | **Full HD 16:9 Presentation Graphic**: Renders 1920×1080 composite slide image with **ZM151 in Red (`1,000.4 hrs`)** vs **ZM154 in Green (`842.0 hrs`)** against limit line, alongside Regional Depot Stock vs Demand bar chart, with clickable **[📥 Download 16:9 Executive Slide Graphic (PNG)]** link for direct insertion into slide decks. | **`< 0.8s`**<br/>*(Chart Painter `< 790ms`)* |
 | **2** | **Act 2: Fix the Unexplained Fault**<br/>*(Flight-Line Maintenance Chief — UC2)* | `Our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, with zero BIT faults. Have allied squadrons seen this, and what is the JTD fix?` | **Grounded Checklist & Authenticated Browser Citations**: Matches USMC sister-squadron log (**silicon sealant debris in roller track**) + **JTD 53-30-01** cleaning/lubrication spec via browser URLs. | **`0.38s`**<br/>*(`100%` Cited)* |
 | **3** | **Act 3A: Assess Structural Over-G**<br/>*(Lead Airworthiness Engineer — UC3)* | `Tail ZM151 logged a severe 14:22Z shudder during a Mach 1.3 split-S on Frame 496. Using C-scan DOC-06, run the ASIP airworthiness assessment and stage the Form 700 release.` | **4-Way Parallel Assessment**: `9.4G` at `14:22:18Z`, **`104.2%` yield** (Miner's Rule), **`0.012"` Hole #14** (`< 0.015"` limit, **no teardown**), flags **14 global jets** (`Lot #8841-B`), stages **Form 700** with authenticated SAR URL. | **`0.54s`**<br/>*(`1.0ms` Physics)* |
 | **4** | **Act 3B: Human-in-the-Loop Sign-Off**<br/>*(Chief Technical Officer / Lead Stress Eng)* | `I am the Lead Stress Engineer. I have verified the deterministic Miner's Rule math and C-scan overlay for package AWR-700-20261102-ZM151. Confirm Form 700 release.` | **Authorised Release Certificate**: Unlocks the safety gate and transitions `AWR-700-20261102-ZM151` to **`CONFIRMED_BY_ENGINEER`** under **DEF STAN 00-970**. | **`< 0.1s`**<br/>*(Safety Gate)* |
@@ -99,16 +99,18 @@ Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot s
      > *2. **Regional Depot Stock vs 30-Day Demand Chart** (RAF Marham & HMS Queen Elizabeth stock vs 30-day demand)*  
      > *Or both?"*
 
-#### Step 1B — Paste Prompt 1B (On-Demand Chart Rendering)
+#### Step 1B — Paste Prompt 1B (On-Demand Presentation Slide Graphic Rendering)
 ```text
-Render the Actuator Fatigue Threshold Chart.
+Render the full 16:9 Executive Briefing Dashboard for my presentation slide deck.
 ```
 
 * **What the Executive Audience Sees:**
-  - The agent invokes the dedicated `render_sustainment_chart` tool, executing Python code in **`1.8 ms`** directly from cached session state.
-  - The Gemini Enterprise Canvas instantly renders the publication-quality **Vega-Lite v5 threshold chart**:
-    - **Tail ZM151**: Highlighted in **Red** at `1,000.4 hrs` breaching the dashed `1,000.0-hr` limit marker.
-    - **Tail ZM154**: Highlighted in **Green** at `842.0 hrs` (serviceable).
+  - The agent invokes the dedicated `render_sustainment_chart` tool, executing headless Matplotlib rendering in **`< 790 ms`** and uploading to Google Cloud Storage (`europe-west1`).
+  - The UI displays the publication-quality **Full HD 16:9 widescreen presentation slide graphic (1920×1080 at 160 DPI)**:
+    - **Panel 1 (Actuator Fatigue Threshold):** Tail **ZM151** in **Red** at `1,000.4 hrs` breaching the dashed `1,000.0-hr` condemnation limit; Tail **ZM154** in **Green** at `842.0 hrs` (serviceable).
+    - **Panel 2 (Regional Depot Stock vs 30-Day Demand):** Grouped bar chart comparing RAF Marham and HMS Queen Elizabeth stock on hand, 30-day demand, and net uncommitted spares.
+  - **Clickable Download Link for Briefing Decks:**
+    - Provides a direct link: **`[📥 Download 16:9 Executive Slide Graphic (PNG)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/charts/f35_sustainment_executive_dashboard.png)`** allowing officers to immediately paste the asset into Keynote / PowerPoint.
 
 > [!IMPORTANT]
 > **Act 1 Executive Takeaway ("The So What?")**
