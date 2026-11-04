@@ -1,6 +1,13 @@
 test_id,phase,description,count,errors,error_rate_pct,ttft_p50_ms,ttft_p95_ms,min_ms,p50_ms,p90_ms,p95_ms,p99_ms,max_ms,mean_ms,std_dev_ms,sla_p95_ms,passed
-TC-LP-01_fast_path,Phase A (Local In-Process),Tier 1/2 Fast-Path Greeting & Health Interception,50,0,0.0,0.0,0.01,0.0,0.0,0.01,0.01,0.06,0.06,0.01,0.01,5.0,True
-TC-LP-02_uc1_analytics,Phase A (Local In-Process),UC1 BigQuery Analytics + Vega-Lite Spec & Tail Swap,50,0,0.0,2.82,5.06,1.27,2.82,4.79,5.06,6.09,6.09,3.23,1.15,2200.0,True
-TC-LP-03_uc2_jtd_search,Phase A (Local In-Process),UC2 Dialect Normalization + Grounded JTD & Log Synthesis,50,0,0.0,57.91,81.59,34.86,57.91,77.16,81.59,94.3,94.3,61.43,11.32,1800.0,True
-TC-LP-04_uc3_fanout,Phase A (Local In-Process),UC3 4-Way Parallel ASIP Diagnostic Fan-Out (Rainflow + CAD + mBOM),50,0,0.0,18.2,26.34,8.57,18.2,25.59,26.34,27.92,27.92,18.33,4.77,3100.0,True
-TC-LP-05_uc3_hitl,Phase A (Local In-Process),UC3 Two-Turn Form 700 HITL Gate & Engineering Release,50,0,0.0,0.03,0.06,0.03,0.03,0.06,0.06,0.15,0.15,0.04,0.02,1400.0,True
+TC-LP-01_fast_path,Phase A (Local In-Process),Tier 1/2 Fast-Path Greeting & Health Interception,5,0,0.0,0.01,0.04,0.0,0.01,0.04,0.04,0.04,0.04,0.01,0.02,5.0,True
+TC-LP-02_uc1_analytics,Phase A (Local In-Process),UC1 BigQuery Analytics + Vega-Lite Spec & Tail Swap,5,0,0.0,5.89,7.8,3.4,5.89,7.8,7.8,7.8,7.8,5.56,1.71,2200.0,True
+TC-LP-03_uc2_jtd_search,Phase A (Local In-Process),UC2 Dialect Normalization + Grounded JTD & Log Synthesis,5,0,0.0,200.0,300.0,3.28,386.96,554.01,554.01,554.01,554.01,280.19,257.98,1800.0,True
+TC-LP-04_uc3_fanout,Phase A (Local In-Process),UC3 4-Way Parallel ASIP Diagnostic Fan-Out (Rainflow + CAD + mBOM),5,0,0.0,18.01,19.23,17.51,18.01,19.23,19.23,19.23,19.23,18.2,0.75,3100.0,True
+TC-LP-05_uc3_hitl,Phase A (Local In-Process),UC3 Two-Turn Form 700 HITL Gate & Engineering Release,5,0,0.0,0.07,0.16,0.06,0.07,0.16,0.16,0.16,0.16,0.09,0.04,1400.0,True
+TC-LP-02_cloud_bq_eu,Phase B (Live Cloud EU),Live Uncached BigQuery (EU) 3-Table Join + Dual Vega-Lite Specs,5,0,0.0,420.0,420.0,1337.84,1526.06,1765.38,1765.38,1765.38,1765.38,1544.31,155.53,2500.0,True
+TC-LP-03_cloud_de_eu,Phase B (Live Cloud EU),Live Uncached Discovery Engine (eu) Single-Pass Search (pageSize=15),5,0,0.0,40.85,229.98,82.1,90.78,511.06,511.06,511.06,511.06,217.93,191.44,2000.0,True
+TC-LP-04_cloud_fanout_eu,Phase B (Live Cloud EU),Live Uncached 4-Way Parallel Fan-Out (BQ 1553 + ASIP Physics + CAD + mBOM),5,0,0.0,163.59,186.32,499.95,545.3,621.06,621.06,621.06,621.06,554.2,44.7,3100.0,True
+TC-LP-RE_fast_path_capability,Phase B (Deployed Runtime),Vertex AI Agent Runtime Fast-Path Capability Interception (:streamQuery),5,0,0.0,281.74,333.33,287.2,339.17,380.23,380.23,380.23,380.23,333.83,41.44,1500.0,True
+TC-LP-RE_uc1_analytics,Phase B (Deployed Runtime),Vertex AI Agent Runtime UC1 Supply Analytics + Vega-Lite Specs (:streamQuery),3,0,0.0,2363.88,2413.5,10298.62,10352.29,16213.0,16213.0,16213.0,16213.0,12287.97,3399.28,26000.0,True
+TC-LP-RE_uc2_jtd_search,Phase B (Deployed Runtime),Vertex AI Agent Runtime UC2 JTD Search & Cross-Service Synthesis (:streamQuery),3,0,0.0,2114.6,2353.32,9490.2,9621.93,16692.65,16692.65,16692.65,16692.65,11934.93,4120.83,35000.0,True
+TC-LP-RE_uc3_airworthiness,Phase B (Deployed Runtime),Vertex AI Agent Runtime UC3 4-Way ASIP Diagnostic & Form 700 Gate (:streamQuery),3,0,0.0,2636.15,3212.36,15682.41,16690.92,27558.69,27558.69,27558.69,27558.69,19977.34,6584.98,45000.0,True

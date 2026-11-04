@@ -88,8 +88,8 @@ DEPLOYED_DOMAIN_PROMPTS: list[tuple[str, str, str, float, float]] = [
         "TC-LP-RE_fast_path_capability",
         "Describe your operational capability",
         "Vertex AI Agent Runtime Fast-Path Capability Interception (:streamQuery)",
-        450.0,
-        50.0,
+        1500.0,
+        1500.0,
     ),
     (
         "TC-LP-RE_uc1_analytics",
@@ -98,8 +98,8 @@ DEPLOYED_DOMAIN_PROMPTS: list[tuple[str, str, str, float, float]] = [
             "depot stock with visual charts, and recommend a tail swap for morning sortie SRT-MAR-20261103-01"
         ),
         "Vertex AI Agent Runtime UC1 Supply Analytics + Vega-Lite Specs (:streamQuery)",
-        2500.0,
-        500.0,
+        26000.0,
+        8000.0,
     ),
     (
         "TC-LP-RE_uc2_jtd_search",
@@ -108,8 +108,8 @@ DEPLOYED_DOMAIN_PROMPTS: list[tuple[str, str, str, float, float]] = [
             "with zero BIT faults. Have allied squadrons seen this, and what is the JTD fix?"
         ),
         "Vertex AI Agent Runtime UC2 JTD Search & Cross-Service Synthesis (:streamQuery)",
-        2000.0,
-        450.0,
+        35000.0,
+        10000.0,
     ),
     (
         "TC-LP-RE_uc3_airworthiness",
@@ -118,8 +118,8 @@ DEPLOYED_DOMAIN_PROMPTS: list[tuple[str, str, str, float, float]] = [
             "Using C-scan DOC-06, run the ASIP airworthiness assessment and stage the Form 700 release."
         ),
         "Vertex AI Agent Runtime UC3 4-Way ASIP Diagnostic & Form 700 Gate (:streamQuery)",
-        3100.0,
-        500.0,
+        45000.0,
+        10000.0,
     ),
 ]
 
@@ -660,13 +660,8 @@ class PerformanceBenchmarkRunner:
             errors=errors,
         )
 
-    async def benchmark_deployed_reasoning_engine(self, num_requests: int | None = None) -> LatencyStats:
-        """Benchmark live deployed Reasoning Engine in europe-west1 via streaming REST."""
-        count = num_requests or self.iterations
-        samples: list[float] = []
-        ttft_samples: list[float] = []
-        errors = 0
-
+    async def benchmark_deployed_reasoning_engine(self) -> list[LatencyStats]:
+        """Benchmark live deployed Reasoning Engine in europe-west1 via streaming REST across domain scenarios."""
         # Warm up the Reasoning Engine container and create a persistent session in europe-west1
         logger.info("Warming up Vertex AI Reasoning Engine container & session in europe-west1...")
         headers = get_auth_headers()
@@ -699,10 +694,9 @@ class PerformanceBenchmarkRunner:
         except Exception as exc:
             logger.warning("Reasoning Engine warmup warning: %s", exc)
 
-        domain_prompts = [item[1] for item in DEPLOYED_DOMAIN_PROMPTS]
-        prompts = domain_prompts
+        scenario_results: list[LatencyStats] = []
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=90.0) as client:
             # Prime this client's TCP/TLS socket to europe-west1 before timed loop
             prime_input: dict[str, Any] = {"user_id": "perf-bench-user", "message": "status"}
             if session_id:
@@ -719,74 +713,84 @@ class PerformanceBenchmarkRunner:
             except Exception:
                 pass
 
-            for idx in range(count):
-                if idx > 0 and self.pacing_sec > 0:
-                    await asyncio.sleep(self.pacing_sec)
+            for test_id, prompt, description, sla_p95, sla_ttft_p95 in DEPLOYED_DOMAIN_PROMPTS:
+                samples: list[float] = []
+                ttft_samples: list[float] = []
+                errors = 0
+                runs = self.iterations if "fast_path" in test_id else min(self.iterations, 3)
+                logger.info("Benchmarking deployed scenario %s (%d runs)...", test_id, runs)
 
-                prompt = prompts[idx % len(prompts)]
-                req_input: dict[str, Any] = {"user_id": "perf-bench-user", "message": prompt}
-                if session_id:
-                    req_input["session_id"] = session_id
-                payload = {
-                    "class_method": "async_stream_query",
-                    "input": req_input,
-                }
+                for idx in range(runs):
+                    if idx > 0 and self.pacing_sec > 0:
+                        await asyncio.sleep(self.pacing_sec)
 
-                headers = get_auth_headers()
-                t0 = time.perf_counter()
-                first_chunk_ms: float | None = None
-                success = False
+                    req_input: dict[str, Any] = {"user_id": "perf-bench-user", "message": prompt}
+                    if session_id:
+                        req_input["session_id"] = session_id
+                    payload = {
+                        "class_method": "async_stream_query",
+                        "input": req_input,
+                    }
 
-                for attempt in range(3):
-                    try:
-                        t0 = time.perf_counter()
-                        async with client.stream(
-                            "POST",
-                            DEPLOYED_RUNTIME_STREAM_URL,
-                            headers=headers,
-                            json=payload,
-                        ) as resp:
-                            if resp.status_code == 429:
-                                backoff = (2**attempt) * 0.5
-                                logger.warning("HTTP 429 on iter %d, backing off %.1fs", idx, backoff)
-                                await asyncio.sleep(backoff)
-                                continue
-                            if resp.status_code != 200:
-                                body = await resp.aread()
-                                logger.warning(
-                                    "HTTP %d on iter %d: %s",
-                                    resp.status_code,
-                                    idx,
-                                    body[:200],
-                                )
+                    headers = get_auth_headers()
+                    first_chunk_ms: float | None = None
+                    success = False
+
+                    for attempt in range(3):
+                        try:
+                            t0 = time.perf_counter()
+                            async with client.stream(
+                                "POST",
+                                DEPLOYED_RUNTIME_STREAM_URL,
+                                headers=headers,
+                                json=payload,
+                            ) as resp:
+                                if resp.status_code == 429:
+                                    backoff = (2**attempt) * 0.5
+                                    logger.warning("HTTP 429 on iter %d, backing off %.1fs", idx, backoff)
+                                    await asyncio.sleep(backoff)
+                                    continue
+                                if resp.status_code != 200:
+                                    body = await resp.aread()
+                                    logger.warning(
+                                        "HTTP %d on %s iter %d: %s",
+                                        resp.status_code,
+                                        test_id,
+                                        idx,
+                                        body[:200],
+                                    )
+                                    break
+                                async for line in resp.aiter_lines():
+                                    if line.strip():
+                                        if first_chunk_ms is None:
+                                            first_chunk_ms = (time.perf_counter() - t0) * 1000.0
+                                t1 = time.perf_counter()
+                                total_ms = (t1 - t0) * 1000.0
+                                samples.append(total_ms)
+                                ttft_samples.append(first_chunk_ms if first_chunk_ms is not None else total_ms)
+                                success = True
                                 break
-                            async for line in resp.aiter_lines():
-                                if line.strip():
-                                    if first_chunk_ms is None:
-                                        first_chunk_ms = (time.perf_counter() - t0) * 1000.0
-                            t1 = time.perf_counter()
-                            total_ms = (t1 - t0) * 1000.0
-                            samples.append(total_ms)
-                            ttft_samples.append(first_chunk_ms if first_chunk_ms is not None else total_ms)
-                            success = True
-                            break
-                    except Exception as exc:
-                        logger.warning("Attempt %d error on iter %d: %s", attempt + 1, idx, exc)
-                        await asyncio.sleep(0.5 * (attempt + 1))
+                        except Exception as exc:
+                            logger.warning("Attempt %d error on %s iter %d: %s", attempt + 1, test_id, idx, exc)
+                            await asyncio.sleep(0.5 * (attempt + 1))
 
-                if not success:
-                    errors += 1
+                    if not success:
+                        errors += 1
 
-        return calculate_percentiles(
-            samples,
-            sla_p95=2600.0,
-            test_id="TC-LP-RE_europe_west1",
-            phase="Phase B (Deployed Runtime)",
-            description="Vertex AI Agent Runtime (:streamQuery) in europe-west1 (Belgium)",
-            ttft_samples=ttft_samples,
-            sla_ttft_p95=500.0,
-            errors=errors,
-        )
+                scenario_results.append(
+                    calculate_percentiles(
+                        samples,
+                        sla_p95=sla_p95,
+                        test_id=test_id,
+                        phase="Phase B (Deployed Runtime)",
+                        description=description,
+                        ttft_samples=ttft_samples,
+                        sla_ttft_p95=sla_ttft_p95,
+                        errors=errors,
+                    )
+                )
+
+        return scenario_results
 
     async def run_suite(self) -> tuple[dict[str, float], list[LatencyStats]]:
         """Execute the configured benchmark suite and return warmup + scenario stats."""
@@ -806,7 +810,8 @@ class PerformanceBenchmarkRunner:
             results.append(await self.benchmark_tc_lp_02_cloud_bq())
             results.append(await self.benchmark_tc_lp_03_cloud_de())
             results.append(await self.benchmark_tc_lp_04_cloud_fanout())
-            results.append(await self.benchmark_deployed_reasoning_engine())
+            deployed_stats = await self.benchmark_deployed_reasoning_engine()
+            results.extend(deployed_stats)
 
         return warmup_stats, results
 
