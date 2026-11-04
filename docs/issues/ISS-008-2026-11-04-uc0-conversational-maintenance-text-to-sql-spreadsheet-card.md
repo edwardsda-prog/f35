@@ -2,7 +2,7 @@
 issue_id: "ISS-008"
 title: "UC0 Conversational Maintenance Data Text-to-SQL Sub-Agent, BigQuery Table & Column Descriptions, and Interactive Spreadsheet Card with GCS CSV Export"
 date: "2026-11-04"
-status: "RESOLVED"
+status: "VERIFIED_IN_PROD"
 severity: "P2-HIGH"
 domain: "UC0-Maintenance-Data"
 sub_agent: "f35_maintenance_data_agent"
@@ -106,7 +106,8 @@ uv run python scripts/setup_demo_infra.py --skip-discovery
 | **Live BigQuery `EU` `execute_maintenance_sql` Latency** | `762.1 ms` | `344.4 ms` (`341.7 ms` BQ) | `< 450 ms` | **✅ PASS** |
 | **Local Fallback (`SQLITE_IN_MEMORY_FALLBACK`) Latency** | `N/A` | `0.85 ms` | `< 10 ms` | **✅ PASS** |
 | **BigQuery Table & 18 Column Descriptions Populated** | `0 / 18` | `18 / 18 + Table Desc` | `100%` | **✅ PASS** |
-| **Unit Test Suite (`tests/unit/`)** | `168 passed` | `173 passed` | `100% Pass` | **✅ PASS** |
+| **Unit Test Suite (`tests/unit/`)** | `168 passed` | `175 passed, 0 xfailed` | `100% Pass` | **✅ PASS** |
+| **Production Reasoning Engine `:streamQuery` (`europe-west1`)** | `N/A` | `5022570215192395776` (`op: 2543304329306046464`) | `100% Assertions Pass` | **✅ PASS** |
 
 ---
 
