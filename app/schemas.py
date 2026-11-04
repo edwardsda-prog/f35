@@ -192,7 +192,7 @@ class Form700ReleasePackage(BaseModel):
     tail_number: str = Field(default="ZM151", min_length=1)
     station_id: str = Field(default="Frame 496 — Fastener Hole #14", min_length=1)
     appraisal_report_uri: str = Field(
-        default="gs://antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf",
+        default="https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf",
         min_length=1,
     )
     mandated_jtd_task_card: str = Field(..., min_length=1)

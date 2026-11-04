@@ -484,9 +484,11 @@ def generate_form700_airworthiness_package(
     appraisal_uri = str(
         ledger_seed.get(
             "appraisal_report_uri",
-            f"gs://antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-{tail_number}.pdf",
+            f"https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-{tail_number}.pdf",
         )
     )
+    if appraisal_uri.startswith("gs://"):
+        appraisal_uri = appraisal_uri.replace("gs://", "https://storage.cloud.google.com/", 1)
 
     current_turn: int | str = 1
     current_inv: str | None = None
@@ -580,7 +582,7 @@ def approve_form700_engineering_release(
         tail_number="ZM151",
         station_id="Frame 496 — Fastener Hole #14",
         appraisal_report_uri=(
-            "gs://antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf"
+            "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf"
         ),
         mandated_jtd_task_card="JTD Task Card 53-11-00-280",
         disposition_status="SERVICEABLE_WITH_TORQUE_RECHECK",

@@ -692,3 +692,293 @@ class TestConfigAndGuardrailInvariants:
         assert "metadata_boost" in res
         assert "metadata_facets" in res
         assert isinstance(res["results"], list) and len(res["results"]) > 0
+
+
+# ===========================================================================
+# 5. Authenticated GCS Browser URLs (`app/tools/uc2_jtd_search.py`, `app/schemas.py`, etc.)
+# ===========================================================================
+
+
+class TestAuthenticatedGcsUrls:
+    """Unit tests verifying all generated documentation and report URIs are converted to authenticated browser HTTPS URLs."""
+
+    def test_to_authenticated_gcs_url_standard_transformation(self) -> None:
+        """Verify standard gs:// URIs are converted to authenticated browser-clickable HTTPS URLs."""
+        from app.tools.uc2_jtd_search import to_authenticated_gcs_url
+
+        gs_uri = "gs://antig-dave-f35-staging-europe-west1/unstructured/docs/DOC-01-JTD-53-30-01-Canopy-Mechanical-Rigging.pdf"
+        expected = "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/docs/DOC-01-JTD-53-30-01-Canopy-Mechanical-Rigging.pdf"
+        assert to_authenticated_gcs_url(gs_uri) == expected
+
+    def test_to_authenticated_gcs_url_edge_cases_and_non_gcs(self) -> None:
+        """Verify edge cases: None, empty strings, whitespace, and existing HTTPS URLs."""
+        from app.tools.uc2_jtd_search import to_authenticated_gcs_url
+
+        assert to_authenticated_gcs_url(None) == ""
+        assert to_authenticated_gcs_url("") == ""
+        assert to_authenticated_gcs_url("   ") == ""
+
+        https_url = "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/docs/DOC-01.pdf"
+        assert to_authenticated_gcs_url(https_url) == https_url
+
+        standard_web = "https://example.com/manual.pdf"
+        assert to_authenticated_gcs_url(standard_web) == standard_web
+
+    def test_uc2_search_tool_outputs_authenticated_browser_citations(self) -> None:
+        """Verify search_technical_manuals_and_repair_logs returns authenticated browser URLs."""
+        from app.tools.uc2_jtd_search import search_technical_manuals_and_repair_logs
+
+        res = search_technical_manuals_and_repair_logs(
+            symptom_query="canopy latch",
+            bit_fault_present=False,
+            subsystem_filter="53-30",
+        )
+        assert res["status"] == "SUCCESS"
+        assert len(res["results"]) > 0
+        for doc in res["results"]:
+            uri = doc.get("uri") or doc.get("document_url") or ""
+            assert uri.startswith("https://storage.cloud.google.com/"), (
+                f"Expected authenticated GCS HTTPS URL, got: {uri}"
+            )
+            assert not uri.startswith("gs://")
+
+    def test_uc3_sar_and_form700_emit_authenticated_browser_urls(self) -> None:
+        """Verify Form 700 release package and SAR outputs use authenticated browser URLs."""
+        from app.schemas import Form700ReleasePackage
+        from app.tools.uc3_airworthiness import generate_form700_airworthiness_package
+
+        # 1. Pydantic schema default
+        pkg = Form700ReleasePackage(
+            release_package_id="AWR-700-20261102-ZM151",
+            mandated_jtd_task_card="JTD Task Card 53-11-00-280",
+            disposition_status="SERVICEABLE_WITH_TORQUE_RECHECK",
+            tail_number="ZM151",
+            station_id="Frame 496 — Fastener Hole #14",
+        )
+        assert pkg.appraisal_report_uri.startswith("https://storage.cloud.google.com/")
+        assert not pkg.appraisal_report_uri.startswith("gs://")
+
+        # 2. Tool output
+        res = generate_form700_airworthiness_package(
+            tail_number="ZM151",
+            station_id="Frame 496",
+        )
+        assert res["status"] in ("SUCCESS", "STAGED_PENDING_HITL_REVIEW")
+        report_uri = res.get("appraisal_report_uri", "")
+        assert report_uri.startswith("https://storage.cloud.google.com/"), (
+            f"Expected authenticated GCS HTTPS URL, got: {report_uri}"
+        )
+        assert not report_uri.startswith("gs://")
+
+
+# ===========================================================================
+# 6. Fast-Path Operational Capability Interception (`app/callbacks.py`)
+# ===========================================================================
+
+
+class TestFastPathCapabilityInterception:
+    """Unit tests for operational capability fast-path interception (< 5 ms SLA)."""
+
+    def test_fast_path_intercepts_operational_capability_query_under_5ms(self) -> None:
+        """Verify 'Describe your operational capability' is intercepted immediately under 5 ms."""
+        from app.callbacks import fast_path_before_model_callback
+
+        prompt = "Describe your operational capability"
+        cb_ctx = DummyCallbackContext(state={}, user_text=prompt)
+        llm_req = DummyLlmRequest(user_text=prompt)
+
+        t0 = time.perf_counter()
+        response = fast_path_before_model_callback(
+            callback_context=cb_ctx, llm_request=llm_req
+        )
+        elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+        assert response is not None, "Expected fast-path callback to intercept operational capability inquiry"
+        assert elapsed_ms < 5.0, (
+            f"Capability interception took {elapsed_ms:.3f} ms, exceeding 5.0 ms SLA"
+        )
+        part_text = response.content.parts[0].text
+        assert "Operational Capabilities" in part_text
+        assert "UC1" in part_text and "UC2" in part_text and "UC3" in part_text
+
+    @pytest.mark.parametrize(
+        "prompt",
+        [
+            "Describe your operational capability",
+            "What are your operational capabilities?",
+            "Explain your capability",
+            "Show your capabilities",
+            "Describe operational capabilities",
+        ],
+    )
+    def test_fast_path_capability_regex_patterns(self, prompt: str) -> None:
+        """Verify various phrasing variations of capability queries are intercepted."""
+        from app.callbacks import fast_path_before_model_callback
+
+        cb_ctx = DummyCallbackContext(state={}, user_text=prompt)
+        llm_req = DummyLlmRequest(user_text=prompt)
+
+        response = fast_path_before_model_callback(
+            callback_context=cb_ctx, llm_request=llm_req
+        )
+        assert response is not None, f"Expected fast-path callback to intercept: '{prompt}'"
+
+    @pytest.mark.parametrize(
+        "query_with_domain_entity",
+        [
+            "Describe your operational capability for ZM151",
+            "What are your capabilities regarding Frame 496?",
+            "Show capabilities for lot #8841-B",
+            "Explain capabilities for ACT-99812-F",
+            "Describe your capability for Form 700 release",
+        ],
+    )
+    def test_domain_entity_queries_fall_through_fast_path(
+        self, query_with_domain_entity: str
+    ) -> None:
+        """Verify queries containing specific airframe or part domain entities fall through to LLM."""
+        from app.callbacks import fast_path_before_model_callback
+
+        cb_ctx = DummyCallbackContext(state={}, user_text=query_with_domain_entity)
+        llm_req = DummyLlmRequest(user_text=query_with_domain_entity)
+
+        response = fast_path_before_model_callback(
+            callback_context=cb_ctx, llm_request=llm_req
+        )
+        assert response is None, (
+            f"Query with domain entity should fall through to LLM, but got intercepted: {query_with_domain_entity}"
+        )
+
+
+# ===========================================================================
+# 7. Sustainment Chart Rendering Tool (`app/tools/uc1_analytics.py`)
+# ===========================================================================
+
+
+class TestSustainmentChartRenderingTool:
+    """Unit tests for on-demand Vega-Lite chart rendering via `render_sustainment_chart`."""
+
+    def test_render_sustainment_chart_actuator_fatigue_threshold(self) -> None:
+        """Verify rendering actuator fatigue threshold chart."""
+        from app.tools.uc1_analytics import render_sustainment_chart
+
+        res = render_sustainment_chart("actuator_fatigue_threshold_chart")
+        assert res["status"] == "SUCCESS"
+        assert res["chart_name"] == "actuator_fatigue_threshold_chart"
+        assert "actuator_fatigue_threshold_chart" in res
+        chart = res["actuator_fatigue_threshold_chart"]
+        assert "$schema" in chart
+        assert "data" in chart or "layer" in chart
+
+    def test_render_sustainment_chart_depot_stock_vs_demand(self) -> None:
+        """Verify rendering depot stock vs demand bar chart."""
+        from app.tools.uc1_analytics import render_sustainment_chart
+
+        res = render_sustainment_chart("depot_stock_vs_demand_bar_chart")
+        assert res["status"] == "SUCCESS"
+        assert res["chart_name"] == "depot_stock_vs_demand_bar_chart"
+        assert "depot_stock_vs_demand_bar_chart" in res
+        chart = res["depot_stock_vs_demand_bar_chart"]
+        assert "$schema" in chart
+        assert "mark" in chart or "layer" in chart
+
+    def test_render_sustainment_chart_both(self) -> None:
+        """Verify rendering both charts simultaneously."""
+        from app.tools.uc1_analytics import render_sustainment_chart
+
+        res = render_sustainment_chart("both")
+        assert res["status"] == "SUCCESS"
+        assert res["chart_name"] == "both"
+        assert "actuator_fatigue_threshold_chart" in res
+        assert "depot_stock_vs_demand_bar_chart" in res
+        assert "vega_lite_charts" in res
+        assert "depot_stock_vs_demand_bar_chart" in res["vega_lite_charts"]
+        assert "actuator_fatigue_threshold_chart" in res["vega_lite_charts"]
+
+    def test_render_sustainment_chart_execution_budget_under_5ms(self) -> None:
+        """Verify on-demand chart rendering completes in < 5 ms when cached or using memory structures."""
+        from app.tools.uc1_analytics import (
+            check_actuator_fatigue_and_depot_inventory,
+            render_sustainment_chart,
+        )
+
+        ctx = DummyToolContext(state={})
+        check_actuator_fatigue_and_depot_inventory(tool_context=ctx)
+
+        t0 = time.perf_counter()
+        res = render_sustainment_chart("both", tool_context=ctx)
+        elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+        assert res["status"] == "SUCCESS"
+        assert elapsed_ms < 5.0, (
+            f"Chart rendering took {elapsed_ms:.3f} ms, exceeding 5.0 ms budget"
+        )
+
+    def test_render_sustainment_chart_state_fallback(self) -> None:
+        """Verify render_sustainment_chart falls back gracefully when tool_context is None or empty."""
+        from app.tools.uc1_analytics import render_sustainment_chart
+
+        # Empty tool context
+        empty_ctx = DummyToolContext(state={})
+        res_empty = render_sustainment_chart("both", tool_context=empty_ctx)
+        assert res_empty["status"] == "SUCCESS"
+        assert "actuator_fatigue_threshold_chart" in res_empty
+
+        # None tool context
+        res_none = render_sustainment_chart("both", tool_context=None)
+        assert res_none["status"] == "SUCCESS"
+        assert "depot_stock_vs_demand_bar_chart" in res_none
+
+
+# ===========================================================================
+# 8. UC1 Two-Turn Tabular Workflow (`app/sub_agents/uc1_analytics_agent.py`, `app/tools/uc1_analytics.py`)
+# ===========================================================================
+
+
+class TestUc1TwoTurnTabularWorkflow:
+    """Unit tests for UC1 two-turn tabular-first workflow and system instructions."""
+
+    def test_uc1_turn1_returns_tabular_and_prompts_for_chart_selection(self) -> None:
+        """Verify Turn 1 analytics tool returns formatted Markdown table, tail records, and backward-compatible chart specs."""
+        from app.tools.uc1_analytics import check_actuator_fatigue_and_depot_inventory
+
+        ctx = DummyToolContext(state={})
+        res = check_actuator_fatigue_and_depot_inventory(tool_context=ctx)
+
+        assert res["status"] == "SUCCESS"
+        assert "markdown_summary_table" in res
+        table = res["markdown_summary_table"]
+        assert "ZM151" in table
+        assert "ZM154" in table
+        assert "1000.4" in table
+        assert "842.0" in table
+        assert "1680-01-619-4821" in table
+
+        # Backward compatibility check
+        assert "vega_lite_charts" in res
+        assert "depot_stock_vs_demand_bar_chart" in res["vega_lite_charts"]
+        assert "actuator_fatigue_threshold_chart" in res["vega_lite_charts"]
+
+        # Cache check in tool_context state
+        assert "last_uc1_metrics" in ctx.state
+        assert "last_uc1_analytics_result" in ctx.state
+
+    def test_uc1_system_instruction_two_turn_rules(self) -> None:
+        """Verify UC1 system instruction and agent definition enforce the two-turn tabular-first workflow."""
+        from app.sub_agents.uc1_analytics_agent import (
+            UC1_SYSTEM_INSTRUCTION,
+            f35_analytics_agent,
+        )
+
+        assert "Turn 1 Output Workflow" in UC1_SYSTEM_INSTRUCTION
+        assert "Do NOT emit raw ```vega-lite JSON blocks in Turn 1" in UC1_SYSTEM_INSTRUCTION
+        assert "Would you like me to render" in UC1_SYSTEM_INSTRUCTION
+        assert "Turn 2 Chart Rendering" in UC1_SYSTEM_INSTRUCTION
+        assert "render_sustainment_chart" in UC1_SYSTEM_INSTRUCTION
+
+        # Tool registration check
+        tool_names = [t.name if hasattr(t, "name") else t.__name__ for t in f35_analytics_agent.tools]
+        assert "render_sustainment_chart" in tool_names
+        assert "check_actuator_fatigue_and_depot_inventory" in tool_names
+        assert "recommend_tail_swap_and_replenishment" in tool_names
+

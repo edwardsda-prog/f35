@@ -131,6 +131,42 @@ _FAST_PATH_GREETING_RESPONSE: LlmResponse = LlmResponse(
     )
 )
 
+_FAST_PATH_CAPABILITY_RE = re.compile(
+    r"\b(describe|what are|explain|show)\s+(your\s+)?(operational\s+)?(capability|capabilities|features|functions)\b|"
+    r"\boperational\s+capabilities?\b",
+    re.IGNORECASE,
+)
+
+_DOMAIN_ENTITY_FALLTHROUGH_RE = re.compile(
+    r"\b(zm\s*\d+|lot\s*#?[\w-]+|act-[\w-]+|nsn\b|srt-[\w-]+|frame\s*\d+|form\s*700|doc-\d+)\b",
+    re.IGNORECASE,
+)
+
+_FAST_PATH_CAPABILITY_RESPONSE: LlmResponse = LlmResponse(
+    content=types.Content(
+        role="model",
+        parts=[
+            types.Part.from_text(
+                text=(
+                    "**F-35 Fleet Sustainment Agent Platform (`f35-sustainment-agent`) Operational Capabilities**\n\n"
+                    "I am an enterprise AI sustainment agent built on Google Agent Developer Kit (ADK 2.0) and Gemini 3.8 Flash, "
+                    "deployed to `europe-west1` (Belgium) with data residency strictly in `EU`.\n\n"
+                    "### Core Capabilities:\n"
+                    "1. **UC1: Predictive Actuator Analytics & Supply Chain Orchestration** (`@F35-Sustainment-Analytics`)\n"
+                    "   - Partition-pruned BigQuery analysis of telemetry, supply depot stock, and sortie schedules.\n"
+                    "   - Two-turn interactive Vega-Lite chart rendering (`render_sustainment_chart`) and automated tail-swap recommendations.\n\n"
+                    "2. **UC2: JTD Maintenance Search & Multi-Service Repair Synthesis** (`@F35-JTD-Search`)\n"
+                    "   - Single-pass grounded retrieval over S1000D Joint Technical Data and 5-year cross-service narrative logs.\n"
+                    "   - Dialect normalization (UK/US MoD terms) and authenticated Google Cloud Storage citation links (`https://storage.cloud.google.com/...`).\n\n"
+                    "3. **UC3: ASIP Structural Exceedance & HITL Airworthiness Release** (`@F35-Airworthiness-Agent`)\n"
+                    "   - Parallel 4-way fan-out (`assess_airframe_airworthiness` via `asyncio.gather`): 1553 bus sync, deterministic Palmgren-Miner's Rule fatigue math, ultrasonic C-scan NDI CAD mapping, and mBOM fastener lot audit.\n"
+                    "   - Two-turn Human-in-the-Loop (HITL) Form 700 airworthiness release gating and SAR package generation."
+                )
+            )
+        ],
+    )
+)
+
 
 def fast_path_before_model_callback(
     callback_context: Any,
@@ -165,6 +201,11 @@ def fast_path_before_model_callback(
 
     if is_short_greeting or is_health_probe:
         return _FAST_PATH_GREETING_RESPONSE
+
+    # Tier 1/2: Operational capability inquiry (< 5 ms)
+    if _FAST_PATH_CAPABILITY_RE.search(cleaned):
+        if not _DOMAIN_ENTITY_FALLTHROUGH_RE.search(cleaned):
+            return _FAST_PATH_CAPABILITY_RESPONSE
 
     return None
 

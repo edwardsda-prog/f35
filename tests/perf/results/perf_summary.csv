@@ -1,11 +1,6 @@
 test_id,phase,description,count,errors,error_rate_pct,ttft_p50_ms,ttft_p95_ms,min_ms,p50_ms,p90_ms,p95_ms,p99_ms,max_ms,mean_ms,std_dev_ms,sla_p95_ms,passed
-TC-LP-01_fast_path,Phase A (Local In-Process),Tier 1/2 Fast-Path Greeting & Health Interception,50,0,0.0,0.0,0.01,0.0,0.0,0.0,0.01,0.02,0.02,0.0,0.0,5.0,True
-TC-LP-02_uc1_analytics,Phase A (Local In-Process),UC1 BigQuery Analytics + Vega-Lite Spec & Tail Swap,50,0,0.0,2.63,4.2,1.06,2.63,3.97,4.2,5.55,5.55,2.69,0.93,2200.0,True
-TC-LP-03_uc2_jtd_search,Phase A (Local In-Process),UC2 Dialect Normalization + Grounded JTD & Log Synthesis,50,0,0.0,2.46,300.0,1.22,2.46,312.87,454.92,480.78,480.78,56.55,130.2,1800.0,True
-TC-LP-04_uc3_fanout,Phase A (Local In-Process),UC3 4-Way Parallel ASIP Diagnostic Fan-Out (Rainflow + CAD + mBOM),50,0,0.0,19.57,25.38,8.79,19.57,25.28,25.38,26.54,26.54,18.88,4.2,3100.0,True
-TC-LP-05_uc3_hitl,Phase A (Local In-Process),UC3 Two-Turn Form 700 HITL Gate & Engineering Release,50,0,0.0,0.03,0.06,0.03,0.03,0.05,0.06,0.13,0.13,0.04,0.02,1400.0,True
-TC-LP-02_cloud_bq_eu,Phase B (Live Cloud EU),Live Uncached BigQuery (EU) 3-Table Join + Dual Vega-Lite Specs,50,0,0.0,420.0,420.0,927.48,1226.89,1465.08,1513.74,1531.79,1531.79,1233.71,157.26,2500.0,True
-TC-LP-03_cloud_de_eu,Phase B (Live Cloud EU),Live Uncached Discovery Engine (eu) Single-Pass Search (pageSize=15),50,0,0.0,25.92,170.46,42.07,57.61,240.35,378.79,506.71,506.71,97.12,107.93,2000.0,True
-TC-LP-04_cloud_fanout_eu,Phase B (Live Cloud EU),Live Uncached 4-Way Parallel Fan-Out (BQ 1553 + ASIP Physics + CAD + mBOM),50,0,0.0,112.73,161.09,301.83,375.76,487.42,536.95,587.33,587.33,388.07,62.03,3100.0,True
-TC-LP-RE_europe_west1,Phase B (Deployed Runtime),Vertex AI Agent Runtime (:streamQuery) in europe-west1 (Belgium),50,0,0.0,269.15,335.02,251.13,329.83,404.01,445.64,492.62,492.62,331.31,52.3,2600.0,True
-TC-LP-FL_10_users,Phase B (10-User Concurrency),Locust 10 Concurrent Flight-Line Engineers (60s Mixed Workload),206,0,0.0,2.7,420.0,2.38,6.0,1100.0,1200.0,1300.0,1347.78,255.79,472.11,3500.0,True
+TC-LP-01_fast_path,Phase A (Local In-Process),Tier 1/2 Fast-Path Greeting & Health Interception,50,0,0.0,0.0,0.01,0.0,0.0,0.01,0.01,0.06,0.06,0.01,0.01,5.0,True
+TC-LP-02_uc1_analytics,Phase A (Local In-Process),UC1 BigQuery Analytics + Vega-Lite Spec & Tail Swap,50,0,0.0,2.82,5.06,1.27,2.82,4.79,5.06,6.09,6.09,3.23,1.15,2200.0,True
+TC-LP-03_uc2_jtd_search,Phase A (Local In-Process),UC2 Dialect Normalization + Grounded JTD & Log Synthesis,50,0,0.0,57.91,81.59,34.86,57.91,77.16,81.59,94.3,94.3,61.43,11.32,1800.0,True
+TC-LP-04_uc3_fanout,Phase A (Local In-Process),UC3 4-Way Parallel ASIP Diagnostic Fan-Out (Rainflow + CAD + mBOM),50,0,0.0,18.2,26.34,8.57,18.2,25.59,26.34,27.92,27.92,18.33,4.77,3100.0,True
+TC-LP-05_uc3_hitl,Phase A (Local In-Process),UC3 Two-Turn Form 700 HITL Gate & Engineering Release,50,0,0.0,0.03,0.06,0.03,0.03,0.06,0.06,0.15,0.15,0.04,0.02,1400.0,True

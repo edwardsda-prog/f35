@@ -9,6 +9,7 @@ inline Vega-Lite v5 JSON specifications (`depot_stock_vs_demand_bar_chart` and
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 from google.cloud import bigquery
@@ -478,8 +479,19 @@ def check_actuator_fatigue_and_depot_inventory(
         "markdown_summary_table": markdown_table,
     }
 
-    if tool_context is not None and hasattr(tool_context, "state"):
+    if tool_context is not None and hasattr(tool_context, "state") and isinstance(tool_context.state, dict):
         tool_context.state["last_uc1_analytics_result"] = result
+        tool_context.state["last_uc1_metrics"] = {
+            "telemetry_rows": telemetry_rows,
+            "inventory_rows": inventory_rows,
+            "sortie_rows": sortie_rows,
+            "primary_breach_tail": zm151_rec,
+            "spare_tail_candidate": zm154_rec,
+            "depot_summary": depot_summary,
+            "impacted_sortie": impacted_sortie,
+            "depot_chart": depot_chart,
+            "fatigue_chart": fatigue_chart,
+        }
 
     return result
 
@@ -573,3 +585,89 @@ def recommend_tail_swap_and_replenishment(
         tool_context.state["last_uc1_swap_recommendation"] = result
 
     return result
+
+
+def render_sustainment_chart(
+    chart_name: str = "both",
+    tool_context: Any | None = None,
+    **_: Any,
+) -> dict[str, Any]:
+    """Render an interactive Vega-Lite v5 specification on demand for sustainment analytics.
+
+    Display Title: Render Sustainment Chart
+    Args:
+        chart_name: Name of the chart to render ('actuator_fatigue_threshold_chart',
+                    'depot_stock_vs_demand_bar_chart', or 'both').
+        tool_context: ADK 2.0 tool execution context storing BigQuery metrics from Turn 1.
+    """
+    t0 = time.perf_counter()
+
+    raw_name = str(chart_name or "both").strip().lower()
+
+    # Check if metrics are already cached in tool_context state
+    depot_chart: dict[str, Any] | None = None
+    fatigue_chart: dict[str, Any] | None = None
+
+    state = getattr(tool_context, "state", None) if tool_context is not None else None
+    if isinstance(state, dict):
+        cached_metrics = state.get("last_uc1_metrics") or state.get("last_uc1_analytics_result")
+        if isinstance(cached_metrics, dict):
+            depot_chart = cached_metrics.get("depot_chart") or cached_metrics.get("depot_stock_vs_demand_bar_chart")
+            fatigue_chart = cached_metrics.get("fatigue_chart") or cached_metrics.get("actuator_fatigue_threshold_chart")
+
+    # If not found in cache, build deterministically from cached/seed tables
+    if depot_chart is None or fatigue_chart is None:
+        bundle = _fetch_uc1_tables_from_bq(base_location="RAF Marham")
+        if depot_chart is None:
+            depot_chart = _build_depot_stock_bar_chart(bundle["inventory"])
+        if fatigue_chart is None:
+            fatigue_chart = _build_actuator_fatigue_threshold_chart(bundle["telemetry"])
+
+    is_fatigue = any(k in raw_name for k in ("fatigue", "actuator", "threshold", "1")) or raw_name == "actuator_fatigue_threshold_chart"
+    is_depot = any(k in raw_name for k in ("depot", "stock", "demand", "inventory", "2")) or raw_name == "depot_stock_vs_demand_bar_chart"
+    is_both = any(k in raw_name for k in ("both", "all", "3")) or (is_fatigue and is_depot) or raw_name in ("charts", "visualizations")
+
+    if is_both:
+        resolved_name = "both"
+        vega_spec = {
+            "depot_stock_vs_demand_bar_chart": depot_chart,
+            "actuator_fatigue_threshold_chart": fatigue_chart,
+        }
+        rendered_charts = {
+            "depot_stock_vs_demand_bar_chart": depot_chart,
+            "actuator_fatigue_threshold_chart": fatigue_chart,
+        }
+    elif is_fatigue and not is_depot:
+        resolved_name = "actuator_fatigue_threshold_chart"
+        vega_spec = fatigue_chart
+        rendered_charts = {
+            "actuator_fatigue_threshold_chart": fatigue_chart,
+        }
+    else:
+        resolved_name = "depot_stock_vs_demand_bar_chart"
+        vega_spec = depot_chart
+        rendered_charts = {
+            "depot_stock_vs_demand_bar_chart": depot_chart,
+        }
+
+    elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+    res = {
+        "status": "SUCCESS",
+        "chart_name": resolved_name,
+        "requested_name": chart_name,
+        "generation_time_ms": round(elapsed_ms, 3),
+        "vega_lite_spec": vega_spec,
+        "vega_lite_charts": rendered_charts,
+        "description": f"Successfully rendered {resolved_name} specification in {elapsed_ms:.2f} ms.",
+    }
+    res.update(rendered_charts)
+    return res
+
+
+__all__ = [
+    "check_actuator_fatigue_and_depot_inventory",
+    "recommend_tail_swap_and_replenishment",
+    "render_sustainment_chart",
+]
+

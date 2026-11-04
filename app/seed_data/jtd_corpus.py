@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 GCS_DOCS_PREFIX = "gs://antig-dave-f35-staging-europe-west1/unstructured/docs"
+GCS_DOCS_HTTP_PREFIX = (
+    "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/docs"
+)
 
 # Cross-service UK (RAF/RN) <-> US (USAF/USMC) maintenance terminology crosswalk
 SYNONYM_CROSSWALK_DICT: dict[str, list[str]] = {
@@ -34,7 +37,7 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
         "bit_fault_associated": False,
         "document_version_date": "2026-10-15",
         "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_PREFIX}/DOC-01_JTD_Section_53-30-01_Canopy_Rigging.pdf",
+        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-01_JTD_Section_53-30-01_Canopy_Rigging.pdf",
         "content": (
             "JOINT TECHNICAL DATA (JTD) SECTION 53-30-01 | S1000D DMC-F35A-53-30-01-00A-520A-A. "
             "SUBSYSTEM 53-30: CANOPY ACTUATION, FORWARD LATCH / CATCH MECHANISM & MECHANICAL RIGGING. "
@@ -68,7 +71,7 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
         "bit_fault_associated": False,
         "document_version_date": "2026-09-20",
         "datastore_target": "narrative",
-        "uri": f"{GCS_DOCS_PREFIX}/DOC-02_Joint_Force_Maintenance_Logs_2021_2026.jsonl",
+        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-02_Joint_Force_Maintenance_Logs_2021_2026.jsonl",
         "content": (
             "5-YEAR JOINT FORCE UNSTRUCTURED MAINTENANCE NARRATIVE LOGS (2021-2026) | WORK ORDER "
             "WO-USMC-VMFA211-2024-0892 & RAF-617SQN-707A-2025-0411. "
@@ -100,7 +103,7 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
         "bit_fault_associated": False,
         "document_version_date": "2026-11-02",
         "datastore_target": "narrative",
-        "uri": f"{GCS_DOCS_PREFIX}/DOC-03_Marham_Pilot_Debrief_Logbook_20261102.pdf",
+        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-03_Marham_Pilot_Debrief_Logbook_20261102.pdf",
         "content": (
             "UK MOD FORM 707A — AIRCRAFT POST-FLIGHT DEBRIEF & MAINTENANCE WORK ORDER LOGBOOK. "
             "STATION: RAF Marham (617 Squadron 'Dambusters'). DATE: 2026-11-02. "
@@ -128,7 +131,7 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
         "bit_fault_associated": False,
         "document_version_date": "2026-10-01",
         "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_PREFIX}/DOC-04_JTD_Rule_53-11-00_Task_Card_280.pdf",
+        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-04_JTD_Rule_53-11-00_Task_Card_280.pdf",
         "content": (
             "JOINT TECHNICAL DATA (JTD) RULE 53-11-00 & MANDATORY TASK CARD 53-11-00-280 | "
             "S1000D DMC-F35-53-11-00-280A-A. "
@@ -162,7 +165,7 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
         "bit_fault_associated": False,
         "document_version_date": "2026-08-12",
         "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_PREFIX}/DOC-05_SRM_Chapter_51-40_Fastener_Hole_Limits.pdf",
+        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-05_SRM_Chapter_51-40_Fastener_Hole_Limits.pdf",
         "content": (
             "STRUCTURAL REPAIR MANUAL (SRM) CHAPTER 51-40 | PRIMARY BULKHEAD FASTENER HOLE ELONGATION "
             "ALLOWABLE LIMITS & 3D CAD SPATIAL DATUM MAPPING. "
@@ -196,7 +199,7 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
         "bit_fault_associated": False,
         "document_version_date": "2026-11-02",
         "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_PREFIX}/DOC-06_Ultrasonic_CScan_Frame496_Hole14.png",
+        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-06_Ultrasonic_CScan_Frame496_Hole14.png",
         "content": (
             "PHASED-ARRAY ULTRASONIC C-SCAN NON-DESTRUCTIVE INSPECTION (NDI) RECORD | DOC-06. "
             "INSPECTION ID: NDI-CSCAN-20261102-ZM151 | AIRCRAFT TAIL: ZM151 | STATION: Frame 496 "
@@ -227,7 +230,7 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
         "bit_fault_associated": False,
         "document_version_date": "2026-07-01",
         "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_PREFIX}/DOC-07_Airworthiness_Directives_MIL-HDBK-516C.pdf",
+        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-07_Airworthiness_Directives_MIL-HDBK-516C.pdf",
         "content": (
             "MILITARY AIRWORTHINESS CERTIFICATION DIRECTIVE | MIL-HDBK-516C SECTION 5 (STRUCTURES), "
             "UK MAA DEF STAN 00-970 PART 1 SECTION 3, AND MIL-STD-3001. "
@@ -262,12 +265,12 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
         "bit_fault_associated": False,
         "document_version_date": "2026-10-10",
         "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_PREFIX}/DOC-08_Form_700_Structural_Appraisal_Template.pdf",
+        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-08_Form_700_Structural_Appraisal_Template.pdf",
         "content": (
             "UK MOD FORM 700 (MOD FORMS 703 / 704 / 705 / 707A) & US AFTO FORM 781 AIRWORTHINESS RELEASE "
             "PACKAGE SPECIFICATION | MIL-STD-3001 STRUCTURAL APPRAISAL REPORT (SAR) TEMPLATE. "
             "REFERENCE PACKAGE ID: AWR-700-20261102-ZM151. "
-            "REPORT ARTIFACT URI: gs://antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf. "
+            "REPORT ARTIFACT URI: https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf. "
             "REQUIRED APPRAISAL FIELDS: "
             "- Aircraft Tail & Unit: ZM151 (RAF Marham, 617 Squadron). "
             "- Exceedance Telemetry Sync: Event EXC-20261102-ZM151 at 2026-11-02T14:22:18.420Z (3.2s window), "
@@ -297,7 +300,7 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
         "bit_fault_associated": False,
         "document_version_date": "2026-09-05",
         "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_PREFIX}/DOC-09_MAM_Section_9-1_HighTemp_RAM.pdf",
+        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-09_MAM_Section_9-1_HighTemp_RAM.pdf",
         "content": (
             "LOW OBSERVABLE (LO) MAINTENANCE MANUAL (MAM) SECTION 9-1 | S1000D DMC-F35B-51-70-09-01A-720A-A. "
             "SUBSYSTEM: OUTER MOLD LINE (OML) COATING & RADAR ABSORBENT MATERIAL (RAM) THERMAL RESTORATION. "

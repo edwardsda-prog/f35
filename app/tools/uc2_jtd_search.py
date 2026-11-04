@@ -14,7 +14,6 @@ from typing import Any
 from app.clients import (
     build_de_search_url,
     clean_snippet_text,
-    search_discovery_engine_datastore,
     search_discovery_engine_extended,
 )
 from app.config import (
@@ -27,6 +26,8 @@ from app.config import (
 from app.schemas import JtdCitation
 from app.seed_data.jtd_corpus import (
     JTD_CORPUS_DOCUMENTS as JTD_CORPUS_DOCS,
+)
+from app.seed_data.jtd_corpus import (
     JTD_DOCUMENTS_BY_ID as JTD_CORPUS_BY_ID,
 )
 
@@ -50,6 +51,21 @@ CROSS_SERVICE_DIALECT_MAP: list[tuple[str, str, list[str]]] = [
 ]
 
 _DE_SEARCH_CACHE: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
+
+
+def to_authenticated_gcs_url(uri: str | None) -> str:
+    """Convert gs:// URI to authenticated browser-clickable HTTPS URL.
+
+    Example:
+        gs://antig-dave-f35-staging-europe-west1/unstructured/docs/file.pdf
+        -> https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/docs/file.pdf
+    """
+    if not uri:
+        return ""
+    u = str(uri).strip()
+    if u.startswith("gs://"):
+        return u.replace("gs://", "https://storage.cloud.google.com/", 1)
+    return u
 
 
 def build_metadata_filter(
@@ -302,7 +318,7 @@ def search_technical_manuals_and_repair_logs(
         doc_id = str(doc["doc_id"])
         doc_bit = bool(doc["bit_fault_associated"])
         doc_sub = str(doc["system_subsystem_code"])
-        doc_uri = str(doc.get("uri") or doc.get("gcs_uri") or "")
+        doc_uri = to_authenticated_gcs_url(str(doc.get("uri") or doc.get("gcs_uri") or ""))
         score = 10.0
 
         if is_uc3_structural_query:
@@ -381,9 +397,9 @@ def search_technical_manuals_and_repair_logs(
     doc01 = JTD_CORPUS_BY_ID["DOC-01"]
     doc02 = JTD_CORPUS_BY_ID["DOC-02"]
     doc09 = JTD_CORPUS_BY_ID["DOC-09"]
-    doc01_uri = str(doc01.get("uri") or doc01.get("gcs_uri") or "")
-    doc02_uri = str(doc02.get("uri") or doc02.get("gcs_uri") or "")
-    doc09_uri = str(doc09.get("uri") or doc09.get("gcs_uri") or "")
+    doc01_uri = to_authenticated_gcs_url(str(doc01.get("uri") or doc01.get("gcs_uri") or ""))
+    doc02_uri = to_authenticated_gcs_url(str(doc02.get("uri") or doc02.get("gcs_uri") or ""))
+    doc09_uri = to_authenticated_gcs_url(str(doc09.get("uri") or doc09.get("gcs_uri") or ""))
 
     result = {
         "status": "SUCCESS",
@@ -445,3 +461,14 @@ def search_technical_manuals_and_repair_logs(
         tool_context.state["last_uc2_search_result"] = result
 
     return result
+
+
+__all__ = [
+    "CROSS_SERVICE_DIALECT_MAP",
+    "PAGE_SIZE",
+    "build_metadata_boost_spec",
+    "build_metadata_filter",
+    "normalize_cross_service_terminology",
+    "search_technical_manuals_and_repair_logs",
+    "to_authenticated_gcs_url",
+]
