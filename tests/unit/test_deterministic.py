@@ -1003,3 +1003,181 @@ class TestUc1TwoTurnTabularWorkflow:
         assert "check_actuator_fatigue_and_depot_inventory" in tool_names
         assert "recommend_tail_swap_and_replenishment" in tool_names
 
+
+# ===========================================================================
+# 9. UC0 Maintenance Data Agent & Spreadsheet Card (`app/tools/uc0_maintenance.py`)
+# ===========================================================================
+
+
+def test_uc0_maintenance_schema_has_table_and_column_descriptions() -> None:
+    """Verify `maintenance_work_orders.schema.json` metadata, partitioning, clustering, and 18 column descriptions."""
+    import json
+
+    schema_path = (
+        REPO_ROOT
+        / "app"
+        / "seed_data"
+        / "schemas"
+        / "maintenance_work_orders.schema.json"
+    )
+    assert schema_path.exists(), f"Missing schema file: {schema_path}"
+
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    assert schema.get("table_name") == "maintenance_work_orders"
+
+    table_desc = schema.get("description", "")
+    assert isinstance(table_desc, str) and len(table_desc.strip()) > 0
+
+    assert schema.get("partition_field") == "created_at_utc"
+
+    clustering_fields = (
+        schema.get("clustering_fields") or schema.get("cluster_fields")
+    )
+    assert clustering_fields == ["tail_number", "aircraft_status"]
+
+    columns = schema.get("columns") or schema.get("fields", [])
+    assert len(columns) == 18, f"Expected 18 columns, got {len(columns)}"
+    for col in columns:
+        col_name = col.get("name", "<unnamed>")
+        col_desc = col.get("description", "")
+        assert isinstance(col_desc, str) and len(col_desc.strip()) > 20, (
+            f"Column '{col_name}' must have a description > 20 chars, got: {col_desc!r}"
+        )
+
+
+def test_uc0_seed_records_match_schema() -> None:
+    """Verify `MAINTENANCE_WORK_ORDERS_ROWS` has 14 rows, ZM151 open work orders, and matches the 18 schema columns."""
+    import json
+
+    from app.seed_data.bq_seed_records import MAINTENANCE_WORK_ORDERS_ROWS
+
+    schema_path = (
+        REPO_ROOT
+        / "app"
+        / "seed_data"
+        / "schemas"
+        / "maintenance_work_orders.schema.json"
+    )
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    columns = schema.get("columns") or schema.get("fields", [])
+    expected_col_names = [col["name"] for col in columns]
+    assert len(expected_col_names) == 18
+
+    assert len(MAINTENANCE_WORK_ORDERS_ROWS) == 14
+
+    zm151_open_wos = {
+        row["work_order_id"]
+        for row in MAINTENANCE_WORK_ORDERS_ROWS
+        if row.get("tail_number") == "ZM151"
+        and row.get("work_order_status") != "COMPLETED"
+    }
+    assert {"WO-2026-88401", "WO-2026-88402", "WO-2026-88403"}.issubset(
+        zm151_open_wos
+    )
+
+    for idx, row in enumerate(MAINTENANCE_WORK_ORDERS_ROWS):
+        assert set(row.keys()) == set(expected_col_names), (
+            f"Row {idx} ({row.get('work_order_id')}) keys do not match schema columns"
+        )
+
+
+def test_uc0_execute_maintenance_sql_spreadsheet_card_and_csv_link() -> None:
+    """Verify `execute_maintenance_sql` returns Spreadsheet Card JSON, Markdown badges, formula footer, and GCS CSV URL."""
+    from app.tools.uc0_maintenance import execute_maintenance_sql
+
+    sql = (
+        "SELECT work_order_id, tail_number, squadron, aircraft_status, "
+        "work_order_status, priority, wuc_code, subsystem_name, "
+        "awaiting_part_nsn, assigned_shift_lead, estimated_mttr_hours, "
+        "logged_man_hours FROM maintenance_work_orders "
+        "WHERE work_order_status != 'COMPLETED' ORDER BY priority ASC"
+    )
+    res = execute_maintenance_sql(sql)
+
+    assert res["status"] == "SUCCESS"
+    assert res["row_count"] == 10
+
+    card = res["spreadsheet_card"]
+    assert card["columns"][0]["col_letter"] == "A"
+    assert "=COUNTA(" in card["formula_footer"]["row_count_formula"]
+    assert "=SUM(" in card["formula_footer"]["total_man_hours_formula"]
+    assert card["csv_download_url"].startswith(
+        "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/"
+    )
+
+    md = res["spreadsheet_card_markdown"]
+    assert "[📥 Download .CSV (Excel / Google Sheets)]" in md
+    assert "🟡 PMC-M" in md
+    assert "🔴 NMC-S (MICAP)" in md
+
+
+def test_uc0_execute_maintenance_sql_aggregation_query() -> None:
+    """Verify `execute_maintenance_sql` supports `GROUP BY squadron, aircraft_status` with accurate counts and sums."""
+    from app.seed_data.bq_seed_records import MAINTENANCE_WORK_ORDERS_ROWS
+    from app.tools.uc0_maintenance import execute_maintenance_sql
+
+    sql = (
+        "SELECT squadron, aircraft_status, COUNT(*) AS work_order_count, "
+        "SUM(logged_man_hours) AS total_logged_hours "
+        "FROM maintenance_work_orders "
+        "GROUP BY squadron, aircraft_status "
+        "ORDER BY squadron ASC, aircraft_status ASC"
+    )
+    res = execute_maintenance_sql(sql)
+    assert res["status"] == "SUCCESS"
+
+    # Compute expected groups from seed rows
+    expected_groups: dict[tuple[str, str], tuple[int, float]] = {}
+    for row in MAINTENANCE_WORK_ORDERS_ROWS:
+        key = (str(row["squadron"]), str(row["aircraft_status"]))
+        cnt, hrs = expected_groups.get(key, (0, 0.0))
+        expected_groups[key] = (cnt + 1, round(hrs + float(row["logged_man_hours"]), 4))
+
+    assert res["row_count"] == len(expected_groups)
+
+    rows = res.get("rows") or res.get("spreadsheet_card", {}).get("rows", [])
+    assert len(rows) == len(expected_groups)
+
+    total_count = 0
+    total_hours = 0.0
+    for r in rows:
+        if isinstance(r, dict):
+            sqn = str(r.get("squadron"))
+            status = str(r.get("aircraft_status"))
+            cnt = int(r.get("work_order_count"))
+            hrs = float(r.get("total_logged_hours"))
+        else:
+            sqn = str(r[0])
+            status = str(r[1])
+            cnt = int(r[2])
+            hrs = float(r[3])
+        # Strip any rendered badge prefix if present in display cells
+        for raw_status in ("FMC", "PMC-M", "NMC-M", "NMC-S"):
+            if raw_status in status:
+                status = raw_status
+                break
+        assert (sqn, status) in expected_groups
+        exp_cnt, exp_hrs = expected_groups[(sqn, status)]
+        assert cnt == exp_cnt
+        assert abs(hrs - exp_hrs) < 1e-3
+        total_count += cnt
+        total_hours += hrs
+
+    assert total_count == 14
+    expected_total_hours = sum(
+        float(r["logged_man_hours"]) for r in MAINTENANCE_WORK_ORDERS_ROWS
+    )
+    assert abs(total_hours - expected_total_hours) < 1e-3
+
+
+def test_uc0_execute_maintenance_sql_blocks_unsafe_dml_ddl() -> None:
+    """Verify `execute_maintenance_sql` rejects non-SELECT DML/DDL queries with `ValueError`."""
+    from app.tools.uc0_maintenance import execute_maintenance_sql
+
+    with pytest.raises(ValueError):
+        execute_maintenance_sql("DROP TABLE maintenance_work_orders")
+
+    with pytest.raises(ValueError):
+        execute_maintenance_sql("DELETE FROM maintenance_work_orders WHERE 1=1")
+
+
