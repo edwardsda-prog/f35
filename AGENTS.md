@@ -1,6 +1,6 @@
 # AGENTS.md — F-35 Fleet Sustainment Agent Platform (`f35-sustainment-agent`)
 
-> **Source Design Specification:** [SA_F35.md](./SA_F35.md) (`SDD-GE-F35-001`, v1.2)  
+> **Source Design Specification:** [SA_F35.md](./SA_F35.md) (`SDD-GE-F35-001`, v1.3)  
 > **Target Platform:** Google Cloud Agent Platform (Gemini Enterprise Search & Conversation, Agent Runtime, Agent Registry — *Agent Gateway excluded for Demo Track*)  
 > **Framework & Toolchain:** Python 3.11+ · Google ADK 2.0 (`google-adk >= 2.0.0`, `google-genai`) · `google-agents-cli` (`agents-cli`)  
 > **Target GCP Project:** `antig-dave` (Project Number: `284046449012`)  

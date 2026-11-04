@@ -1,5 +1,5 @@
 # Executive Demo Storyboard: F-35 Fleet Sustainment (`F35 Support`)
-### *The "5-Prompt Golden Thread" — Compressing 72 Hours of Sustainment into 5 Minutes*
+### *The "6-Prompt Golden Thread" — Compressing 72 Hours of Sustainment into 5 Minutes*
 
 **Target Audience:** Senior Defence Leadership, Air Command, MOD DE&S, & Industry Executives  
 **Operational Setting:** RAF Marham (617 Squadron "The Dambusters") & HMS Queen Elizabeth Carrier Strike Group  
@@ -7,11 +7,11 @@
 
 ---
 
-## 0. Presenter Quick-Copy Cheat Sheet (The 5 Golden Prompts)
+## 0. Presenter Quick-Copy Cheat Sheet (The 6 Golden Prompts)
 
 > [!TIP]
-> **The Entire Demo Takes 5 Fast Executive Prompts (5–6 Minutes Total).**  
-> Each prompt is written in natural Commander / Chief Engineer language and triggers live BigQuery (`EU`) tabular data, on-demand Vega-Lite charts, grounded JTD citations (`eu`), deterministic physics calculations, and Human-in-the-Loop airworthiness sign-offs.
+> **The Entire Demo Takes 6 Fast Executive Prompts (5–6 Minutes Total).**  
+> Each prompt is written in natural Commander / Chief Engineer language and triggers live BigQuery (`EU`) tabular data, Excel / Google Sheets Cards with `.CSV` export, on-demand 16:9 presentation graphics, grounded JTD citations (`eu`), deterministic physics calculations, and Human-in-the-Loop airworthiness sign-offs.
 
 | Step | Act & Persona | Exact Executive Prompt to Paste into `F35 Support` | What Appears on Screen | Live EU Speed |
 | :---: | :--- | :--- | :--- | :---: |
@@ -28,15 +28,16 @@
 
 ```mermaid
 flowchart LR
-    A1A["Act 1A (Prompt 1A · 1 Min) | GENERATE MORE SORTIES: Spot ZM151 Breach, Check Stock & Auto-Swap to ZM154"] --> A1B["Act 1B (Prompt 1B · 0.5 Min) | VISUALIZE FLEET DATA: On-Demand Vega-Lite Chart Rendering (< 5ms Tool)"]
+    A0["Act 0 (Prompt 0 · 0.5 Min) | MORNING STAND-UP: Live ODIN Work Orders in Excel/Sheets Card + CSV Export"] --> A1A["Act 1A (Prompt 1A · 1 Min) | GENERATE MORE SORTIES: Spot ZM151 Breach, Check Stock & Auto-Swap to ZM154"]
+    A1A --> A1B["Act 1B (Prompt 1B · 0.5 Min) | VISUALIZE FLEET DATA: On-Demand 16:9 Executive Dashboard Slide PNG (< 790ms)"]
     A1B --> A2["Act 2 (Prompt 2 · 1.5 Mins) | EMPOWER MAINTAINERS: Solve Zero-BIT Canopy Fault via Allied USMC/RAF Experience"]
-    A2 --> A3["Act 3 (Prompts 3 & 4 · 2.5 Mins) | CERTIFY AIRWORTHINESS SAFELY: Deterministic Over-G Physics, Fleet Lot Audit & Human Sign-Off"]
+    A2 --> A3["Act 3 (Prompts 3 & 4 · 2 Mins) | CERTIFY AIRWORTHINESS SAFELY: Deterministic Over-G Physics, Fleet Lot Audit & Human Sign-Off"]
 ```
 
 ### Presenter Opening Talk-Track
 > *"Every time an F-35 lands at RAF Marham, it downloads gigabytes of flight telemetry alongside millions of pages of technical manuals and maintenance logs. Today, that data lives in disconnected silos. When an aircraft has a component near life-limit or suffers a high-G structural exceedance, our engineers spend **up to 72 hours** manually cross-checking SQL databases, PDF manuals, ultrasonic scans, and paper Form 700 certificates.*
 >
-> *In the next **5 minutes**, using **just 5 prompts** inside **Gemini Enterprise (`F35 Support`)**, we will follow F-35A Tail **`ZM151`** from landing to return-to-flight—showing how AI compresses days of logistics, troubleshooting, and structural recertification into seconds, while keeping safety-critical math **100% deterministic** and human engineers **strictly in command**."*
+> *In the next **5 minutes**, using **just 6 prompts** inside **Gemini Enterprise (`F35 Support`)**, we will follow F-35 Tail **`ZM151`** from the morning maintenance stand-up to return-to-flight—showing how AI compresses days of logistics, troubleshooting, and structural recertification into seconds, while keeping safety-critical math **100% deterministic** and human engineers **strictly in command**."*
 
 ---
 
@@ -61,10 +62,10 @@ flowchart LR
 * **What the Executive Audience Sees:**
   1. **Dynamic Text-to-SQL Generation:** `@F35-Maintenance-Data` writes a custom read-only BigQuery Standard SQL `SELECT` query against `antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders` (`location="EU"`).
   2. **Excel / Google Sheets-Like Spreadsheet Card:**
-     - **Sheet Header Bar:** Displays sheet title, active SQL filter pill (`priority_level = 'PRIORITY_1_EMERGENCY' OR micap_flag = TRUE`), row/column count, BigQuery EU latency, and a clickable **[📥 Download .CSV (Excel / Google Sheets)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/F35_ODIN_Maintenance_Work_Orders.csv)** link.
-     - **Column Letter Headers (`A`..`I`) & Status Badges:** Displays `🔴 NMC-S (MICAP)`, `🟠 NMC-M`, and `🟡 PMC-M` status pills across `ZM151`, `ZM152`, `ZM158`, `ZM161`, and `ZM163`.
-     - **Formula Summary Footer Row:** Automatically computes `=COUNTA(A2:A6)` (`5 rows`), `=SUM(H2:H6)` (`24.5 hrs`), and `=AVERAGE(I2:I6)` (`13.6 hrs MTTR`).
-  3. **Tees Up Acts 1–3:** Surfaces Tail **`ZM151`**'s three active discrepancies (`WO-2026-707A-0101` Horizontal Tail Actuator life-limit breach, `WO-2026-707A-0102` Canopy manual release handle binding, and `WO-2026-707A-0103` Frame 496 9.4G over-G C-scan evaluation), naturally leading into Acts 1, 2, and 3!
+     - **Sheet Header Bar:** Displays sheet title, active SQL filter pill (`priority = 'PRIORITY_1_RED_X' OR work_order_status LIKE '%MICAP%'`), row/column count, BigQuery EU latency, and a clickable **[📥 Download .CSV (Excel / Google Sheets)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/F35_ODIN_Maintenance_Work_Orders.csv)** link.
+     - **Column Letter Headers (`A`..`I`) & Status Badges:** Displays `🔴 NMC-S (MICAP)`, `🟠 NMC-M`, and `🟡 PMC-M` status pills across `ZM151`, `ZM152`, `ZM153`, `ZM156`, `ZM159`, and `ZM162`.
+     - **Formula Summary Footer Row:** Automatically computes `=COUNTA(A2:A6)` (`5 rows`), `=SUM(H2:H6)` (`19.2 hrs`), and `=AVERAGE(I2:I6)` (`9.2 hrs MTTR`).
+  3. **Tees Up Acts 1–3:** Surfaces Tail **`ZM151`**'s three active discrepancies (`WO-2026-88401` Actuator life-limit breach at `1,000.4 hrs`, `WO-2026-88402` Canopy locking catch mechanical binding with zero BIT faults, and `WO-2026-88403` Frame 496 over-G C-scan `DOC-06` evaluation), naturally leading into Acts 1, 2, and 3!
 
 ---
 
@@ -74,10 +75,10 @@ flowchart LR
 flowchart LR
     U1A["Prompt 1A: Logistics Officer (07:30Z Sortie Risk)"] --> R1A["@F35-Sustainment-Analytics (BigQuery EU Join · 1.2s)"]
     R1A --> S1["Tabular Briefing: ZM151 Breached (1,000.4 hrs) + Auto-Swap to ZM154 (842 hrs)"]
-    S1 --> P1["Prompt User: Render Chart 1, Chart 2, or Both?"]
-    P1 --> U1B["Prompt 1B: 'Render Actuator Fatigue Threshold Chart'"]
-    U1B --> T1["render_sustainment_chart Tool (< 5ms Python Code Execution)"]
-    T1 --> C1["Interactive Vega-Lite v5 Chart Rendered in Canvas"]
+    S1 --> P1["Prompt User: Render Chart 1, Chart 2, or 16:9 Executive Dashboard?"]
+    P1 --> U1B["Prompt 1B: 'Render the full 16:9 Executive Briefing Dashboard...'"]
+    U1B --> T1["render_sustainment_chart Tool (< 790ms Headless Matplotlib + GCS Upload)"]
+    T1 --> C1["Full HD 16:9 Presentation Graphic + Clickable PNG Download Link"]
 ```
 
 * **The Executive Challenge:** Tail **`ZM151`** is scheduled to lead the `07:30Z` morning wave with **Flt Lt Henderson (`VIPER-1`)**. Just before launch, post-flight telemetry shows its Left Horizontal Tail Actuator crossed its `1,000.0`-hour safety limit.
@@ -90,14 +91,14 @@ Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot s
 * **What the Executive Audience Sees:**
   1. **Operational Readiness Table:** Displays real-time BigQuery EU status:
      - **Tail ZM151 (`S/N ACT-99812-F`)**: `1,000.4 hrs` (Breached by `+0.4 hrs`, `PMC-M`).
-     - **Spare Tail ZM154 (`S/N ACT-88319-A`)**: `842.0 hrs` (`158.0 hrs` remaining, `MC`).
-     - **Depot Stock (`DEP-UK-01` RAF Marham)**: `4` serviceable units on hand vs `2` units reserved for 30-day demand (`18.0-hr` shipping ETA).
+     - **Spare Tail ZM154 (`S/N ACT-88401-B`)**: `842.0 hrs` (`158.0 hrs` remaining, `MC`).
+     - **Depot Stock (`DEPOT-MAR-01` RAF Marham)**: `4` serviceable units on hand vs `2` units reserved for 30-day demand (`18.0-hr` shipping ETA).
   2. **Automated Action Plan:** Reallocates Flt Lt Henderson's `07:30Z` sortie (`SRT-MAR-20261103-01`) to Spare Tail **`ZM154`** and drafts Priority-1 depot supply requisition for `NSN: 1680-01-619-4821`.
   3. **Interactive Chart Prompt:**
      > *"Would you like me to render:*  
      > *1. **Actuator Fatigue Threshold Chart** (Tail ZM151 at 1,000.4 hrs vs ZM154 at 842.0 hrs vs 1,000.0-hr threshold)*  
      > *2. **Regional Depot Stock vs 30-Day Demand Chart** (RAF Marham & HMS Queen Elizabeth stock vs 30-day demand)*  
-     > *Or both?"*
+     > *Or the full **16:9 Executive Briefing Dashboard** for your presentation slide deck?"*
 
 #### Step 1B — Paste Prompt 1B (On-Demand Presentation Slide Graphic Rendering)
 ```text
@@ -116,7 +117,7 @@ Render the full 16:9 Executive Briefing Dashboard for my presentation slide deck
 > **Act 1 Executive Takeaway ("The So What?")**
 > - **Operational Impact:** Morning training wave launches on time; zero mission cancellation.
 > - **Time Compressed:** **2–4 hours** of manual ERP, supply, and flight-schedule reconciliation reduced to **1.2 seconds**.
-> - **Zero Latency Spikes:** Decoupling tabular analysis from on-demand chart rendering via `render_sustainment_chart` cuts response time by 90% (< 2.5s turn 1, < 0.05s turn 2).
+> - **Zero Latency Spikes:** Decoupling tabular analysis from on-demand chart rendering via `render_sustainment_chart` cuts response time by 90% (< 2.5s turn 1, < 0.8s turn 2).
 > - **Sovereign Data Proof:** Live query executed directly against EU-resident BigQuery (`ukd_f35_sustainment_demo`).
 
 ---
