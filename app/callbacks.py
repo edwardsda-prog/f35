@@ -138,7 +138,7 @@ _FAST_PATH_CAPABILITY_RE = re.compile(
 )
 
 _DOMAIN_ENTITY_FALLTHROUGH_RE = re.compile(
-    r"\b(zm\s*\d+|lot\s*#?[\w-]+|act-[\w-]+|nsn\b|srt-[\w-]+|frame\s*\d+|form\s*700|doc-\d+)\b",
+    r"\b(zm\s*\d+|wo-2026-\d+|lot\s*#?[\w-]+|act-[\w-]+|nsn\b|srt-[\w-]+|frame\s*\d+|form\s*700|doc-\d+|work\s+orders?|micap)\b",
     re.IGNORECASE,
 )
 
@@ -152,6 +152,9 @@ _FAST_PATH_CAPABILITY_RESPONSE: LlmResponse = LlmResponse(
                     "I am an enterprise AI sustainment agent built on Google Agent Developer Kit (ADK 2.0) and Gemini 3.8 Flash, "
                     "deployed to `europe-west1` (Belgium) with data residency strictly in `EU`.\n\n"
                     "### Core Capabilities:\n"
+                    "0. **UC0: Conversational Maintenance Log Explorer & Spreadsheet Card** (`@F35-Maintenance-Data (UC0)`)\n"
+                    "   - Dynamic Text-to-SQL over BigQuery EU Table 7 (`maintenance_work_orders`, ODIN / MOD Form 707A logs).\n"
+                    "   - Interactive Excel / Google Sheets-like Spreadsheet Card (`A`..`R`, Status Badges, Formula Summary Footer) with one-click `.CSV` export.\n\n"
                     "1. **UC1: Predictive Actuator Analytics & Supply Chain Orchestration** (`@F35-Sustainment-Analytics`)\n"
                     "   - Partition-pruned BigQuery analysis of telemetry, supply depot stock, and sortie schedules.\n"
                     "   - Two-turn interactive Vega-Lite chart rendering (`render_sustainment_chart`) and automated tail-swap recommendations.\n\n"

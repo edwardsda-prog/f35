@@ -1,7 +1,11 @@
-"""Domain tools package for UC1 Analytics, UC2 JTD Search, and UC3 Airworthiness."""
+"""Domain tools package for UC0 Maintenance Data, UC1 Analytics, UC2 JTD Search, and UC3 Airworthiness."""
 
 from __future__ import annotations
 
+from app.tools.uc0_maintenance import (
+    execute_maintenance_sql,
+    validate_and_rewrite_maintenance_sql,
+)
 from app.tools.uc1_analytics import (
     check_actuator_fatigue_and_depot_inventory,
     recommend_tail_swap_and_replenishment,
@@ -28,10 +32,12 @@ __all__ = [
     "calculate_structural_fatigue_and_yield",
     "check_actuator_fatigue_and_depot_inventory",
     "confirm_form700_hitl_release",
+    "execute_maintenance_sql",
     "generate_form700_airworthiness_package",
     "inspect_ultrasonic_cscan_and_map_cad",
     "normalize_cross_service_terminology",
     "recommend_tail_swap_and_replenishment",
     "search_technical_manuals_and_repair_logs",
     "sync_flight_telemetry_exceedance",
+    "validate_and_rewrite_maintenance_sql",
 ]

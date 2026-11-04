@@ -58,6 +58,7 @@ EXPECTED_BQ_TABLES = (
     "high_freq_strain_telemetry",
     "as_maintained_mbom_fasteners",
     "airworthiness_release_ledger",
+    "maintenance_work_orders",
 )
 
 
@@ -154,8 +155,22 @@ def ensure_gcs_bucket_and_upload(project_id: str, region: str, bucket_name: str)
             blob.upload_from_filename(str(file_path))
             uploaded_uris.append(f"gs://{bucket_name}/{rel_path}")
 
+    # Upload UC0 default CSV export (exports/F35_ODIN_Maintenance_Work_Orders.csv)
+    mwo_csv_path = OUTPUT_ROOT / "structured" / "maintenance_work_orders.csv"
+    if mwo_csv_path.exists():
+        export_rel_path = "exports/F35_ODIN_Maintenance_Work_Orders.csv"
+        export_blob = bucket.blob(export_rel_path)
+        export_blob.upload_from_filename(
+            str(mwo_csv_path),
+            content_type="text/csv; charset=utf-8",
+        )
+        uploaded_uris.append(f"gs://{bucket_name}/{export_rel_path}")
+
     print(f"  -> Uploaded {len(uploaded_uris)} artifacts to gs://{bucket_name}/")
     return uploaded_uris
+
+
+upload_staging_to_gcs = ensure_gcs_bucket_and_upload
 
 
 def ensure_bigquery_dataset_and_tables(
@@ -163,7 +178,7 @@ def ensure_bigquery_dataset_and_tables(
     bq_location: str,
     dataset_id: str,
 ) -> dict[str, int]:
-    """Create BigQuery EU dataset and populate all 6 tables using declarative schemas."""
+    """Create BigQuery EU dataset and populate all 7 tables using declarative schemas."""
     print(f"[4/6] Provisioning BigQuery dataset '{project_id}.{dataset_id}' (location='{bq_location}')...")
     bq_client = bigquery.Client(
         project=project_id,
@@ -174,7 +189,8 @@ def ensure_bigquery_dataset_and_tables(
     dataset_ref.location = bq_location
     dataset_ref.description = (
         "UK Defence F-35 Lightning II Fleet Sustainment Demo Dataset (EU Multi-Region). "
-        "Contains UC1 telemetry/depot/sortie tables and UC3 strain exceedance/mBOM/airworthiness release tables."
+        "Contains UC0 ODIN maintenance work orders, UC1 telemetry/depot/sortie tables, "
+        "and UC3 strain exceedance/mBOM/airworthiness release tables."
     )
     dataset = bq_client.create_dataset(dataset_ref, exists_ok=True)
     print(f"  -> BigQuery dataset ready: {dataset.full_dataset_id} (location={dataset.location})")
@@ -185,8 +201,9 @@ def ensure_bigquery_dataset_and_tables(
         schema_spec = json.loads(schema_file.read_text(encoding="utf-8"))
         table_name = schema_spec["table_name"]
         table_id = f"{project_id}.{dataset_id}.{table_name}"
+        description = schema_spec.get("description", "")
 
-        bq_fields = [
+        schema = [
             bigquery.SchemaField(
                 name=col["name"],
                 field_type=col["type"],
@@ -196,8 +213,8 @@ def ensure_bigquery_dataset_and_tables(
             for col in schema_spec["fields"]
         ]
 
-        table_obj = bigquery.Table(table_id, schema=bq_fields)
-        table_obj.description = schema_spec.get("description", "")
+        table_obj = bigquery.Table(table_id, schema=schema)
+        table_obj.description = description
 
         partition_field = schema_spec.get("partition_field")
         if partition_field:
@@ -206,7 +223,7 @@ def ensure_bigquery_dataset_and_tables(
                 field=partition_field,
             )
 
-        cluster_fields = schema_spec.get("cluster_fields")
+        cluster_fields = schema_spec.get("clustering_fields") or schema_spec.get("cluster_fields")
         if cluster_fields:
             table_obj.clustering_fields = cluster_fields
 
@@ -218,7 +235,7 @@ def ensure_bigquery_dataset_and_tables(
 
         rows = BQ_SEED_TABLES[table_name]
         job_config = bigquery.LoadJobConfig(
-            schema=bq_fields,
+            schema=schema,
             write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
         )
         load_job = bq_client.load_table_from_json(
@@ -229,10 +246,11 @@ def ensure_bigquery_dataset_and_tables(
         )
         load_job.result()
 
-        # Re-apply table description after WRITE_TRUNCATE load job
+        # Re-apply both column schema descriptions and table description after WRITE_TRUNCATE load job
         updated_table = bq_client.get_table(table_id)
-        updated_table.description = schema_spec.get("description", "")
-        bq_client.update_table(updated_table, ["description"])
+        updated_table.schema = schema
+        updated_table.description = description
+        bq_client.update_table(updated_table, ["schema", "description"])
 
         # Verify live row count via SQL query
         count_query = f"SELECT COUNT(*) AS row_count FROM `{table_id}`"
@@ -244,6 +262,9 @@ def ensure_bigquery_dataset_and_tables(
         print(f"  -> Seeded & verified table '{table_name}': {row_count} rows")
 
     return table_row_counts
+
+
+seed_bigquery_tables = ensure_bigquery_dataset_and_tables
 
 
 def _build_inline_document_payload(doc: dict[str, Any], content_config: str) -> dict[str, Any]:

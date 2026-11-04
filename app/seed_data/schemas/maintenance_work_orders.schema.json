@@ -1,0 +1,124 @@
+{
+  "table_name": "maintenance_work_orders",
+  "description": "Lockheed Martin ODIN / UK MOD Form 707A Aircraft Maintenance Log Work Orders across RAF Marham (617 Sqn, 207 Sqn) and HMS Queen Elizabeth (809 NAS). Tracks active and historical maintenance discrepancies (JCN), S1000D / JTD work unit codes (WUC), aircraft readiness status (FMC, PMC-M, NMC-M, NMC-S), MICAP supply holds, technician assignments, and MTTR metrics.",
+  "partition_field": "created_at_utc",
+  "partition_type": "DAY",
+  "clustering_fields": [
+    "tail_number",
+    "aircraft_status"
+  ],
+  "cluster_fields": [
+    "tail_number",
+    "aircraft_status"
+  ],
+  "fields": [
+    {
+      "name": "work_order_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Primary Key: ODIN / MOD Form 707A Job Control Number (JCN), e.g., WO-2026-88412."
+    },
+    {
+      "name": "tail_number",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "UK Lightning Force aircraft serial number (e.g., ZM151, ZM154). Foreign key to airframe_component_telemetry.tail_number."
+    },
+    {
+      "name": "aircraft_variant",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "F-35 variant (F-35B STOVL for UK Lightning Force)."
+    },
+    {
+      "name": "squadron",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Assigned unit (617 Sqn (The Dambusters), 809 NAS (The Immortals), 207 Sqn (OCU))."
+    },
+    {
+      "name": "base_location",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Operating location (RAF Marham or HMS Queen Elizabeth)."
+    },
+    {
+      "name": "aircraft_status",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Current readiness condition code: FMC (Full Mission Capable), PMC-M (Partial Mission Capable - Maintenance), NMC-M (Not Mission Capable - Maintenance), or NMC-S (Not Mission Capable - Supply / MICAP)."
+    },
+    {
+      "name": "work_order_status",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Job lifecycle state: OPEN, IN_PROGRESS, AWAITING_PARTS (MICAP), AWAITING_ENGINEERING_DISPOSITION, or COMPLETED."
+    },
+    {
+      "name": "priority",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Maintenance priority level: PRIORITY_1_RED_X (Grounding safety/MICAP), PRIORITY_2_URGENT (Degrades mission capability), or PRIORITY_3_ROUTINE (Deferred/routine)."
+    },
+    {
+      "name": "work_center",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Responsible maintenance work center: FLIGHT_LINE, STRUCTURES_LO, PROPULSION, AVIONICS, or ARMAMENT."
+    },
+    {
+      "name": "wuc_code",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "S1000D / JTD Work Unit Code (e.g., 27-10 Flight Control Actuator, 53-30 Forward Fuselage Canopy Latch, 53-20 Frame 496 Nacelle Bulkhead)."
+    },
+    {
+      "name": "subsystem_name",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Human-readable aircraft subsystem name corresponding to wuc_code."
+    },
+    {
+      "name": "discrepancy_narrative",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Pilot or technician reported fault description from ODIN / MOD Form 707A."
+    },
+    {
+      "name": "corrective_action",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Current maintenance action taken, JTD Data Module referenced, or engineering hold status."
+    },
+    {
+      "name": "awaiting_part_nsn",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "NATO Stock Number (NSN) if work_order_status = 'AWAITING_PARTS (MICAP)' or part replacement is scheduled; NULL otherwise."
+    },
+    {
+      "name": "assigned_shift_lead",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Ranked UK MOD maintenance supervisor assigned to the job (e.g., Chf Tech M. Davies)."
+    },
+    {
+      "name": "estimated_mttr_hours",
+      "type": "FLOAT",
+      "mode": "REQUIRED",
+      "description": "Estimated Mean Time To Repair (hours) based on JTD standard task times."
+    },
+    {
+      "name": "logged_man_hours",
+      "type": "FLOAT",
+      "mode": "REQUIRED",
+      "description": "Cumulative technician man-hours logged against the work order to date."
+    },
+    {
+      "name": "created_at_utc",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "UTC timestamp when the work order was opened in ODIN (DAY partition key)."
+    }
+  ]
+}
