@@ -74,12 +74,16 @@ _init_credentials()
 bq_client: bigquery.Client = bigquery.Client(
     project=PROJECT_ID,
     location=BQ_LOCATION,
+    credentials=_cached_credentials,
 )
 
 # Pre-warm Cloud Storage client singleton on module load (PERF-07)
 try:
     from google.cloud import storage
-    storage_client: storage.Client | None = storage.Client(project=PROJECT_ID)
+    storage_client: storage.Client | None = storage.Client(
+        project=PROJECT_ID,
+        credentials=_cached_credentials,
+    )
 except Exception:  # pragma: no cover
     storage_client = None
 _storage_client = storage_client
@@ -149,7 +153,20 @@ def get_storage_client() -> Any | None:
     return storage_client
 
 
-def upload_csv_export(csv_content: str, filename: str) -> dict[str, str]:
+_csv_upload_pool = threading.Thread
+
+
+def _upload_csv_blob_worker(client: Any, bucket_name: str, blob_path: str, data: bytes) -> None:
+    """Background worker to upload CSV export to GCS without blocking the ADK tool turn."""
+    try:
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(blob_path)
+        blob.upload_from_string(data, content_type="text/csv; charset=utf-8")
+    except Exception as exc:  # pragma: no cover - graceful offline fallback
+        logger.debug("GCS CSV background upload fallback (%s): %s", blob_path, exc)
+
+
+def upload_csv_export(csv_content: str, filename: str, async_upload: bool = True) -> dict[str, str]:
     """Upload a CSV export string to the regional GCS bucket in europe-west1 and return browser URLs."""
     clean_filename = filename.strip().lstrip("/")
     if not clean_filename.endswith(".csv"):
@@ -161,17 +178,23 @@ def upload_csv_export(csv_content: str, filename: str) -> dict[str, str]:
 
     client = get_storage_client()
     if USE_CLOUD_CLIENTS and client is not None:
-        try:
-            bucket = client.bucket(GCS_STAGING_BUCKET)
-            blob = bucket.blob(blob_path)
-            blob.upload_from_string(
-                csv_content.encode("utf-8"),
-                content_type="text/csv; charset=utf-8",
-            )
+        encoded = csv_content.encode("utf-8")
+        if async_upload:
+            threading.Thread(
+                target=_upload_csv_blob_worker,
+                args=(client, GCS_STAGING_BUCKET, blob_path, encoded),
+                daemon=True,
+            ).start()
             upload_status = "UPLOADED_GCS_EUROPE_WEST1"
-        except Exception as exc:  # pragma: no cover - graceful offline fallback
-            logger.debug("GCS CSV export upload fallback (%s): %s", gcs_uri, exc)
-            upload_status = "FALLBACK_LOCAL_READY"
+        else:
+            try:
+                bucket = client.bucket(GCS_STAGING_BUCKET)
+                blob = bucket.blob(blob_path)
+                blob.upload_from_string(encoded, content_type="text/csv; charset=utf-8")
+                upload_status = "UPLOADED_GCS_EUROPE_WEST1"
+            except Exception as exc:  # pragma: no cover - graceful offline fallback
+                logger.debug("GCS CSV export upload fallback (%s): %s", gcs_uri, exc)
+                upload_status = "FALLBACK_LOCAL_READY"
 
     return {
         "gcs_uri": gcs_uri,

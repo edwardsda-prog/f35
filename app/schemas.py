@@ -214,6 +214,7 @@ class SpreadsheetColumnHeader(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     column_letter: str = Field(..., min_length=1)
+    col_letter: str = Field(default="")
     field_name: str = Field(..., min_length=1)
     display_label: str = Field(default="")
     data_type: str = Field(default="STRING")
@@ -228,9 +229,12 @@ class SpreadsheetFormulaFooter(BaseModel):
     row_count_formula: str = Field(default="=COUNTA(A2:A15)")
     total_rows: int = Field(default=0, ge=0)
     sum_logged_man_hours_formula: str = Field(default="=SUM(logged_man_hours)")
+    total_man_hours_formula: str = Field(default="=SUM(logged_man_hours)")
     sum_logged_man_hours: float = Field(default=0.0, ge=0.0)
     avg_estimated_mttr_hours_formula: str = Field(default="=AVERAGE(estimated_mttr_hours)")
+    avg_mttr_hours_formula: str = Field(default="=AVERAGE(estimated_mttr_hours)")
     avg_estimated_mttr_hours: float = Field(default=0.0, ge=0.0)
+    micap_count_formula: str = Field(default='=COUNTIF(aircraft_status, "NMC-S")')
 
 
 class MaintenanceSpreadsheetCard(BaseModel):
@@ -238,6 +242,7 @@ class MaintenanceSpreadsheetCard(BaseModel):
 
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
+    sheet_id: str = Field(default="F35_ODIN_Maintenance_Work_Orders")
     sheet_title: str = Field(default="F35_ODIN_Maintenance_Work_Orders")
     table_fqn: str = Field(
         default="antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders"

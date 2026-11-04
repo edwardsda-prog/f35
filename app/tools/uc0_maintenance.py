@@ -248,11 +248,25 @@ def execute_maintenance_sql(
 
     if USE_CLOUD_CLIENTS:
         try:
+            from google.cloud import bigquery
+
             client = get_bq_client()
-            query_job = client.query(bq_sql, location=BQ_LOCATION)
+            job_config = bigquery.QueryJobConfig(use_query_cache=True)
+            if hasattr(client, "query_and_wait"):
+                row_iter = client.query_and_wait(
+                    bq_sql,
+                    job_config=job_config,
+                    location=BQ_LOCATION,
+                )
+            else:
+                row_iter = client.query(
+                    bq_sql,
+                    job_config=job_config,
+                    location=BQ_LOCATION,
+                ).result()
             rows = [
                 {k: _serialize_bq_val(v) for k, v in dict(row.items()).items()}
-                for row in query_job.result()
+                for row in row_iter
             ]
         except Exception as exc:
             logger.warning(
@@ -289,6 +303,7 @@ def execute_maintenance_sql(
         columns.append(
             SpreadsheetColumnHeader(
                 column_letter=col_letter,
+                col_letter=col_letter,
                 field_name=fname,
                 display_label=f"{col_letter}: {fname}",
                 data_type=meta.get("type", "STRING"),
@@ -326,14 +341,23 @@ def execute_maintenance_sql(
 
     sum_logged = round(sum(logged_hours_vals), 2) if logged_hours_vals else 0.0
     avg_mttr = round(sum(mttr_vals) / len(mttr_vals), 2) if mttr_vals else 0.0
+    micap_cnt = sum(
+        1
+        for r in rows
+        if str(r.get("aircraft_status", "")).upper().startswith("NMC-S")
+        or "MICAP" in str(r.get("work_order_status", "")).upper()
+    )
 
     footer = SpreadsheetFormulaFooter(
         row_count_formula=f"=COUNTA(A2:A{end_row_num})",
         total_rows=total_rows,
-        sum_logged_man_hours_formula="=SUM(logged_man_hours)",
+        sum_logged_man_hours_formula=f"=SUM(logged_man_hours) -> {sum_logged:.1f} hrs",
+        total_man_hours_formula=f"=SUM(logged_man_hours) -> {sum_logged:.1f} hrs",
         sum_logged_man_hours=sum_logged,
-        avg_estimated_mttr_hours_formula="=AVERAGE(estimated_mttr_hours)",
+        avg_estimated_mttr_hours_formula=f"=AVERAGE(estimated_mttr_hours) -> {avg_mttr:.2f} hrs",
+        avg_mttr_hours_formula=f"=AVERAGE(estimated_mttr_hours) -> {avg_mttr:.2f} hrs",
         avg_estimated_mttr_hours=avg_mttr,
+        micap_count_formula=f'=COUNTIF(aircraft_status, "NMC-S") -> {micap_cnt} MICAP',
     )
 
     # Export CSV to GCS europe-west1
@@ -419,6 +443,7 @@ def execute_maintenance_sql(
     card_markdown = "\n".join(md_lines)
 
     card = MaintenanceSpreadsheetCard(
+        sheet_id=clean_title,
         sheet_title=clean_title,
         table_fqn=_TABLE_FQN,
         bq_location=BQ_LOCATION,
