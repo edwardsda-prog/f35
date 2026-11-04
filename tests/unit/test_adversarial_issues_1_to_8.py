@@ -110,21 +110,9 @@ class TestFastPathRegexAdversarial:
             "describe operational capability",
             "explain your operational features please",
             # Edge-case whitespace between "what" and "are":
-            # Uses xfail to document that regex has literal 'what are' rather than 'what\s+are'
-            pytest.param(
-                "   what    are    your    capabilities   ",
-                marks=pytest.mark.xfail(
-                    reason="Regex has literal space in 'what are' instead of 'what\\s+are'"
-                ),
-            ),
+            "   what    are    your    capabilities   ",
             # Singular 'operational capability' without verb:
-            # Uses xfail to document that regex has 'capabilities?' which matches 'capabilitie'/'capabilities' but not 'capability'
-            pytest.param(
-                "operational capability",
-                marks=pytest.mark.xfail(
-                    reason="Regex specifies 'capabilities?' which matches 'capabilitie'/'capabilities' but not 'capability'"
-                ),
-            ),
+            "operational capability",
         ],
     )
     def test_fast_path_capability_interception_edge_cases(self, query: str) -> None:

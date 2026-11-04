@@ -132,8 +132,8 @@ _FAST_PATH_GREETING_RESPONSE: LlmResponse = LlmResponse(
 )
 
 _FAST_PATH_CAPABILITY_RE = re.compile(
-    r"\b(describe|what are|explain|show)\s+(your\s+)?(operational\s+)?(capability|capabilities|features|functions)\b|"
-    r"\boperational\s+capabilities?\b",
+    r"\b(describe|what\s+are|explain|show)\s+(your\s+)?(operational\s+)?(capability|capabilities|features|functions)\b|"
+    r"\boperational\s+capabilit(?:y|ies)\b",
     re.IGNORECASE,
 )
 
