@@ -1,6 +1,27 @@
 {
   "eval_cases": [
     {
+      "eval_case_id": "uc0_maintenance_work_orders_spreadsheet_card",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Show all active ODIN/ALIS maintenance work orders from maintenance_work_orders where work_order_status != 'COMPLETED' ordered by priority ascending using execute_maintenance_sql, and include the Excel / Google Sheets Spreadsheet Card and CSV download link."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Executed execute_maintenance_sql on antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders returning 10 active work orders (including ZM151 work orders WO-2026-88401, WO-2026-88402, WO-2026-88403), rendered as an Excel / Google Sheets Spreadsheet Card with status badges (🟡 PMC-M, 🔴 NMC-S (MICAP)), formula footer (=COUNTA, =SUM), and authenticated GCS CSV download link [📥 Download .CSV (Excel / Google Sheets)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/)."
+            }
+          ]
+        }
+      }
+    },
+    {
       "eval_case_id": "uc1_actuator_fatigue_and_stock",
       "prompt": {
         "role": "user",
