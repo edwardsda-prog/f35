@@ -184,6 +184,7 @@ I am the Lead Stress Engineer. I have verified the deterministic Miner's Rule ma
 > - **Operational Impact:** Avoids an unnecessary multi-week depot wing teardown (`0.012" < 0.015"` tolerance) while proactively protecting **14 allied F-35s** globally carrying the same fastener batch (`Lot #8841-B`).
 > - **Time Compressed:** **36–72 hours** of multi-team engineering data fusion compressed into **< 1 second (`537 ms` parallel execution)**.
 > - **Accredited Governance Proof:** **100% Deterministic Physics** (`MIL-HDBK-516C` / `DEF STAN 00-970`) + **Hard-Coded Human-in-the-Loop Gate**—AI prepares the evidence; the human Chief Engineer owns the signature.
+> - **Leadership Briefing:** See [docs/PRODUCTION_ARCHITECTURE_EXECUTIVE_SUMMARY.md](file:///usr/local/google/home/edwardsda/Documents/F35/docs/PRODUCTION_ARCHITECTURE_EXECUTIVE_SUMMARY.md) for the full non-technical 7-stage workflow and commander's brief.
 
 ---
 
