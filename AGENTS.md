@@ -184,6 +184,10 @@ f35-sustainment-agent/
   2. `recommend_tail_swap_and_replenishment(sortie_id: str, primary_tail: str, spare_tail: str, tool_context: ToolContext) -> dict`  
      *Display Title:* **Recommend Tail Swap & Depot Replenishment**  
      - Drafts the automated Supply Alert (`NSN 1680-01-619-4821`, 18-hr shipping ETA) and stages reallocation of `SRT-MAR-20261103-01` (`Flt Lt Henderson`) from `ZM151` to `ZM154`.
+  3. `render_sustainment_chart(chart_name: str, tool_context: ToolContext = None) -> dict`  
+     *Display Title:* **Render Sustainment Chart & Presentation Slides**  
+     - Dynamically renders high-resolution Full HD 16:9 widescreen PNG charts on the fly in memory (~300–450 ms) using headless Matplotlib (`Agg` backend at 160 DPI).
+     - Automatically uploads the rendered PNG bytes to Google Cloud Storage (`gs://antig-dave-f35-staging-europe-west1/charts/<chart_name>.png`) and returns an authenticated HTTPS browser download link (`[📥 Download 16:9 Executive Slide Graphic (PNG)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/charts/...)`) for direct insertion into executive briefings, in addition to inline Vega-Lite v5 JSON specifications for Gemini Enterprise Canvas.
 
 ### Sub-Agent 2: `f35_jtd_search_agent` (`app/sub_agents/uc2_search_agent.py` & `app/tools/uc2_jtd_search.py`)
 * **Target Datastores:** `ukd-f35-jtd-ietm-ds` & `ukd-f35-narrative-logs-ds` (Discovery Engine Location: `eu`)

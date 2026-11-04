@@ -4,7 +4,7 @@
 [![Gemini Enterprise](https://img.shields.io/badge/Gemini%20Enterprise-eu-orange.svg)](https://cloud.google.com/gemini)
 [![Region](https://img.shields.io/badge/GCP%20Region-europe--west1%20%28Belgium%29-green.svg)](https://cloud.google.com/compute/docs/regions-zones)
 
-> **Specification Reference:** [SA_F35.md](./SA_F35.md) (`SDD-GE-F35-001`, v1.2)  
+> **Specification Reference:** [SA_F35.md](./SA_F35.md) (`SDD-GE-F35-001`, v1.3)  
 > **Multi-Agent Orchestration & Operational Invariants:** [AGENTS.md](./AGENTS.md)  
 > **Phase 0 Engineering Specification:** [.agents-cli-spec.md](./.agents-cli-spec.md)
 
@@ -14,10 +14,12 @@
 
 The **F-35 Lightning II Fleet Sustainment Agent Platform** is an enterprise-grade autonomous reasoning engine deployed to **Google Cloud Agent Platform** and published to **Gemini Enterprise Search & Conversation** (App: **`F35 Support`** in `eu`).
 
-Built on **ADK 2.0 (`google-adk >= 2.0.0`)** and managed via `agents-cli`, the platform unifies three primary sustainment operational use cases:
+Built on **ADK 2.0 (`google-adk >= 2.0.0`)** and managed via `agents-cli`, the platform unifies four primary sustainment operational use cases:
 
-1. **UC1: Predictive Component Health & Global Depot Replenishment**  
-   Cross-analyzes BigQuery 200 Hz strain telemetry (`airframe_component_telemetry`), global inventory (`global_depot_inventory`), and sortie schedules (`squadron_sortie_schedule`) to trigger automated supply alerts and sortie tail swaps with interactive Vega-Lite visualizations.
+0. **UC0: Conversational Maintenance Data (Text-to-SQL & Spreadsheet Card)**  
+   Translates natural-language maintenance queries into pure dynamic read-only BigQuery Standard SQL against Lockheed Martin ODIN / UK MOD Form 707A work orders (`maintenance_work_orders` in `EU`), rendering Excel / Google Sheets-like Spreadsheet Cards with Column Letters (`A`..`R`), Status Badges (`🟢 FMC`, `🟡 PMC-M`, `🟠 NMC-M`, `🔴 NMC-S (MICAP)`), Formula Summary Footers (`=COUNTA()`, `=SUM()`, `=AVERAGE()`), and automatic GCS `.csv` export download links.
+1. **UC1: Predictive Component Health, Depot Replenishment & Presentation Graphics**  
+   Cross-analyzes BigQuery 200 Hz strain telemetry (`airframe_component_telemetry`), global inventory (`global_depot_inventory`), and sortie schedules (`squadron_sortie_schedule`) to trigger automated supply alerts, recommend sortie tail swaps, generate inline Vega-Lite visualizations, and dynamically render publication-ready 16:9 widescreen presentation slide graphics on the fly in memory (< 790 ms) with direct GCS download links.
 2. **UC2: Discrepancy Diagnostics & S1000D Maintenance Grounding**  
    Performs grounded single-pass semantic searches across S1000D Joint Technical Data (`ukd-f35-jtd-ietm-ds`) and 5-year cross-service maintenance narratives (`ukd-f35-narrative-logs-ds`), normalizing RAF/RN/USAF/USMC technical dialect variations and eliminating phantom BIT discrepancies.
 3. **UC3: Dynamic Flight Envelope Exceedance & HITL Airworthiness Release**  
@@ -46,15 +48,15 @@ Built on **ADK 2.0 (`google-adk >= 2.0.0`)** and managed via `agents-cli`, the p
 ├── README.md                        # Project documentation
 ├── .gitignore                       # Git ignore rules
 ├── app/                             # ADK 2.0 Agent Runtime package (App(name="app"))
-│   ├── sub_agents/                  # Specialist ADK sub-agents (Analytics, Search, Airworthiness)
+│   ├── sub_agents/                  # Specialist ADK sub-agents (Maintenance Data, Analytics, Search, Airworthiness)
 │   ├── physics/                     # Deterministic Rainflow & Palmgren-Miner ASIP engine
 │   ├── seed_data/                   # Authoritative seed records & schemas for BigQuery / DE
 │   │   └── schemas/                 # Declarative BigQuery JSON table schemas
-│   └── tools/                       # Human-friendly tool implementations
+│   └── tools/                       # Human-friendly tool implementations & on-the-fly chart painter
 ├── packages/                        # Monorepo specialization boundaries
 │   ├── api/                         # Backend Implementer boundary (API, data layer, physics)
 │   │   └── AGENTS.md
-│   └── web/                         # Frontend Implementer boundary (Vega-Lite Canvas & HITL Studio)
+│   └── web/                         # Frontend Implementer boundary (Spreadsheet Card, Vega-Lite Canvas & HITL Studio)
 │       └── AGENTS.md
 ├── scripts/                         # Synthetic corpus generation & infra bootstrapping
 └── tests/                           # QA / Test Agent boundary
