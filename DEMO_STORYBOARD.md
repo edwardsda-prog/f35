@@ -26,8 +26,8 @@
 
 ```mermaid
 flowchart LR
-    A1["Act 1 (Prompt 1 · 1.5 Mins)<br/>GENERATE MORE SORTIES<br/>Spot ZM151 Actuator Breach,<br/>Check Depot Stock & Swap to ZM154"] --> A2["Act 2 (Prompt 2 · 1.5 Mins)<br/>EMPOWER MAINTAINERS<br/>Solve Zero-BIT Canopy Fault<br/>via Allied USMC/RAF Experience"]
-    A2 --> A3["Act 3 (Prompts 3 & 4 · 2.5 Mins)<br/>CERTIFY AIRWORTHINESS SAFELY<br/>Deterministic Over-G Physics,<br/>Fleet Lot Audit & Human Sign-Off"]
+    A1["Act 1 (Prompt 1 · 1.5 Mins) | GENERATE MORE SORTIES: Spot ZM151 Actuator Breach, Check Depot Stock & Swap to ZM154"] --> A2["Act 2 (Prompt 2 · 1.5 Mins) | EMPOWER MAINTAINERS: Solve Zero-BIT Canopy Fault via Allied USMC/RAF Experience"]
+    A2 --> A3["Act 3 (Prompts 3 & 4 · 2.5 Mins) | CERTIFY AIRWORTHINESS SAFELY: Deterministic Over-G Physics, Fleet Lot Audit & Human Sign-Off"]
 ```
 
 ### Presenter Opening Talk-Track
@@ -42,6 +42,13 @@ flowchart LR
 ---
 
 ### Act 1: Generate More Sorties — Instant Fleet Readiness & Tail Swap (Prompt 1)
+
+```mermaid
+flowchart LR
+    U1["Prompt 1: Squadron Logistics Officer (07:30Z Sortie Risk)"] --> R1["@F35-Sustainment-Analytics (BigQuery EU 3-Table Join · 1.2s)"]
+    R1 --> C1["2 Inline Vega-Lite Charts: ZM151 Breached (1,000.4 hrs) vs 4 Spares in Stock"]
+    C1 --> S1["Mission Saved: Pilot Henderson Swapped to ZM154 (842 hrs) + 18-Hr Depot Order"]
+```
 
 * **The Executive Challenge:** Tail **`ZM151`** is scheduled to lead the `07:30Z` morning wave with **Flt Lt Henderson (`VIPER-1`)**. Just before launch, post-flight telemetry shows its Left Horizontal Tail Actuator crossed its `1,000.0`-hour safety limit.
 * **Paste Prompt 1 into `F35 Support`:**
@@ -64,6 +71,13 @@ flowchart LR
 
 ### Act 2: Empower Front-Line Maintainers — Solving the "No-Fault" Mystery (Prompt 2)
 
+```mermaid
+flowchart LR
+    U2["Prompt 2: Maintenance Chief (Stiff Canopy Handle · Zero BIT Faults)"] --> R2["@F35-JTD-Search (Discovery Engine eu Single-Pass · 0.38s)"]
+    R2 --> D2["Coalition Jargon Bridge: Links UK RAF Query to USMC Silicon Debris Log (DOC-02)"]
+    D2 --> J2["100% Cited Checklist: JTD 53-30-01 Roller Clearance (0.020-0.035 in) & 18.5 N·m Torque"]
+```
+
 * **The Executive Challenge:** A night-sortie pilot reports a stiff canopy release handle that hesitated to lock—but the aircraft computer logged **zero Built-In Test (BIT) fault codes**. Normally, technicians waste an entire shift tearing down the canopy electrical system because keyword search can't find a match—especially when the real answer is buried in a US Marine Corps log using American terminology (`latch/wrench` vs UK `catch/spanner`).
 * **Paste Prompt 2 into `F35 Support`:**
   ```text
@@ -82,6 +96,13 @@ flowchart LR
 ---
 
 ### Act 3: Certify Airworthiness Safely — Deterministic Physics & Human-in-the-Loop Release (Prompts 3 & 4)
+
+```mermaid
+flowchart LR
+    U3["Prompt 3: Lead Engineer (ZM151 14:22Z Mach 1.3 Shudder + C-Scan DOC-06)"] --> F3["4-Way Parallel Fan-Out (0.54s): 1553 Sync (9.4G) + Miner's Rule (104.2% Yield) + CAD Hole #14 (0.012 in) + Lot #8841-B (14 Jets)"]
+    F3 --> G3["Safety Gate Pause: Form 700 (AWR-700-20261102-ZM151) Held in PENDING_HITL_REVIEW"]
+    G3 --> U4["Prompt 4: Chief Engineer Sign-Off -> CONFIRMED_BY_ENGINEER (DEF STAN 00-970)"]
+```
 
 * **The Executive Challenge:** Why did `ZM151` experience heavy wear yesterday? During a `Mach 1.3` evasive maneuver at `14:22Z`, the pilot felt a severe airframe shudder on the port wing bulkhead (**`Frame 496`**). Under UK & US Military Airworthiness Directives (**`DEF STAN 00-970`** & **`MIL-HDBK-516C`**), **AI is legally forbidden from estimating structural stress or clearing an aircraft to fly.**
 * **Presenter Talk-Track:** *"Watch how Gemini Enterprise orchestrates four separate engineering systems in parallel in half a second—while delegating 100% of the structural fatigue math to accredited, deterministic physics code and holding the aircraft at a mandatory Human-in-the-Loop gate."*
