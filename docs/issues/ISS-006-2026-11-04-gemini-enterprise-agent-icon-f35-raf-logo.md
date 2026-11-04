@@ -62,7 +62,7 @@ Additionally, the source image `gs://f35sa/f35-RAF.png` is a widescreen `1408x76
 ### 3.1 Summary of Resolution
 1. Downloaded `gs://f35sa/f35-RAF.png` (`1408x768`, featuring RAF F-35B `ZM151` with RAF roundels and tail markings), framed the full nose-to-afterburner aircraft into a seamless `1:1` square, and downsampled with `Image.Resampling.LANCZOS` to `128x128` (`34,987` bytes, `app/assets/f35_raf_icon_128.png`) and `256x256` (`121,496` bytes, `app/assets/f35_raf_icon_256.png`).
 2. Uploaded the resized icons to `gs://f35sa/f35_raf_icon_128.png`, `gs://f35sa/f35_raf_icon_256.png`, and `gs://antig-dave-f35-staging-europe-west1/assets/`.
-3. Patched agent `1346484961578743940` (`F-35 Fleet Sustainment Coordinator`) in Gemini Enterprise (`f35-support`) via `PATCH .../agents/1346484961578743940?updateMask=icon` using base64 `"icon": {"content": "<base64_png>"}`.
+3. Patched agent `1346484961578743940` (`F-35 Fleet Sustainment Coordinator`) in Gemini Enterprise (`f35-support`) via `PATCH .../agents/1346484961578743940?updateMask=icon` using a RFC 2397 Data URI in `"icon": {"uri": "data:image/png;base64,<base64_png>"}` (the Vertex AI Search / Gemini Enterprise web UI binds `<img src>` to `icon.uri` and falls back to the initial letter `"F"` when `icon.uri` is empty, even if `icon.content` is populated).
 4. Added `ensure_gemini_enterprise_agent_icon()` to [`scripts/setup_demo_infra.py`](../../scripts/setup_demo_infra.py) so re-running infrastructure provisioning or agent publishing automatically restores the RAF F-35 (`ZM151`) icon.
 
 ### 3.2 Modified Files & Symbols
@@ -96,7 +96,8 @@ Additionally, the source image `gs://f35sa/f35-RAF.png` is a widescreen `1408x76
 
 | Rejected Approach | Why It Failed or Was Rejected | Guardrail / Constraint Violated |
 | :--- | :--- | :--- |
-| Passing raw `gs://f35sa/f35-RAF.png` in `icon.uri` | Discovery Engine `Agent.icon.uri` requires browser-accessible HTTPS or inline `icon.content` base64 bytes, and the uncropped `1408x768` (1.64 MB) image is non-square and oversized for an avatar icon. | UI rendering & payload size |
+| Passing raw `gs://f35sa/f35-RAF.png` in `icon.uri` | Discovery Engine `Agent.icon.uri` requires a browser-renderable URI (`https://...` or `data:image/png;base64,...`), and the uncropped `1408x768` (1.64 MB) image is non-square and oversized for an avatar icon. | UI rendering & payload size |
+| Setting `icon.content` instead of `icon.uri` | `Agent.icon` is a `oneof` (`uri` vs `content`). Although the Discovery Engine REST API accepts `icon.content`, the Vertex AI Search / Gemini Enterprise web frontend (`vertexaisearch.cloud.google.com`) only reads `icon.uri` and falls back to rendering the first letter of `displayName` (`"F"`) when `icon.uri` is omitted. Passing `"icon": {"uri": "data:image/png;base64,..."}` populates `icon.uri` directly. | Gemini Enterprise UI avatar rendering |
 | Tight 768x768 center crop without framing | Clips the nose cone and horizontal stabilizer tips when Gemini Enterprise applies a circular avatar mask. Framing `x=230..1230` (`1000x1000`) preserves the entire nose-to-afterburner silhouette of `ZM151`. | Visual quality |
 
 ---

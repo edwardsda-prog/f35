@@ -545,6 +545,7 @@ def ensure_gemini_enterprise_agent_icon(
         return {"status": "SKIPPED", "reason": f"Icon file missing: {icon_path}"}
 
     b64_content = base64.b64encode(icon_path.read_bytes()).decode("ascii")
+    data_uri = f"data:image/png;base64,{b64_content}"
     agents_base_url = (
         f"https://{de_location}-discoveryengine.googleapis.com/v1alpha/"
         f"projects/{project_id}/locations/{de_location}/collections/default_collection/"
@@ -565,7 +566,7 @@ def ensure_gemini_enterprise_agent_icon(
                 patch_payload = {
                     "displayName": agent["displayName"],
                     "description": agent.get("description", ""),
-                    "icon": {"content": b64_content},
+                    "icon": {"uri": data_uri},
                     "adkAgentDefinition": agent.get("adkAgentDefinition", {}),
                 }
                 p_resp = client.patch(patch_url, headers=headers, json=patch_payload)
