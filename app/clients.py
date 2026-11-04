@@ -26,9 +26,13 @@ from app.config import (
     DE_COLLECTION,
     DE_LOCATION,
     DISCOVERY_PAGE_SIZE,
+    GCS_BROWSER_BASE_URL,
+    GCS_EXPORTS_PREFIX,
+    GCS_STAGING_BUCKET,
     JTD_DATASTORE_ID,
     NARRATIVE_DATASTORE_ID,
     PROJECT_ID,
+    USE_CLOUD_CLIENTS,
 )
 
 logger = logging.getLogger(__name__)
@@ -78,6 +82,7 @@ try:
     storage_client: storage.Client | None = storage.Client(project=PROJECT_ID)
 except Exception:  # pragma: no cover
     storage_client = None
+_storage_client = storage_client
 
 # Pre-warm synchronous and asynchronous HTTP clients for Discovery Engine (eu) (PERF-07)
 http_client: httpx.Client = httpx.Client(
@@ -142,6 +147,37 @@ def get_bigquery_client() -> bigquery.Client:
 def get_storage_client() -> Any | None:
     """Return the pre-warmed Cloud Storage client singleton."""
     return storage_client
+
+
+def upload_csv_export(csv_content: str, filename: str) -> dict[str, str]:
+    """Upload a CSV export string to the regional GCS bucket in europe-west1 and return browser URLs."""
+    clean_filename = filename.strip().lstrip("/")
+    if not clean_filename.endswith(".csv"):
+        clean_filename = f"{clean_filename}.csv"
+    blob_path = f"{GCS_EXPORTS_PREFIX}/{clean_filename}"
+    gcs_uri = f"gs://{GCS_STAGING_BUCKET}/{blob_path}"
+    download_url = f"{GCS_BROWSER_BASE_URL}/{blob_path}"
+    upload_status = "SKIPPED_OFFLINE"
+
+    client = get_storage_client()
+    if USE_CLOUD_CLIENTS and client is not None:
+        try:
+            bucket = client.bucket(GCS_STAGING_BUCKET)
+            blob = bucket.blob(blob_path)
+            blob.upload_from_string(
+                csv_content.encode("utf-8"),
+                content_type="text/csv; charset=utf-8",
+            )
+            upload_status = "UPLOADED_GCS_EUROPE_WEST1"
+        except Exception as exc:  # pragma: no cover - graceful offline fallback
+            logger.debug("GCS CSV export upload fallback (%s): %s", gcs_uri, exc)
+            upload_status = "FALLBACK_LOCAL_READY"
+
+    return {
+        "gcs_uri": gcs_uri,
+        "download_url": download_url,
+        "upload_status": upload_status,
+    }
 
 
 def get_http_client() -> httpx.Client:
@@ -334,4 +370,5 @@ __all__ = [
     "search_discovery_engine_datastore",
     "search_discovery_engine_extended",
     "storage_client",
+    "upload_csv_export",
 ]

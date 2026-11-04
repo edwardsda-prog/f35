@@ -1,8 +1,9 @@
-"""Pydantic v2 data contracts for UC1 Analytics, UC2 JTD Search, and UC3 Airworthiness.
+"""Pydantic v2 data contracts for UC0 Maintenance Data, UC1 Analytics, UC2 JTD Search, and UC3 Airworthiness.
 
-Provides strict schema validation for BigQuery telemetry/inventory records, Vega-Lite v5
-visualizations, S1000D JTD citations, deterministic ASIP Miner's Rule fatigue results,
-3D CAD flaw mappings, mBOM lot audits, MIL-STD-3001 SAR, and Form 700 HITL release packages.
+Provides strict schema validation for BigQuery maintenance work orders / Spreadsheet Cards,
+telemetry/inventory records, Vega-Lite v5 visualizations, S1000D JTD citations,
+deterministic ASIP Miner's Rule fatigue results, 3D CAD flaw mappings, mBOM lot audits,
+MIL-STD-3001 SAR, and Form 700 HITL release packages.
 """
 
 from __future__ import annotations
@@ -205,3 +206,54 @@ class Form700ReleasePackage(BaseModel):
     staged_turn_id: int | str | None = Field(default=None)
     approved_turn_id: int | str | None = Field(default=None)
     approval_notes: str | None = Field(default=None)
+
+
+class SpreadsheetColumnHeader(BaseModel):
+    """UC0 Excel / Google Sheets column header metadata with column letter A..R."""
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+    column_letter: str = Field(..., min_length=1)
+    field_name: str = Field(..., min_length=1)
+    display_label: str = Field(default="")
+    data_type: str = Field(default="STRING")
+    description: str = Field(default="")
+
+
+class SpreadsheetFormulaFooter(BaseModel):
+    """UC0 Excel / Google Sheets formula summary footer row."""
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+    row_count_formula: str = Field(default="=COUNTA(A2:A15)")
+    total_rows: int = Field(default=0, ge=0)
+    sum_logged_man_hours_formula: str = Field(default="=SUM(logged_man_hours)")
+    sum_logged_man_hours: float = Field(default=0.0, ge=0.0)
+    avg_estimated_mttr_hours_formula: str = Field(default="=AVERAGE(estimated_mttr_hours)")
+    avg_estimated_mttr_hours: float = Field(default=0.0, ge=0.0)
+
+
+class MaintenanceSpreadsheetCard(BaseModel):
+    """UC0 interactive Excel / Google Sheets-like Spreadsheet Card & CSV export model."""
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+    sheet_title: str = Field(default="F35_ODIN_Maintenance_Work_Orders")
+    table_fqn: str = Field(
+        default="antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders"
+    )
+    bq_location: str = Field(default="EU")
+    executed_sql: str = Field(..., min_length=1)
+    execution_source: str = Field(default="BIGQUERY_EU")
+    execution_latency_ms: float = Field(default=0.0, ge=0.0)
+    row_count: int = Field(default=0, ge=0)
+    column_count: int = Field(default=0, ge=0)
+    columns: list[SpreadsheetColumnHeader] = Field(default_factory=list)
+    rows: list[dict[str, Any]] = Field(default_factory=list)
+    formula_footer: SpreadsheetFormulaFooter = Field(
+        default_factory=SpreadsheetFormulaFooter
+    )
+    csv_gcs_uri: str = Field(default="")
+    csv_download_url: str = Field(default="")
+    spreadsheet_card_markdown: str = Field(default="")
+
