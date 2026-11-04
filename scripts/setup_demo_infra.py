@@ -530,6 +530,53 @@ def ensure_gemini_enterprise_app(
         return c_resp.json()
 
 
+def ensure_gemini_enterprise_agent_icon(
+    project_id: str,
+    de_location: str = "eu",
+    engine_id: str = "f35-support",
+    agent_display_name: str = "F-35 Fleet Sustainment Coordinator",
+    icon_path: Path | None = None,
+) -> dict[str, Any]:
+    """Patch the Gemini Enterprise registered ADK agent icon with the RAF F-35 (ZM151) aircraft logo."""
+    if icon_path is None:
+        icon_path = PROJECT_ROOT / "app" / "assets" / "f35_raf_icon_128.png"
+    if not icon_path.exists():
+        print(f"  -> Warning: Agent icon file not found at {icon_path}; skipping icon patch.")
+        return {"status": "SKIPPED", "reason": f"Icon file missing: {icon_path}"}
+
+    b64_content = base64.b64encode(icon_path.read_bytes()).decode("ascii")
+    agents_base_url = (
+        f"https://{de_location}-discoveryengine.googleapis.com/v1alpha/"
+        f"projects/{project_id}/locations/{de_location}/collections/default_collection/"
+        f"engines/{engine_id}/assistants/default_assistant/agents"
+    )
+    headers = get_auth_headers(project_id)
+    patched_agents: list[str] = []
+
+    with httpx.Client(timeout=30.0) as client:
+        resp = client.get(agents_base_url, headers=headers)
+        if resp.status_code != 200:
+            return {"status": "ERROR", "http_status": resp.status_code}
+        agents = resp.json().get("agents", [])
+        for agent in agents:
+            if agent.get("displayName") == agent_display_name or "1346484961578743940" in agent.get("name", ""):
+                agent_name = agent["name"]
+                patch_url = f"https://{de_location}-discoveryengine.googleapis.com/v1alpha/{agent_name}?updateMask=icon"
+                patch_payload = {
+                    "displayName": agent["displayName"],
+                    "description": agent.get("description", ""),
+                    "icon": {"content": b64_content},
+                    "adkAgentDefinition": agent.get("adkAgentDefinition", {}),
+                }
+                p_resp = client.patch(patch_url, headers=headers, json=patch_payload)
+                if p_resp.status_code == 200:
+                    patched_agents.append(agent_name)
+                    print(f"  -> Patched RAF F-35 (ZM151) icon onto agent: {agent_name}")
+
+    return {"status": "OK", "patched_agents": patched_agents, "icon_bytes": icon_path.stat().st_size}
+
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Provision & seed live EU infrastructure for F-35 Sustainment Agent Platform."
@@ -572,6 +619,7 @@ def main() -> None:
         force_reimport=args.force_reimport,
     )
     engine_info = ensure_gemini_enterprise_app(args.project, args.de_location, args.engine_id)
+    icon_info = ensure_gemini_enterprise_agent_icon(args.project, args.de_location, args.engine_id)
 
     summary = {
         "project_id": args.project,
@@ -585,6 +633,7 @@ def main() -> None:
         "bigquery_table_row_counts": bq_counts,
         "discovery_engine_datastores": de_status,
         "gemini_enterprise_engine": engine_info.get("name", args.engine_id),
+        "gemini_enterprise_agent_icon": icon_info,
     }
     print("\n=== INFRASTRUCTURE PROVISIONING & VERIFICATION SUMMARY ===")
     print(json.dumps(summary, indent=2))
