@@ -2,6 +2,8 @@
  * @fileoverview Public entrypoint for `@f35-sustainment-agent/web` (`packages/web`).
  *
  * Exports:
+ * 0. UC0 Maintenance Work Order Spreadsheet Card (`MaintenanceSheetCard`,
+ *    `formatStatusBadge`, `MAINTENANCE_STATUS_BADGES`, `MAINTENANCE_SHEET_CARD_STYLES`).
  * 1. UC1 Supply & Readiness Analytics Canvas (`VegaCanvas`, `validateVegaLiteSpec`,
  *    `extractVegaLiteBlocks`, `renderMarkdownFallbackTable`, `formatDualCompatibleVegaOutput`,
  *    `VEGA_LITE_V5_SCHEMA_URL`).
@@ -10,6 +12,20 @@
  *    `normalizeAuthorizedEngineeringRole`, `AUTHORIZED_ENGINEERING_ROLES`).
  * 3. Isomorphic VNode-to-HTML serializer (`renderVNodeToHtml`) for SSR and deterministic verification.
  */
+
+export {
+  MAINTENANCE_STATUS_BADGES,
+  MAINTENANCE_SHEET_CARD_STYLES,
+  formatStatusBadge,
+  MaintenanceSheetCard,
+} from "./components/MaintenanceSheetCard";
+
+export type {
+  SpreadsheetColumnHeader,
+  SpreadsheetFormulaFooter,
+  MaintenanceSpreadsheetCardProps,
+  MaintenanceSpreadsheetCard,
+} from "./components/MaintenanceSheetCard";
 
 export {
   VEGA_LITE_V5_SCHEMA,
