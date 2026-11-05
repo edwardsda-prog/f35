@@ -101,6 +101,9 @@ EXPECTED_SCHEMA_FILES = (
     "high_freq_strain_telemetry.schema.json",
     "as_maintained_mbom_fasteners.schema.json",
     "airworthiness_release_ledger.schema.json",
+    "maintenance_work_orders.schema.json",
+    "phm_bit_fault_events.schema.json",
+    "work_center_tooling_and_sqep.schema.json",
 )
 
 
@@ -108,7 +111,7 @@ def _extract_schema_fields(parsed: object) -> list[dict]:
     if isinstance(parsed, list):
         return parsed
     if isinstance(parsed, dict):
-        return list(parsed.get("fields", parsed.get("schema", [])))
+        return list(parsed.get("fields", parsed.get("columns", parsed.get("schema", []))))
     return []
 
 
@@ -828,7 +831,9 @@ def test_f10_2_root_agent_wires_all_three_sub_agents() -> None:
     from app import root_agent
 
     sub_names = {sa.name for sa in (root_agent.sub_agents or [])}
+    assert len(sub_names) == 4
     assert sub_names == {
+        "f35_maintenance_data_agent",
         "f35_analytics_agent",
         "f35_jtd_search_agent",
         "f35_airworthiness_orchestrator",
@@ -1009,13 +1014,16 @@ def test_f13_1_basic_dataset_json_valid_and_has_3_smoke_cases() -> None:
     assert p.is_file()
     data = json.loads(p.read_text(encoding="utf-8"))
     cases = data.get("eval_cases", [])
-    assert len(cases) == 3
+    assert len(cases) >= 4
     case_ids = {c["eval_case_id"] for c in cases}
-    assert case_ids == {
+    assert {
+        "uc0_maintenance_work_orders_spreadsheet_card",
+        "uc0_1_phm_bit_fault_triage_card",
+        "uc0_5_multi_table_tooling_sqep_join_card",
         "uc1_actuator_fatigue_and_stock",
         "uc2_sticky_canopy_latch_search",
         "uc3_frame496_exceedance_and_form700_stage",
-    }
+    }.issubset(case_ids)
 
 
 def test_f13_2_vv_golden_suite_json_has_all_10_vv_scenarios() -> None:
@@ -1023,11 +1031,18 @@ def test_f13_2_vv_golden_suite_json_has_all_10_vv_scenarios() -> None:
     assert p.is_file()
     data = json.loads(p.read_text(encoding="utf-8"))
     cases = data.get("eval_cases", [])
-    assert len(cases) == 10
+    assert len(cases) >= 10
+    case_ids = {c["eval_case_id"] for c in cases}
     prefixes = {c["eval_case_id"].split("_")[0] for c in cases}
     for i in range(1, 6):
         assert f"TC-SQ-0{i}" in prefixes
         assert f"TC-LP-0{i}" in prefixes
+    assert {
+        "uc0_tc_sq_00_conversational_maintenance_sql_card",
+        "uc0_1_tc_sq_00_1_phm_bit_fault_triage_card",
+        "uc0_5_tc_sq_00_5_multi_table_tooling_sqep_join_card",
+        "uc0_tc_lp_00_text_to_sql_latency_and_csv_export",
+    }.issubset(case_ids)
 
 
 def test_f13_3_eval_config_yaml_defines_metrics_to_run_and_custom_metrics() -> None:
@@ -1210,6 +1225,7 @@ def test_f16_3_sub_agent_display_identities_for_enterprise_routing() -> None:
         f"{sa.name} {getattr(sa, 'description', '')}"
         for sa in (root_agent.sub_agents or [])
     )
+    assert "f35_maintenance_data_agent" in descriptions
     assert "f35_analytics_agent" in descriptions
     assert "f35_jtd_search_agent" in descriptions
     assert "f35_airworthiness_orchestrator" in descriptions
@@ -1277,4 +1293,10 @@ def test_f17_5_end_to_end_release_readiness_and_live_smoke_hook() -> None:
 
     assert app is not None
     assert root_agent is not None
-    assert len(root_agent.sub_agents) == 3
+    assert len(root_agent.sub_agents) == 4
+    assert {sa.name for sa in root_agent.sub_agents} == {
+        "f35_maintenance_data_agent",
+        "f35_analytics_agent",
+        "f35_jtd_search_agent",
+        "f35_airworthiness_orchestrator",
+    }
