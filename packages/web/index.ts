@@ -2,8 +2,13 @@
  * @fileoverview Public entrypoint for `@f35-sustainment-agent/web` (`packages/web`).
  *
  * Exports:
- * 0. UC0 Maintenance Work Order Spreadsheet Card (`MaintenanceSheetCard`,
- *    `formatStatusBadge`, `MAINTENANCE_STATUS_BADGES`, `MAINTENANCE_SHEET_CARD_STYLES`).
+ * 0. UC 0 / UC 0.1 / UC 0.5 Maintenance Data & Multi-Table Spreadsheet Card (`MaintenanceSheetCard`,
+ *    `formatStatusBadge`, `formatFaultSeverityBadge`, `formatCndFlagBadge`,
+ *    `formatToolCalibrationBadge`, `formatBayDispatchBadge`, `resolveStatusBadgeTone`,
+ *    `resolveReferencedTables`, `MAINTENANCE_STATUS_BADGES`, `AIRCRAFT_STATUS_BADGES`,
+ *    `FAULT_SEVERITY_BADGES`, `CND_FLAG_BADGES`, `TOOL_CALIBRATION_STATUS_BADGES`,
+ *    `BAY_DISPATCH_STATUS_BADGES`, `F35_WAREHOUSE_TABLES`, `F35_WAREHOUSE_TABLE_BADGES`,
+ *    `STATUS_BADGE_FIELD_NAMES`, `MAINTENANCE_SHEET_CARD_STYLES`).
  * 1. UC1 Supply & Readiness Analytics Canvas (`VegaCanvas`, `validateVegaLiteSpec`,
  *    `extractVegaLiteBlocks`, `renderMarkdownFallbackTable`, `formatDualCompatibleVegaOutput`,
  *    `VEGA_LITE_V5_SCHEMA_URL`).
@@ -14,13 +19,30 @@
  */
 
 export {
+  F35_WAREHOUSE_TABLES,
+  F35_WAREHOUSE_TABLE_BADGES,
+  AIRCRAFT_STATUS_BADGES,
+  FAULT_SEVERITY_BADGES,
+  CND_FLAG_BADGES,
+  TOOL_CALIBRATION_STATUS_BADGES,
+  BAY_DISPATCH_STATUS_BADGES,
   MAINTENANCE_STATUS_BADGES,
+  STATUS_BADGE_FIELD_NAMES,
   MAINTENANCE_SHEET_CARD_STYLES,
+  formatFaultSeverityBadge,
+  formatCndFlagBadge,
+  formatToolCalibrationBadge,
+  formatBayDispatchBadge,
   formatStatusBadge,
+  resolveStatusBadgeTone,
+  resolveReferencedTables,
   MaintenanceSheetCard,
 } from "./components/MaintenanceSheetCard";
 
 export type {
+  F35WarehouseTableName,
+  WarehouseTableBadgeMeta,
+  StatusBadgeTone,
   SpreadsheetColumnHeader,
   SpreadsheetFormulaFooter,
   MaintenanceSpreadsheetCardProps,
@@ -119,7 +141,7 @@ function serializeStyleObject(styleObj: Record<string, unknown>): string {
 }
 
 /**
- * Serializes a `VNode` tree produced by `VegaCanvas` or `Form700ReviewStudio` into
+ * Serializes a `VNode` tree produced by `VegaCanvas`, `MaintenanceSheetCard`, or `Form700ReviewStudio` into
  * deterministic HTML for SSR rendering and verification assertions.
  */
 export function renderVNodeToHtml(node: VNodeChild): string {
