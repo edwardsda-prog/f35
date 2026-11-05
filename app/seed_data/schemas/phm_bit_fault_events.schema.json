@@ -1,0 +1,112 @@
+{
+  "table_name": "phm_bit_fault_events",
+  "description": "Lockheed Martin ODIN Prognostics & Health Management (PHM) and Portable Maintenance Aid (PMA) post-sortie Health Reporting Codes (HRCs) and Built-In Test (BIT) fault telemetry events across RAF Marham (617 Sqn, 207 Sqn) and HMS Queen Elizabeth (809 NAS). Tracks continuous BIT, initiated BIT, prognostic threshold exceedances, Pilot-Reported-Only (Zero-BIT) anomalies, Can-Not-Duplicate (CND) chronic repeat rates, diagnostic isolation confidence, and linked Form 707A maintenance work orders.",
+  "partition_field": "fault_timestamp_utc",
+  "partition_type": "DAY",
+  "clustering_fields": [
+    "tail_number",
+    "fault_severity"
+  ],
+  "cluster_fields": [
+    "tail_number",
+    "fault_severity"
+  ],
+  "fields": [
+    {
+      "name": "fault_event_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Primary Key (PK): Unique ODIN PHM / PMA Built-In Test fault event identifier (e.g., PHM-2026-99101)."
+    },
+    {
+      "name": "tail_number",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Cluster Key: UK Lightning Force aircraft serial number (e.g., ZM151, ZM154). Foreign key to airframe_component_telemetry.tail_number."
+    },
+    {
+      "name": "aircraft_variant",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "F-35 aircraft variant designation ('F-35B' STOVL for UK Lightning Force squadrons)."
+    },
+    {
+      "name": "squadron",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Assigned operational squadron ('617 Sqn (The Dambusters)', '809 NAS (The Immortals)', or '207 Sqn (OCU)')."
+    },
+    {
+      "name": "base_location",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Operating air station or carrier strike group location ('RAF Marham' or 'HMS Queen Elizabeth')."
+    },
+    {
+      "name": "sortie_id",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Foreign Key (FK -> squadron_sortie_schedule.sortie_id): Sortie identifier during or after which the fault was recorded; NULL for ground deck checks."
+    },
+    {
+      "name": "wuc_code",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "S1000D / JTD Work Unit Code identifying the faulted aircraft subsystem (e.g., '27-10', '53-30', '53-20', '34-40', '72-30')."
+    },
+    {
+      "name": "subsystem_name",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Human-readable F-35 subsystem nomenclature corresponding to wuc_code (e.g., 'Forward Fuselage Canopy Latch')."
+    },
+    {
+      "name": "hrc_code",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "ODIN Health Reporting Code (HRC) or BIT fault code emitted by onboard vehicle management / avionics processors (e.g., 'HRC-2710-88A', 'HRC-5330-000-NONE')."
+    },
+    {
+      "name": "fault_severity",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Cluster Key: Operational severity classification: 'CRITICAL_GROUNDING', 'DEGRADED_PMC', 'ADVISORY_PHM', or 'NO_BIT_FAULT_LOGGED'."
+    },
+    {
+      "name": "bit_trigger_type",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Diagnostic trigger mechanism: 'CONTINUOUS_BIT', 'INITIATED_BIT', 'PHM_PROGNOSTIC_THRESHOLD', or 'PILOT_REPORT_ONLY_NO_BIT'."
+    },
+    {
+      "name": "recurrence_count_30d",
+      "type": "INTEGER",
+      "mode": "REQUIRED",
+      "description": "Number of times this HRC / WUC fault signature has recurred on the same tail within the trailing 30-day operational window."
+    },
+    {
+      "name": "cnd_flag",
+      "type": "BOOLEAN",
+      "mode": "REQUIRED",
+      "description": "Can-Not-Duplicate (CND) / intermittent repeat fault indicator (TRUE if previous ground BIT checks failed to reproduce the fault)."
+    },
+    {
+      "name": "diagnostic_confidence_pct",
+      "type": "FLOAT",
+      "mode": "REQUIRED",
+      "description": "Unit: percentage (%). ODIN PHM automated fault-tree isolation confidence score (0.0% for uninstrumented Zero-BIT mechanical faults up to 99.8%)."
+    },
+    {
+      "name": "linked_work_order_id",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Foreign Key (FK -> maintenance_work_orders.work_order_id): Associated ODIN / MOD Form 707A Job Control Number (e.g., 'WO-2026-88401'), or NULL if unactioned."
+    },
+    {
+      "name": "fault_timestamp_utc",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "Partition Key (DAY): UTC timestamp when the PHM/BIT event or post-sortie PMA download was recorded."
+    }
+  ]
+}

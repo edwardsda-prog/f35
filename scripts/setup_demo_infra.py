@@ -59,6 +59,8 @@ EXPECTED_BQ_TABLES = (
     "as_maintained_mbom_fasteners",
     "airworthiness_release_ledger",
     "maintenance_work_orders",
+    "phm_bit_fault_events",
+    "work_center_tooling_and_sqep",
 )
 
 

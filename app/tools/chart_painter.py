@@ -65,12 +65,13 @@ def render_actuator_fatigue_chart(
     mandatory 1,000.0-hour life-limit threshold (MIL-HDBK-516C / JTD 53-11-00).
     """
     rows = telemetry_rows or AIRFRAME_COMPONENT_TELEMETRY_ROWS
-    # Filter to Marham or take top 5
+    # Filter to NSN 1680-01-619-4821 or actuator rows (max 5 bars)
     items = [
         r for r in rows
-        if "actuator" in str(r.get("component_name", "")).lower()
+        if str(r.get("nsn", "")) == "1680-01-619-4821"
+        or "actuator" in str(r.get("component_name", "")).lower()
         or "act" in str(r.get("part_serial_number", "")).lower()
-    ]
+    ][:5]
     if not items:
         items = rows[:5]
 
@@ -197,7 +198,10 @@ def render_depot_inventory_chart(
     inventory_rows: list[dict[str, Any]] | None = None,
 ) -> bytes:
     """Render high-resolution 16:9 Regional Depot Stock vs 30-Day Demand Chart PNG."""
-    rows = inventory_rows or GLOBAL_DEPOT_INVENTORY_ROWS
+    raw_rows = inventory_rows or GLOBAL_DEPOT_INVENTORY_ROWS
+    rows = [
+        r for r in raw_rows if str(r.get("nsn", "")) == "1680-01-619-4821"
+    ] or raw_rows[:4]
     depots = [str(r.get("depot_name", "Unknown Depot")).replace(" Regional Sustainment Hub", "").replace(" Afloat Spares", "") for r in rows]
     on_hand = [int(r.get("quantity_on_hand", 0)) for r in rows]
     reserved = [int(r.get("quantity_reserved_30d", 0)) for r in rows]
@@ -344,9 +348,12 @@ def render_executive_dashboard_chart(
     ax1.legend(loc="lower left", fontsize=8.5, frameon=True, facecolor=BG_CANVAS)
 
     # ---- Right Subplot: Depot Inventory ----
-    depots = [str(r.get("depot_name", "")).replace(" Regional Sustainment Hub", "").replace(" Afloat Spares", "") for r in i_rows]
-    on_hand = [int(r.get("quantity_on_hand", 0)) for r in i_rows]
-    reserved = [int(r.get("quantity_reserved_30d", 0)) for r in i_rows]
+    i_filtered = [
+        r for r in i_rows if str(r.get("nsn", "")) == "1680-01-619-4821"
+    ] or i_rows[:4]
+    depots = [str(r.get("depot_name", "")).replace(" Regional Sustainment Hub", "").replace(" Afloat Spares", "") for r in i_filtered]
+    on_hand = [int(r.get("quantity_on_hand", 0)) for r in i_filtered]
+    reserved = [int(r.get("quantity_reserved_30d", 0)) for r in i_filtered]
 
     x2 = range(len(depots))
     w2 = 0.32
