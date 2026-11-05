@@ -34,31 +34,31 @@
       "name": "squadron",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Assigned unit (617 Sqn (The Dambusters), 809 NAS (The Immortals), 207 Sqn (OCU))."
+      "description": "Assigned unit ('617 Sqn (The Dambusters)', '809 NAS (The Immortals)', or '207 Sqn (OCU)'). Operational shorthand: '617'/'Dambusters' -> '617 Sqn (The Dambusters)'; '809'/'Immortals' -> '809 NAS (The Immortals)'; '207'/'OCU' -> '207 Sqn (OCU)'."
     },
     {
       "name": "base_location",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Operating location (RAF Marham, HMS Queen Elizabeth, or HMS Prince of Wales)."
+      "description": "Operating location ('RAF Marham', 'HMS Queen Elizabeth', or 'HMS Prince of Wales'). 'RAF Marham' (land-based Main Operating Base / MOB) and 'HMS Queen Elizabeth' / 'HMS Prince of Wales' (afloat carrier platforms) together form the UK Carrier Strike Group (CSG) / UK Lightning Force force-generation enterprise. Queries for 'Carrier Strike Group' (CSG) or 'fleet-wide' span all bases without filtering out 'RAF Marham'; 'afloat'/'embarked'/'at sea' maps to ('HMS Queen Elizabeth', 'HMS Prince of Wales'); 'ashore'/'MOB'/'home station' maps to 'RAF Marham'."
     },
     {
       "name": "aircraft_status",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Current readiness condition code: FMC (Full Mission Capable), PMC-M (Partial Mission Capable - Maintenance), NMC-M (Not Mission Capable - Maintenance), or NMC-S (Not Mission Capable - Supply / MICAP)."
+      "description": "Current readiness condition code: 'FMC' (Full Mission Capable / serviceable / flyable), 'PMC-M' (Partial Mission Capable - Maintenance / degraded), 'NMC-M' (Not Mission Capable - Maintenance), or 'NMC-S' (Not Mission Capable - Supply / MICAP). Natural-language synonyms: 'grounded'/'NMC'/'unserviceable'/'down' = aircraft_status IN ('NMC-M', 'NMC-S'); 'MICAP'/'supply hold' = aircraft_status = 'NMC-S'."
     },
     {
       "name": "work_order_status",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Job lifecycle state: OPEN, IN_PROGRESS, AWAITING_PARTS (MICAP), AWAITING_ENGINEERING_DISPOSITION, or COMPLETED."
+      "description": "Job lifecycle state: 'OPEN' (logged/unstarted), 'IN_PROGRESS' (actively on bay), 'AWAITING_PARTS (MICAP)' (supply hold), 'AWAITING_ENGINEERING_DISPOSITION' (engineering/HITL hold), or 'COMPLETED' (historical closed). Natural-language synonyms: 'open'/'active'/'current'/'on the board'/'backlog' jobs = work_order_status != 'COMPLETED'; 'urgent jobs and grounded aircraft' = priority = 'PRIORITY_1_RED_X' AND work_order_status != 'COMPLETED'."
     },
     {
       "name": "priority",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Maintenance priority level: PRIORITY_1_RED_X (Grounding safety/MICAP), PRIORITY_2_URGENT (Degrades mission capability), or PRIORITY_3_ROUTINE (Deferred/routine)."
+      "description": "Maintenance priority level: 'PRIORITY_1_RED_X' (Grounding safety/Red-X/MICAP/most urgent/P1/critical), 'PRIORITY_2_URGENT' (Degrades mission capability/P2/urgent), or 'PRIORITY_3_ROUTINE' (Deferred/routine/P3)."
     },
     {
       "name": "work_center",

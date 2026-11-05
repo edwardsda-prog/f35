@@ -34,13 +34,13 @@
       "name": "squadron",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Assigned operational squadron ('617 Sqn (The Dambusters)', '809 NAS (The Immortals)', or '207 Sqn (OCU)')."
+      "description": "Assigned operational squadron ('617 Sqn (The Dambusters)', '809 NAS (The Immortals)', or '207 Sqn (OCU)'). Shorthand: '617'/'Dambusters', '809'/'Immortals', '207'/'OCU'."
     },
     {
       "name": "base_location",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Operating air station or carrier strike group location ('RAF Marham', 'HMS Queen Elizabeth', or 'HMS Prince of Wales')."
+      "description": "Operating air station or carrier strike group location ('RAF Marham', 'HMS Queen Elizabeth', or 'HMS Prince of Wales'). 'RAF Marham' (land-based Main Operating Base / MOB) and 'HMS Queen Elizabeth' / 'HMS Prince of Wales' (afloat carrier platforms) together form the UK Carrier Strike Group (CSG) / UK Lightning Force force-generation enterprise; queries for 'Carrier Strike Group' or 'fleet-wide' span all bases without filtering out 'RAF Marham', whereas 'afloat'/'embarked' maps to ('HMS Queen Elizabeth', 'HMS Prince of Wales') and 'ashore'/'MOB' maps to 'RAF Marham'."
     },
     {
       "name": "sortie_id",
@@ -70,13 +70,13 @@
       "name": "fault_severity",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Cluster Key: Operational severity classification: 'CRITICAL_GROUNDING', 'DEGRADED_PMC', 'ADVISORY_PHM', or 'NO_BIT_FAULT_LOGGED'."
+      "description": "Cluster Key: Operational severity classification: 'CRITICAL_GROUNDING' (critical/grounding/Red-X), 'DEGRADED_PMC' (degraded/PMC), 'ADVISORY_PHM' (advisory/warning/PHM), or 'NO_BIT_FAULT_LOGGED' (zero BIT/no fault code logged)."
     },
     {
       "name": "bit_trigger_type",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Diagnostic trigger mechanism: 'CONTINUOUS_BIT', 'INITIATED_BIT', 'PHM_PROGNOSTIC_THRESHOLD', or 'PILOT_REPORT_ONLY_NO_BIT'."
+      "description": "Diagnostic trigger mechanism: 'CONTINUOUS_BIT', 'INITIATED_BIT', 'PHM_PROGNOSTIC_THRESHOLD', or 'PILOT_REPORT_ONLY_NO_BIT' (natural-language synonyms: 'zero fault codes', 'no BIT', 'pilot reported only')."
     },
     {
       "name": "recurrence_count_30d",
@@ -88,7 +88,7 @@
       "name": "cnd_flag",
       "type": "BOOLEAN",
       "mode": "REQUIRED",
-      "description": "Can-Not-Duplicate (CND) / intermittent repeat fault indicator (TRUE if previous ground BIT checks failed to reproduce the fault)."
+      "description": "Can-Not-Duplicate (CND) / intermittent repeat fault indicator (TRUE if previous ground BIT checks failed to reproduce the fault; natural-language synonyms: 'repeat', 'chronic', 'rogue', 'CND')."
     },
     {
       "name": "diagnostic_confidence_pct",
@@ -100,7 +100,7 @@
       "name": "linked_work_order_id",
       "type": "STRING",
       "mode": "NULLABLE",
-      "description": "Foreign Key (FK -> maintenance_work_orders.work_order_id): Associated ODIN / MOD Form 707A Job Control Number (e.g., 'WO-2026-88401'), or NULL if unactioned."
+      "description": "Foreign Key (FK -> maintenance_work_orders.work_order_id): Associated ODIN / MOD Form 707A Job Control Number (e.g., 'WO-2026-88401'), or NULL if unactioned/unscheduled warning (linked_work_order_id IS NULL)."
     },
     {
       "name": "fault_timestamp_utc",

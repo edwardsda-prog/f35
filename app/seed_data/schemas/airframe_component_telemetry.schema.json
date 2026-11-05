@@ -29,7 +29,7 @@
       "name": "base_location",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Current operating station or carrier deployment base: 'RAF Marham', 'HMS Queen Elizabeth', or 'HMS Prince of Wales'."
+      "description": "Current operating station or carrier deployment base: 'RAF Marham', 'HMS Queen Elizabeth', or 'HMS Prince of Wales'. 'RAF Marham' (land-based Main Operating Base / MOB) and 'HMS Queen Elizabeth' / 'HMS Prince of Wales' (afloat carrier platforms) together form the UK Carrier Strike Group (CSG) / UK Lightning Force force-generation enterprise; queries for 'Carrier Strike Group' or 'fleet-wide' span all bases without filtering out 'RAF Marham', whereas 'afloat'/'embarked' maps to ('HMS Queen Elizabeth', 'HMS Prince of Wales') and 'ashore'/'MOB' maps to 'RAF Marham'."
     },
     {
       "name": "part_serial_number",

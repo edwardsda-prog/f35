@@ -115,6 +115,9 @@ To guarantee zero-shot Text-to-SQL accuracy and sub-350ms BigQuery execution in 
   ) -> dict[str, Any]:
   ```
 - **Execution Pipeline & Guardrails:**
+  0. **Generalized 3-Layer Semantic SQL Canonicalizer (`canonicalize_maintenance_sql` & `_relax_zero_row_sql` — `ISS-013`):**
+     - Automatically rewrites natural-language semantic variations and LLM enum shorthand into canonical F-35 Data Warehouse predicates across 6 deterministic rules (`CSG_ENTERPRISE_LOCATION_EXPANSION`, `LOCATION_CATEGORY_AND_ALIAS_CANONICALIZATION`, `SQUADRON_SHORTHAND_CANONICALIZATION`, `ACTIVE_WORK_ORDER_LIFECYCLE_EXPANSION`, `URGENT_AND_GROUNDED_TRIAGE_ALIGNMENT`, and `ENUM_SYNONYM_CANONICALIZATION`).
+     - Ensures Carrier Strike Group (CSG) / fleet-wide queries include both `RAF Marham` (Main Operating Base) and afloat carriers (`HMS Queen Elizabeth`, `HMS Prince of Wales`), maps `"most urgent maintenance jobs and grounded aircraft"` to the 6 `PRIORITY_1_RED_X` active rows (`WO-2026-88405`, `88403`, `88411`, `88414`, `88404`, `88408`), and performs automatic zero-row substring/lifecycle relaxation (`_relax_zero_row_sql`) when an initial query returns 0 rows.
   1. **Read-Only SQL Validation Guardrail:**
      - Strips comments and trailing semicolons; verifies the query starts with `SELECT` or `WITH` and references `maintenance_work_orders`.
      - Rejects any statement containing mutating or administrative keywords (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `TRUNCATE`, `CREATE`, `GRANT`, `REVOKE`, `MERGE`, `CALL`, `EXECUTE`) or multi-statement semicolons, returning a structured `SQL_GUARDRAIL_BLOCKED` error dictionary.

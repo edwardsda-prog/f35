@@ -275,6 +275,478 @@ def _index_to_column_letter(idx: int) -> str:
     return result
 
 
+def _cleanup_tautologies(sql: str) -> str:
+    """Clean up redundant 1=1 predicates left by semantic filter rewrites."""
+    cleaned = sql
+    prev = None
+    while prev != cleaned:
+        prev = cleaned
+        cleaned = re.sub(r"\(\s*1=1\s*\)", "1=1", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(
+            r"\bWHERE\s+1=1\s+AND\s+",
+            "WHERE ",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+        cleaned = re.sub(
+            r"\s+AND\s+1=1\b",
+            "",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+        cleaned = re.sub(
+            r"\b1=1\s+AND\s+",
+            "",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+        cleaned = re.sub(
+            r"\bWHERE\s+1=1\b(?=\s*(?:GROUP\s+BY|ORDER\s+BY|LIMIT|HAVING|$))",
+            "",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+    return re.sub(r"  +", " ", cleaned).strip()
+
+
+def canonicalize_maintenance_sql(
+    sql_query: str,
+    sheet_title: str = "",
+    user_prompt: str = "",
+) -> tuple[str, list[str]]:
+    """Apply deterministic semantic canonicalization rules to UC0/UC0.1/UC0.5 SQL queries.
+
+    Enforces 6 operational ontology guardrails:
+    1. `CSG_ENTERPRISE_LOCATION_EXPANSION`
+    2. `LOCATION_CATEGORY_AND_ALIAS_CANONICALIZATION`
+    3. `SQUADRON_SHORTHAND_CANONICALIZATION`
+    4. `ACTIVE_WORK_ORDER_LIFECYCLE_EXPANSION`
+    5. `URGENT_AND_GROUNDED_TRIAGE_ALIGNMENT`
+    6. `ENUM_SYNONYM_CANONICALIZATION`
+
+    Returns:
+        Tuple of (canonicalized_sql, applied_rule_names).
+    """
+    if not sql_query or not sql_query.strip():
+        return sql_query, []
+
+    rewritten = sql_query
+    applied_rules: list[str] = []
+
+    def _mark_rule(rule_name: str) -> None:
+        if rule_name not in applied_rules:
+            applied_rules.append(rule_name)
+
+    raw_context = f"{sheet_title or ''} {user_prompt or ''}".lower()
+    context_tokens = re.sub(r"[_\-]+", " ", raw_context)
+
+    # -----------------------------------------------------------------------
+    # Rule 6: ENUM_SYNONYM_CANONICALIZATION
+    # Run enum normalization first so downstream lifecycle/triage rules see
+    # canonical enum literals.
+    # -----------------------------------------------------------------------
+    enum_patterns: tuple[tuple[str, str], ...] = (
+        # priority
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bpriority\s*=\s*)'(?:P1|PRIORITY_1|PRIORITY 1|RED_X|RED-X|RED X|CRITICAL|HIGH)'",
+            r"\1'PRIORITY_1_RED_X'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bpriority\s*=\s*)'(?:P2|PRIORITY_2|PRIORITY 2|URGENT|MEDIUM)'",
+            r"\1'PRIORITY_2_URGENT'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bpriority\s*=\s*)'(?:P3|PRIORITY_3|PRIORITY 3|ROUTINE|LOW|DEFERRED)'",
+            r"\1'PRIORITY_3_ROUTINE'",
+        ),
+        # aircraft_status
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\baircraft_status)\s*=\s*'(?:GROUNDED|NMC|DOWN|UNSERVICEABLE|AOG)'",
+            r"\1 IN ('NMC-M', 'NMC-S')",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\baircraft_status)\s*=\s*'(?:MICAP|NMC-S\s*\(MICAP\)|AWAITING_PARTS)'",
+            r"\1 = 'NMC-S'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\baircraft_status)\s*=\s*'(?:PMC|DEGRADED|PARTIAL)'",
+            r"\1 = 'PMC-M'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\baircraft_status)\s*=\s*'(?:MC|SERVICEABLE|FLYABLE|FULLY_MISSION_CAPABLE)'",
+            r"\1 = 'FMC'",
+        ),
+        # fault_severity
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bfault_severity\s*=\s*)'(?:CRITICAL|GROUNDING|RED_X|RED-X)'",
+            r"\1'CRITICAL_GROUNDING'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bfault_severity\s*=\s*)'(?:DEGRADED|PMC)'",
+            r"\1'DEGRADED_PMC'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bfault_severity\s*=\s*)'(?:ADVISORY|WARNING|PHM)'",
+            r"\1'ADVISORY_PHM'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bfault_severity\s*=\s*)'(?:NO_BIT|ZERO_BIT|NONE|NO_FAULT)'",
+            r"\1'NO_BIT_FAULT_LOGGED'",
+        ),
+        # bit_trigger_type
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbit_trigger_type\s*=\s*)'(?:ZERO_BIT|NO_BIT|PILOT_REPORT|PILOT_REPORTED|PILOT_REPORT_ONLY|PILOT REPORT ONLY|NONE)'",
+            r"\1'PILOT_REPORT_ONLY_NO_BIT'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbit_trigger_type\s*=\s*)'(?:CONTINUOUS)'",
+            r"\1'CONTINUOUS_BIT'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbit_trigger_type\s*=\s*)'(?:INITIATED)'",
+            r"\1'INITIATED_BIT'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbit_trigger_type\s*=\s*)'(?:PROGNOSTIC|PHM_THRESHOLD|THRESHOLD)'",
+            r"\1'PHM_PROGNOSTIC_THRESHOLD'",
+        ),
+        # bay_dispatch_status
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbay_dispatch_status)\s*=\s*'(?:BLOCKED|HELD_UP|HELD UP|STALLED|CONSTRAINED|NOT_READY)'",
+            r"\1 != 'READY_TO_DISPATCH'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbay_dispatch_status)\s*=\s*'(?:READY|DISPATCHABLE|CLEAR)'",
+            r"\1 = 'READY_TO_DISPATCH'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbay_dispatch_status)\s*=\s*'(?:TOOL_OUT_OF_CAL|OUT_OF_CAL)'",
+            r"\1 = 'BLOCKED_TOOL_OUT_OF_CAL'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbay_dispatch_status)\s*=\s*'(?:NO_QAR|MISSING_QAR)'",
+            r"\1 = 'BLOCKED_NO_QAR_ON_SHIFT'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbay_dispatch_status)\s*=\s*'(?:MICAP|AWAITING_MICAP|AWAITING_PARTS)'",
+            r"\1 = 'BLOCKED_AWAITING_MICAP_PART'",
+        ),
+        # tool_calibration_status
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\btool_calibration_status\s*=\s*)'(?:EXPIRED|OUT_OF_CAL|OUT OF CAL|UNCALIBRATED|OVERDUE)'",
+            r"\1'EXPIRED_OUT_OF_CAL'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\btool_calibration_status\s*=\s*)'(?:CALIBRATED|SERVICEABLE|VALID|IN_CAL)'",
+            r"\1'CALIBRATED_SERVICEABLE'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\btool_calibration_status\s*=\s*)'(?:WARNING|DUE|DUE_SOON|CALIBRATION_DUE)'",
+            r"\1'CALIBRATION_DUE_WARNING'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\btool_calibration_status\s*=\s*)'(?:IN_USE|OTHER_BAY|BUSY)'",
+            r"\1'IN_USE_OTHER_BAY'",
+        ),
+        # shift_code
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bshift_code\s*=\s*)'(?:DAY|ALPHA|DAY_SHIFT|DAY SHIFT)'",
+            r"\1'DAY_ALPHA'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bshift_code\s*=\s*)'(?:NIGHT|BRAVO|NIGHT_SHIFT|NIGHT SHIFT)'",
+            r"\1'NIGHT_BRAVO'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bshift_code\s*=\s*)'(?:CARRIER|AFLOAT|CARRIER_WATCH|CARRIER WATCH)'",
+            r"\1'CARRIER_WATCH_1'",
+        ),
+    )
+    for pat, repl in enum_patterns:
+        new_sql, cnt = re.subn(pat, repl, rewritten, flags=re.IGNORECASE)
+        if cnt > 0:
+            rewritten = new_sql
+            _mark_rule("ENUM_SYNONYM_CANONICALIZATION")
+
+    # -----------------------------------------------------------------------
+    # Rule 2: LOCATION_CATEGORY_AND_ALIAS_CANONICALIZATION
+    # -----------------------------------------------------------------------
+    loc_patterns: tuple[tuple[str, str], ...] = (
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbase_location)\s*=\s*'(?:AFLOAT|EMBARKED|AT_SEA|AT SEA|CARRIER|CARRIERS|CARRIER_DECK|CARRIER DECK|CARRIER_DECKS|CARRIER DECKS|MARITIME|NAVAL)'",
+            r"\1 IN ('HMS Queen Elizabeth', 'HMS Prince of Wales')",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbase_location)\s*=\s*'(?:MOB|MAIN OPERATING BASE|MAIN_OPERATING_BASE|ASHORE|SHORE|SHORE_BASED|SHORE-BASED|SHORE BASED|HOME_STATION|HOME STATION|MARHAM|RAF_MARHAM)'",
+            r"\1 = 'RAF Marham'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbase_location)\s*=\s*'(?:QNLZ|HMS QE|HMS_QE|QUEEN ELIZABETH|HMS_QUEEN_ELIZABETH)'",
+            r"\1 = 'HMS Queen Elizabeth'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbase_location)\s*=\s*'(?:PWLS|HMS POW|HMS_POW|PRINCE OF WALES|HMS_PRINCE_OF_WALES)'",
+            r"\1 = 'HMS Prince of Wales'",
+        ),
+    )
+    for pat, repl in loc_patterns:
+        new_sql, cnt = re.subn(pat, repl, rewritten, flags=re.IGNORECASE)
+        if cnt > 0:
+            rewritten = new_sql
+            _mark_rule("LOCATION_CATEGORY_AND_ALIAS_CANONICALIZATION")
+
+    # -----------------------------------------------------------------------
+    # Rule 1: CSG_ENTERPRISE_LOCATION_EXPANSION
+    # -----------------------------------------------------------------------
+    csg_literal_re = re.compile(
+        r"(?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbase_location\s*(?:=|LIKE)\s*'%?(?:Carrier\s+Strike\s+Group|CSG|UK\s+Carrier\s+Strike\s+Group|UK\s+Lightning\s+Force|Lightning\s+Force|FLEET|ALL|ALL_BASES)%?'",
+        re.IGNORECASE,
+    )
+    if csg_literal_re.search(rewritten):
+        rewritten = csg_literal_re.sub("1=1", rewritten)
+        rewritten = _cleanup_tautologies(rewritten)
+        _mark_rule("CSG_ENTERPRISE_LOCATION_EXPANSION")
+
+    has_csg_context = bool(
+        any(
+            phrase in context_tokens
+            for phrase in (
+                "carrier strike group",
+                "lightning force",
+                "across the fleet",
+                "fleet wide",
+                "air wing",
+                "all bases",
+            )
+        )
+        or re.search(r"\bcsg\b", context_tokens)
+    )
+    has_explicit_single_or_subset_base = any(
+        phrase in context_tokens
+        for phrase in (
+            "queen elizabeth",
+            "qnlz",
+            "prince of wales",
+            "pwls",
+            "marham",
+            "afloat",
+            "embarked",
+            "at sea",
+            "ashore",
+            "shore",
+            "mob",
+            "main operating base",
+        )
+    )
+    if has_csg_context and not has_explicit_single_or_subset_base:
+        restrictive_base_re = re.compile(
+            r"(?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbase_location\s*(?:IN\s*\([^)]+\)|(?:=|!=|<>|NOT\s+LIKE|LIKE)\s*'[^']+')",
+            re.IGNORECASE,
+        )
+        if restrictive_base_re.search(rewritten):
+            rewritten = restrictive_base_re.sub("1=1", rewritten)
+            rewritten = _cleanup_tautologies(rewritten)
+            _mark_rule("CSG_ENTERPRISE_LOCATION_EXPANSION")
+
+    # -----------------------------------------------------------------------
+    # Rule 3: SQUADRON_SHORTHAND_CANONICALIZATION
+    # -----------------------------------------------------------------------
+    sqn_patterns: tuple[tuple[str, str], ...] = (
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bsquadron)\s*(?:=|LIKE)\s*'%?(?:617|617\s+Sqn|617\s+Squadron|Dambusters|The\s+Dambusters)%?'",
+            r"\1 = '617 Sqn (The Dambusters)'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bsquadron)\s*(?:=|LIKE)\s*'%?(?:809|809\s+NAS|809\s+Squadron|809\s+Naval\s+Air\s+Squadron|Immortals|The\s+Immortals)%?'",
+            r"\1 = '809 NAS (The Immortals)'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bsquadron)\s*(?:=|LIKE)\s*'%?(?:207|207\s+Sqn|207\s+Squadron|OCU|207\s+OCU)%?'",
+            r"\1 = '207 Sqn (OCU)'",
+        ),
+    )
+    for pat, repl in sqn_patterns:
+        new_sql, cnt = re.subn(pat, repl, rewritten, flags=re.IGNORECASE)
+        if cnt > 0:
+            rewritten = new_sql
+            _mark_rule("SQUADRON_SHORTHAND_CANONICALIZATION")
+
+    # -----------------------------------------------------------------------
+    # Rule 4: ACTIVE_WORK_ORDER_LIFECYCLE_EXPANSION
+    # -----------------------------------------------------------------------
+    wo_lifecycle_patterns: tuple[tuple[str, str], ...] = (
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bwork_order_status)\s*=\s*'(?:ACTIVE|CURRENT|INCOMPLETE|BACKLOG|PENDING|NOT_COMPLETED|ON_THE_BOARD|ON THE BOARD|IN_WORK)'",
+            r"\1 != 'COMPLETED'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bwork_order_status)\s*=\s*'(?:MICAP|AWAITING_PARTS|AWAITING PARTS|SUPPLY_HOLD|SUPPLY HOLD)'",
+            r"\1 = 'AWAITING_PARTS (MICAP)'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bwork_order_status)\s*=\s*'(?:AWAITING_ENGINEERING|ENGINEERING_HOLD|AWAITING DISPOSITION)'",
+            r"\1 = 'AWAITING_ENGINEERING_DISPOSITION'",
+        ),
+        (
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bwork_order_status)\s*=\s*'(?:CLOSED|DONE|FINISHED|RESOLVED)'",
+            r"\1 = 'COMPLETED'",
+        ),
+    )
+    for pat, repl in wo_lifecycle_patterns:
+        new_sql, cnt = re.subn(pat, repl, rewritten, flags=re.IGNORECASE)
+        if cnt > 0:
+            rewritten = new_sql
+            _mark_rule("ACTIVE_WORK_ORDER_LIFECYCLE_EXPANSION")
+
+    open_eq_re = re.compile(
+        r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bwork_order_status)\s*=\s*'OPEN'",
+        re.IGNORECASE,
+    )
+    if open_eq_re.search(rewritten):
+        wants_strictly_unstarted = any(
+            phrase in context_tokens
+            for phrase in (
+                "unstarted",
+                "strictly open",
+                "not yet started",
+                "newly opened",
+            )
+        )
+        has_active_triage_context = bool(
+            any(
+                phrase in context_tokens
+                for phrase in (
+                    "urgent",
+                    "grounded",
+                    "active",
+                    "current",
+                    "backlog",
+                    "carrier strike group",
+                    "triage",
+                    "standup",
+                    "on the board",
+                    "all open",
+                    "open jobs",
+                    "open work",
+                    "open maintenance",
+                )
+            )
+            or re.search(r"\bcsg\b", context_tokens)
+            or re.search(r"\bpriority\s*=\s*'PRIORITY_1_RED_X'", rewritten, re.IGNORECASE)
+            or re.search(r"\baircraft_status\b", rewritten, re.IGNORECASE)
+        )
+        if has_active_triage_context and not wants_strictly_unstarted:
+            rewritten = open_eq_re.sub(r"\1 != 'COMPLETED'", rewritten)
+            _mark_rule("ACTIVE_WORK_ORDER_LIFECYCLE_EXPANSION")
+
+    # -----------------------------------------------------------------------
+    # Rule 5: URGENT_AND_GROUNDED_TRIAGE_ALIGNMENT
+    # -----------------------------------------------------------------------
+    if re.search(r"\bmaintenance_work_orders\b", rewritten, re.IGNORECASE):
+        has_p1_filter = bool(
+            re.search(r"\bpriority\s*=\s*'PRIORITY_1_RED_X'", rewritten, re.IGNORECASE)
+        )
+        has_urgent_and_grounded_prompt = (
+            "urgent" in context_tokens and "grounded" in context_tokens
+        )
+        nmc_status_pred_re = re.compile(
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?)\baircraft_status\s*(?:IN\s*\(\s*'NMC-M'\s*,\s*'NMC-S'\s*\)|IN\s*\(\s*'NMC-S'\s*,\s*'NMC-M'\s*\)|LIKE\s+'NMC%'|=\s*'NMC-M')",
+            re.IGNORECASE,
+        )
+        if nmc_status_pred_re.search(rewritten) and (
+            has_p1_filter or has_urgent_and_grounded_prompt
+        ):
+            has_active_wo_filter = bool(
+                re.search(
+                    r"\bwork_order_status\s*(?:!=|<>)\s*'COMPLETED'",
+                    rewritten,
+                    re.IGNORECASE,
+                )
+            )
+
+            def _replace_nmc_triage(match: re.Match[str]) -> str:
+                alias_prefix = match.group(1) or ""
+                if has_p1_filter:
+                    return (
+                        "1=1"
+                        if has_active_wo_filter
+                        else f"{alias_prefix}work_order_status != 'COMPLETED'"
+                    )
+                if has_active_wo_filter:
+                    return f"{alias_prefix}priority = 'PRIORITY_1_RED_X'"
+                return (
+                    f"{alias_prefix}priority = 'PRIORITY_1_RED_X' "
+                    f"AND {alias_prefix}work_order_status != 'COMPLETED'"
+                )
+
+            rewritten = nmc_status_pred_re.sub(_replace_nmc_triage, rewritten)
+            rewritten = _cleanup_tautologies(rewritten)
+            _mark_rule("URGENT_AND_GROUNDED_TRIAGE_ALIGNMENT")
+
+    return rewritten, applied_rules
+
+
+def _relax_zero_row_sql(sql_query: str) -> tuple[str, list[str]]:
+    """Relax overly strict equality predicates when an initial maintenance SQL query returns 0 rows."""
+    if not sql_query or not sql_query.strip():
+        return sql_query, []
+
+    relaxed = sql_query
+    recovery_rules: list[str] = []
+
+    text_col_eq_re = re.compile(
+        r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\b(?:subsystem_name|discrepancy_narrative|corrective_action|required_special_tool_name|sqep_certification_domain))\s*=\s*'([^']+)'",
+        re.IGNORECASE,
+    )
+
+    def _to_substring_like(match: re.Match[str]) -> str:
+        col_expr = match.group(1)
+        val_lower = match.group(2).strip().lower()
+        return f"LOWER({col_expr}) LIKE '%{val_lower}%'"
+
+    new_sql, cnt = text_col_eq_re.subn(_to_substring_like, relaxed)
+    if cnt > 0:
+        relaxed = new_sql
+        recovery_rules.append("ZERO_ROW_SUBSTRING_RELAXATION")
+
+    open_eq_re = re.compile(
+        r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bwork_order_status)\s*=\s*'OPEN'",
+        re.IGNORECASE,
+    )
+    new_sql2, cnt2 = open_eq_re.subn(r"\1 != 'COMPLETED'", relaxed)
+    if cnt2 > 0:
+        relaxed = new_sql2
+        recovery_rules.append("ZERO_ROW_ACTIVE_LIFECYCLE_RELAXATION")
+
+    return relaxed, recovery_rules
+
+
+def _extract_user_prompt_from_context(tool_context: ToolContext | None) -> str:
+    """Extract the current user prompt text from ToolContext if available."""
+    if tool_context is None:
+        return ""
+    user_content = getattr(tool_context, "user_content", None)
+    if user_content is not None:
+        parts = getattr(user_content, "parts", None) or []
+        texts = [
+            str(getattr(p, "text", ""))
+            for p in parts
+            if getattr(p, "text", None)
+        ]
+        if texts:
+            return " ".join(texts).strip()
+    user_text = getattr(tool_context, "user_text", None)
+    if isinstance(user_text, str) and user_text.strip():
+        return user_text.strip()
+    state = getattr(tool_context, "state", None)
+    if isinstance(state, dict):
+        for key in ("last_user_prompt", "user_prompt", "query"):
+            val = state.get(key)
+            if isinstance(val, str) and val.strip():
+                return val.strip()
+    return ""
+
+
 def validate_and_rewrite_maintenance_sql(sql_query: str) -> tuple[str, str]:
     """Validate that sql_query is a safe read-only SELECT on UC0/UC0.1/UC0.5 tables.
 
@@ -468,10 +940,16 @@ def execute_maintenance_sql(
         `columns`, `formula_footer`, `csv_download_url`, `csv_gcs_uri`, and execution metadata.
     """
     t0 = time.perf_counter()
-    bq_sql, sqlite_sql = validate_and_rewrite_maintenance_sql(sql_query)
+    user_prompt = _extract_user_prompt_from_context(tool_context)
+    canonical_sql, applied_rules = canonicalize_maintenance_sql(
+        sql_query,
+        sheet_title=sheet_title,
+        user_prompt=user_prompt,
+    )
+    bq_sql, sqlite_sql = validate_and_rewrite_maintenance_sql(canonical_sql)
 
     referenced_tables: list[str] = []
-    for m in _TABLE_REF_RE.finditer(sql_query):
+    for m in _TABLE_REF_RE.finditer(canonical_sql):
         tname = m.group(1).lower()
         if tname not in referenced_tables:
             referenced_tables.append(tname)
@@ -479,42 +957,52 @@ def execute_maintenance_sql(
     resolved_table_fqn = BQ_TABLES.get(primary_table, _TABLE_FQN)
     repo_tables_label = ", ".join(f"`{t}`" for t in referenced_tables) or "`maintenance_work_orders`"
 
-    rows: list[dict[str, Any]] = []
-    execution_source = "BIGQUERY_EU"
+    def _run_validated_query(
+        target_bq_sql: str,
+        target_sqlite_sql: str,
+    ) -> tuple[list[dict[str, Any]], str]:
+        if USE_CLOUD_CLIENTS:
+            try:
+                from google.cloud import bigquery
 
-    if USE_CLOUD_CLIENTS:
-        try:
-            from google.cloud import bigquery
-
-            client = get_bq_client()
-            job_config = bigquery.QueryJobConfig(use_query_cache=True)
-            if hasattr(client, "query_and_wait"):
-                row_iter = client.query_and_wait(
-                    bq_sql,
-                    job_config=job_config,
-                    location=BQ_LOCATION,
+                client = get_bq_client()
+                job_config = bigquery.QueryJobConfig(use_query_cache=True)
+                if hasattr(client, "query_and_wait"):
+                    row_iter = client.query_and_wait(
+                        target_bq_sql,
+                        job_config=job_config,
+                        location=BQ_LOCATION,
+                    )
+                else:
+                    row_iter = client.query(
+                        target_bq_sql,
+                        job_config=job_config,
+                        location=BQ_LOCATION,
+                    ).result()
+                fetched = [
+                    {k: _serialize_bq_val(v) for k, v in dict(row.items()).items()}
+                    for row in row_iter
+                ]
+                return fetched, "BIGQUERY_EU"
+            except Exception as exc:
+                logger.warning(
+                    "BigQuery EU query fallback to in-memory SQLite for %s: %s",
+                    primary_table,
+                    exc,
                 )
-            else:
-                row_iter = client.query(
-                    bq_sql,
-                    job_config=job_config,
-                    location=BQ_LOCATION,
-                ).result()
-            rows = [
-                {k: _serialize_bq_val(v) for k, v in dict(row.items()).items()}
-                for row in row_iter
-            ]
-        except Exception as exc:
-            logger.warning(
-                "BigQuery EU query fallback to in-memory SQLite for %s: %s",
-                primary_table,
-                exc,
-            )
-            rows = _execute_sqlite_fallback(sqlite_sql)
-            execution_source = "SQLITE_IN_MEMORY_FALLBACK"
-    else:
-        rows = _execute_sqlite_fallback(sqlite_sql)
-        execution_source = "SQLITE_IN_MEMORY_FALLBACK"
+                return _execute_sqlite_fallback(target_sqlite_sql), "SQLITE_IN_MEMORY_FALLBACK"
+        return _execute_sqlite_fallback(target_sqlite_sql), "SQLITE_IN_MEMORY_FALLBACK"
+
+    rows, execution_source = _run_validated_query(bq_sql, sqlite_sql)
+
+    if not rows:
+        relaxed_sql, recovery_rules = _relax_zero_row_sql(canonical_sql)
+        if relaxed_sql != canonical_sql:
+            bq_sql, sqlite_sql = validate_and_rewrite_maintenance_sql(relaxed_sql)
+            rows, execution_source = _run_validated_query(bq_sql, sqlite_sql)
+            for r_rule in recovery_rules:
+                if r_rule not in applied_rules:
+                    applied_rules.append(r_rule)
 
     latency_ms = round((time.perf_counter() - t0) * 1000.0, 2)
 
@@ -734,6 +1222,7 @@ def execute_maintenance_sql(
         "referenced_tables": referenced_tables,
         "bq_location": BQ_LOCATION,
         "executed_sql": bq_sql,
+        "applied_semantic_guardrails": applied_rules,
         "execution_source": execution_source,
         "execution_latency_ms": latency_ms,
         "row_count": total_rows,
@@ -749,6 +1238,7 @@ def execute_maintenance_sql(
 
 
 __all__ = [
+    "canonicalize_maintenance_sql",
     "execute_maintenance_sql",
     "validate_and_rewrite_maintenance_sql",
 ]

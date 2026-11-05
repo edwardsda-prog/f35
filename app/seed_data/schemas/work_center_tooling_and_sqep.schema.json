@@ -28,7 +28,7 @@
       "name": "base_location",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Cluster Key: Operating location ('RAF Marham', 'HMS Queen Elizabeth', or 'HMS Prince of Wales')."
+      "description": "Cluster Key: Operating location ('RAF Marham', 'HMS Queen Elizabeth', or 'HMS Prince of Wales'). 'RAF Marham' (land-based Main Operating Base / MOB) and 'HMS Queen Elizabeth' / 'HMS Prince of Wales' (afloat carrier platforms) together form the UK Carrier Strike Group (CSG) / UK Lightning Force force-generation enterprise; queries for 'Carrier Strike Group' or 'fleet-wide' span all bases without filtering out 'RAF Marham', whereas 'afloat'/'embarked' maps to ('HMS Queen Elizabeth', 'HMS Prince of Wales') and 'ashore'/'MOB' maps to 'RAF Marham'."
     },
     {
       "name": "work_center",
@@ -88,7 +88,7 @@
       "name": "tool_calibration_status",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Metrology calibration status: 'CALIBRATED_SERVICEABLE', 'CALIBRATION_DUE_WARNING', 'EXPIRED_OUT_OF_CAL', or 'IN_USE_OTHER_BAY'."
+      "description": "Metrology calibration status: 'CALIBRATED_SERVICEABLE' (calibrated/serviceable), 'CALIBRATION_DUE_WARNING' (due/warning), 'EXPIRED_OUT_OF_CAL' (expired/out of cal/uncalibrated), or 'IN_USE_OTHER_BAY'."
     },
     {
       "name": "calibration_expiry_utc",
@@ -100,7 +100,7 @@
       "name": "bay_dispatch_status",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Composite task dispatch readiness state: 'READY_TO_DISPATCH', 'BLOCKED_TOOL_OUT_OF_CAL', 'BLOCKED_NO_QAR_ON_SHIFT', or 'BLOCKED_AWAITING_MICAP_PART'."
+      "description": "Composite task dispatch readiness state: 'READY_TO_DISPATCH' (ready/dispatchable), 'BLOCKED_TOOL_OUT_OF_CAL', 'BLOCKED_NO_QAR_ON_SHIFT', or 'BLOCKED_AWAITING_MICAP_PART'. Natural-language synonyms: 'held up'/'blocked'/'stalled'/'constrained' shift jobs = bay_dispatch_status != 'READY_TO_DISPATCH'."
     },
     {
       "name": "shift_updated_utc",

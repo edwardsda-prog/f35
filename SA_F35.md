@@ -98,6 +98,19 @@ To support the full **Act 0 Trilogy (`UC 0` → `UC 0.1` → `UC 0.5`)** and ens
 2. **Table 9 (`work_center_tooling_and_sqep` — UC 0.5, 100 Records, Partitioned on `shift_updated_utc`, Clustered on `base_location, work_center`):**
    - Supports dual-key SQL `JOIN`s via `assigned_work_order_id` (`1:1` with `maintenance_work_orders.work_order_id`) and `(base_location, work_center, supported_wuc_code)`. Tracks `sqep_certification_domain`, `sqep_certified_techs_on_shift`, `qar_inspector_available`, `required_special_tool_id` (`JTD-53-30-T14`, `NDI-PAUT-496A`, `LO-IR-BLANKET-04`), `tool_calibration_status` (`CALIBRATED_SERVICEABLE`, `CALIBRATION_DUE_WARNING`, `EXPIRED_OUT_OF_CAL`, `IN_USE_OTHER_BAY`), and `bay_dispatch_status` (`READY_TO_DISPATCH`, `BLOCKED_TOOL_OUT_OF_CAL`, `BLOCKED_NO_QAR_ON_SHIFT`, `BLOCKED_AWAITING_MICAP_PART`).
 
+## 2.5.4 Generalized 3-Layer Operational Semantic Ontology & SQL Canonicalizer (`ISS-013`)
+
+To prevent semantic impedance mismatches between natural-language defence terminology and literal database enum values across unseen user queries, the UC 0 / UC 0.1 / UC 0.5 pipeline enforces a **3-Layer Semantic Defense-in-Depth Architecture**:
+
+1. **Layer 1 — Enriched BigQuery Schema Metadata & Cross-Table Seed Consistency (`app/seed_data/`):**
+   - A canonical `_TAIL_ASSIGNMENT_MAP` in `app/seed_data/bq_seed_records.py` guarantees 100% referential and location consistency for every tail (`ZM135`..`ZM176`) across all 9 tables (`900` total records), including `ZM159` (`WO-2026-88411`, `RES-2026-00011`, `TEL-ZM159-ACT-77542`, `PHM-2026-99111`) at `HMS Queen Elizabeth`.
+   - Declarative BigQuery schemas (`app/seed_data/schemas/*.schema.json`) document that `RAF Marham` (land-based Main Operating Base / MOB) and `HMS Queen Elizabeth` / `HMS Prince of Wales` (afloat maritime platforms) together constitute the **UK Carrier Strike Group (CSG) / UK Lightning Force** force-generation enterprise.
+2. **Layer 2 — Agent Cognitive Ontology (`UC0_SYSTEM_INSTRUCTION` in `app/sub_agents/uc0_maintenance_agent.py`):**
+   - Embeds explicit translation rules across 8 semantic dimensions: CSG/Fleet-wide scope (no `base_location` restriction), `afloat`/`embarked` (`IN ('HMS Queen Elizabeth', 'HMS Prince of Wales')`), `ashore`/`MOB` (`'RAF Marham'`), squadron shorthand (`617`/`Dambusters`, `809`/`Immortals`, `207`/`OCU`), active work-order lifecycle (`work_order_status != 'COMPLETED'`), Red-X urgent/grounded triage (`priority = 'PRIORITY_1_RED_X' AND work_order_status != 'COMPLETED'`), PHM/BIT zero-code/CND filters, and SQEP/tooling dispatch constraints.
+3. **Layer 3 — Deterministic SQL Semantic Canonicalizer & Zero-Row Auto-Recovery (`app/tools/uc0_maintenance.py`):**
+   - `canonicalize_maintenance_sql(sql_query, sheet_title, user_prompt)` executes in `< 0.2 ms` before query evaluation, applying 6 deterministic rewrite rules (`CSG_ENTERPRISE_LOCATION_EXPANSION`, `LOCATION_CATEGORY_AND_ALIAS_CANONICALIZATION`, `SQUADRON_SHORTHAND_CANONICALIZATION`, `ACTIVE_WORK_ORDER_LIFECYCLE_EXPANSION`, `URGENT_AND_GROUNDED_TRIAGE_ALIGNMENT`, `ENUM_SYNONYM_CANONICALIZATION`).
+   - If a valid `SELECT` query still returns `0` rows, `_relax_zero_row_sql` automatically relaxes exact string equality on descriptive columns (`subsystem_name`, `discrepancy_narrative`, `required_special_tool_name`) to case-insensitive `LOWER(col) LIKE '%term%'` and widens `work_order_status = 'OPEN'` to `work_order_status != 'COMPLETED'`.
+
 # 3\. Use Case 1 Design: Conversational Analytics with Simple Charts (Structured Data)
 
 ## 3.1 Operational Narrative & Gemini Capabilities

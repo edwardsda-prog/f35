@@ -12,8 +12,8 @@ SCHEMAS_DIR = Path(__file__).resolve().parent / "schemas"
 # ---------------------------------------------------------------------------
 _FLEET_TAILS: tuple[str, ...] = tuple(
     f"ZM{num}"
-    for num in range(135, 180)
-    if num not in (151, 152, 154, 158, 159)
+    for num in range(135, 177)
+    if num not in range(151, 163)
 )
 
 _SUBSYSTEM_CATALOG: tuple[dict[str, str], ...] = (
@@ -112,6 +112,25 @@ _SQUADRON_ROSTER: tuple[tuple[str, str, str], ...] = (
     ("207 Sqn (OCU)", "RAF Marham", "Chf Tech K. Lindqvist"),
 )
 
+_TAIL_ASSIGNMENT_MAP: dict[str, tuple[str, str, str]] = {
+    "ZM151": ("617 Sqn (The Dambusters)", "RAF Marham", "Chf Tech M. Davies"),
+    "ZM152": ("617 Sqn (The Dambusters)", "RAF Marham", "Chf Tech K. Lindqvist"),
+    "ZM153": ("617 Sqn (The Dambusters)", "RAF Marham", "WO1 D. MacLeod"),
+    "ZM154": ("617 Sqn (The Dambusters)", "RAF Marham", "Chf Tech M. Davies"),
+    "ZM155": ("617 Sqn (The Dambusters)", "RAF Marham", "Sgt T. O'Connor"),
+    "ZM156": ("809 NAS (The Immortals)", "HMS Queen Elizabeth", "POAET J. Stirling"),
+    "ZM157": ("809 NAS (The Immortals)", "HMS Queen Elizabeth", "LAET S. Krishnan"),
+    "ZM158": ("809 NAS (The Immortals)", "HMS Prince of Wales", "CPOAET N. Armstrong"),
+    "ZM159": ("809 NAS (The Immortals)", "HMS Queen Elizabeth", "POAET T. Campbell"),
+    "ZM160": ("207 Sqn (OCU)", "RAF Marham", "FSgt L. Becker"),
+    "ZM161": ("207 Sqn (OCU)", "RAF Marham", "Chf Tech K. Lindqvist"),
+    "ZM162": ("207 Sqn (OCU)", "RAF Marham", "Sgt R. Patel"),
+    **{
+        _tail: _SQUADRON_ROSTER[_i % len(_SQUADRON_ROSTER)]
+        for _i, _tail in enumerate(_FLEET_TAILS)
+    },
+}
+
 # ---------------------------------------------------------------------------
 # Table 1: airframe_component_telemetry (100 rows)
 # ---------------------------------------------------------------------------
@@ -153,7 +172,7 @@ _BASE_AIRFRAME_COMPONENT_TELEMETRY_ROWS: list[dict[str, Any]] = [
         "telemetry_record_id": "TEL-ZM158-ACT-77510",
         "tail_number": "ZM158",
         "aircraft_variant": "F-35B",
-        "base_location": "HMS Queen Elizabeth",
+        "base_location": "HMS Prince of Wales",
         "part_serial_number": "ACT-77510-C",
         "nsn": "1680-01-619-4821",
         "component_name": "Port Electro-Hydrostatic Actuator (EHA)",
@@ -175,7 +194,7 @@ _BASE_AIRFRAME_COMPONENT_TELEMETRY_ROWS: list[dict[str, Any]] = [
         "telemetry_record_id": "TEL-ZM160-ACT-77560",
         "tail_number": "ZM160",
         "aircraft_variant": "F-35B",
-        "base_location": "HMS Prince of Wales",
+        "base_location": "RAF Marham",
         "part_serial_number": "ACT-77560-E",
         "nsn": "1680-01-619-4821",
         "component_name": "Port Electro-Hydrostatic Actuator (EHA)",
@@ -190,7 +209,7 @@ AIRFRAME_COMPONENT_TELEMETRY_ROWS: list[dict[str, Any]] = list(
 for _idx in range(6, 100):
     _tail = _FLEET_TAILS[_idx % len(_FLEET_TAILS)]
     _sub = _SUBSYSTEM_CATALOG[_idx % len(_SUBSYSTEM_CATALOG)]
-    _sqn_info = _SQUADRON_ROSTER[_idx % len(_SQUADRON_ROSTER)]
+    _sqn_info = _TAIL_ASSIGNMENT_MAP[_tail]
     _serial = f"{_sub['part_prefix']}-{70000 + _idx}-B"
     _hours = round(140.0 + ((_idx * 17) % 620) + (_idx % 10) * 0.4, 1)
     AIRFRAME_COMPONENT_TELEMETRY_ROWS.append(
@@ -782,7 +801,7 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         "tail_number": "ZM159",
         "aircraft_variant": "F-35B",
         "squadron": "809 NAS (The Immortals)",
-        "base_location": "HMS Prince of Wales",
+        "base_location": "HMS Queen Elizabeth",
         "aircraft_status": "NMC-M",
         "work_order_status": "OPEN",
         "priority": "PRIORITY_1_RED_X",
@@ -790,7 +809,7 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         "wuc_code": "72-50",
         "subsystem_name": "3-Bearing Swivel Duct Nozzle Actuator",
         "discrepancy_narrative": (
-            "3BSD pitch nozzle actuator feedback RVDT sensor discrepancy during carrier deck spot movement on HMS Prince of Wales."
+            "3BSD pitch nozzle actuator feedback RVDT sensor discrepancy during carrier deck spot movement on HMS Queen Elizabeth."
         ),
         "corrective_action": (
             "Troubleshooting harness continuity between 3BSD RVDT channel B and propulsion control module."
@@ -878,7 +897,7 @@ MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = list(
 for _idx in range(14, 100):
     _wo_num = 88401 + _idx
     _tail = _FLEET_TAILS[_idx % len(_FLEET_TAILS)]
-    _sqn, _base, _lead = _SQUADRON_ROSTER[_idx % len(_SQUADRON_ROSTER)]
+    _sqn, _base, _lead = _TAIL_ASSIGNMENT_MAP[_tail]
     _sub = _SUBSYSTEM_CATALOG[_idx % len(_SUBSYSTEM_CATALOG)]
     _day = 1 + (_idx % 28)
     _hr = 6 + (_idx % 16)
@@ -1085,7 +1104,7 @@ _BASE_PHM_BIT_FAULT_EVENTS_ROWS: list[dict[str, Any]] = [
         "tail_number": "ZM158",
         "aircraft_variant": "F-35B",
         "squadron": "809 NAS (The Immortals)",
-        "base_location": "HMS Queen Elizabeth",
+        "base_location": "HMS Prince of Wales",
         "sortie_id": "SRT-QNLZ-20261103-01",
         "wuc_code": "32-40",
         "subsystem_name": "Main Landing Gear Carbon Brake Pack",
@@ -1397,7 +1416,7 @@ _BASE_WORK_CENTER_TOOLING_AND_SQEP_ROWS: list[dict[str, Any]] = [
     {
         "resource_id": "RES-2026-00011",
         "assigned_work_order_id": "WO-2026-88411",
-        "base_location": "HMS Prince of Wales",
+        "base_location": "HMS Queen Elizabeth",
         "work_center": "PROPULSION",
         "supported_wuc_code": "72-50",
         "shift_code": "CARRIER_WATCH_1",

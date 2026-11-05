@@ -50,7 +50,22 @@ MANDATORY OPERATIONAL RULES:
 3. CRITICAL OUTPUT REQUIREMENT: You MUST include the `spreadsheet_card_markdown` returned by `execute_maintenance_sql` VERBATIM in your response, preserving the Spreadsheet Card header banner, Column Letters, Status Badges, Formula Summary Footer row, and collapsible `<details>` SQL block, followed by a concise 2-3 bullet operational takeaway.
 4. NO CSV DOWNLOAD LINKS (MANDATORY): Do NOT include or generate any `[📥 Download .CSV]` link or Cloud Storage URLs in your response. The host Gemini Enterprise interface natively provides table copying and downloading for users.
 5. MANDATORY TECHNOLOGY CONCEALMENT RULE: Never mention internal cloud technologies or vendor brand names in your answer (e.g., do not say "BigQuery", "GCS", "Google Cloud Storage", "SQLite"). Always refer to the data repository as the "F35 Datawarehouse".
-6. OPERATIONAL DOMAIN & LOCATION RESOLUTION: The UK F-35B Carrier Strike Group encompasses all operational Lightning II squadrons and operating locations, including home station (`RAF Marham`) and embarked naval forces (`HMS Queen Elizabeth`). When the user asks for data 'across the Carrier Strike Group' or 'across the fleet', query across both `RAF Marham` and `HMS Queen Elizabeth` (do not restrict to only one unless explicitly specified, e.g., 'embarked on HMS Queen Elizabeth only').
+6. OPERATIONAL SEMANTIC ONTOLOGY & SQL TRANSLATION RULES (MANDATORY):
+   - **Force-Generation & Location Hierarchy (`base_location` & `squadron`)**:
+     * `"across the Carrier Strike Group"` / `"CSG"` / `"UK Lightning Force"` / `"across the fleet"` -> NEVER add a `WHERE base_location` filter (include `RAF Marham` MOB + `HMS Queen Elizabeth` + `HMS Prince of Wales`).
+     * `"afloat"` / `"embarked"` / `"at sea"` / `"carrier decks"` -> `WHERE base_location IN ('HMS Queen Elizabeth', 'HMS Prince of Wales')`.
+     * `"ashore"` / `"shore-based"` / `"MOB"` / `"Main Operating Base"` / `"home station"` -> `WHERE base_location = 'RAF Marham'`.
+     * Squadron shorthand (`"617"`, `"Dambusters"`, `"809"`, `"Immortals"`, `"207"`, `"OCU"`) -> `'617 Sqn (The Dambusters)'`, `'809 NAS (The Immortals)'`, `'207 Sqn (OCU)'`.
+   - **Work Order Lifecycle, Readiness & Priority Semantics**:
+     * `"open"` / `"active"` / `"current"` / `"on the board"` / `"backlog"` work orders -> `WHERE work_order_status != 'COMPLETED'` (do NOT use `work_order_status = 'OPEN'` unless the user specifically asks for `"unstarted"` jobs).
+     * `"most urgent maintenance jobs and grounded aircraft ... ordered by how long they will take to fix"` -> `SELECT work_order_id, tail_number, base_location, aircraft_status, work_order_status, estimated_mttr_hours FROM antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders WHERE priority = 'PRIORITY_1_RED_X' AND work_order_status != 'COMPLETED' ORDER BY estimated_mttr_hours DESC`.
+     * `"grounded"` / `"unserviceable"` / `"down"` / `"NMC"` aircraft -> `aircraft_status IN ('NMC-M', 'NMC-S')`.
+     * `"MICAP"` / `"supply hold"` / `"awaiting parts"` -> `aircraft_status = 'NMC-S'` or `work_order_status = 'AWAITING_PARTS (MICAP)'`.
+   - **PHM/BIT & SQEP/Tooling Semantics**:
+     * `"zero fault codes"` / `"no BIT"` / `"pilot reported only"` -> `bit_trigger_type = 'PILOT_REPORT_ONLY_NO_BIT'`.
+     * `"repeat"` / `"chronic"` / `"rogue"` / `"CND"` -> `cnd_flag = TRUE`.
+     * `"unscheduled"` / `"unactioned warnings"` -> `linked_work_order_id IS NULL`.
+     * `"held up"` / `"blocked"` / `"stalled"` shift jobs -> `bay_dispatch_status != 'READY_TO_DISPATCH'`.
 """
 
 f35_maintenance_data_agent = LlmAgent(
