@@ -369,19 +369,21 @@ def execute_maintenance_sql(
     export_info = upload_csv_export(csv_content=csv_content, filename=csv_filename)
 
     # Build Markdown Spreadsheet Card
-    header_cells = ["#"] + [f"**{c.column_letter}** · `{c.field_name}`" for c in columns]
+    header_cells = ["#"] + [f"**{c.column_letter}** `{c.field_name}`" for c in columns]
     align_cells = ["---:"] + [
         "---:" if c.data_type in ("FLOAT", "FLOAT64", "INT64", "INTEGER", "NUMERIC") else ":---"
         for c in columns
     ]
+
+    has_logged_col = any("logged" in c.field_name.lower() for c in columns)
+    has_mttr_col = any("mttr" in c.field_name.lower() for c in columns)
 
     md_lines: list[str] = [
         f"### 📊 Spreadsheet Card: `{clean_title}`",
         (
             f"**Repository:** F35 Datawarehouse (`maintenance_work_orders`) · "
             f"**Rows:** `{total_rows}` · **Columns:** `{len(columns)}` (`A`–`{columns[-1].column_letter if columns else 'A'}`) · "
-            f"**Latency:** `{latency_ms} ms` · "
-            f"[📥 Download .CSV (Excel / Google Sheets)]({export_info['download_url']})"
+            f"**Latency:** `{latency_ms} ms`"
         ),
         "",
         "| " + " | ".join(header_cells) + " |",
@@ -409,11 +411,11 @@ def execute_maintenance_sql(
         fname_lower = col.field_name.lower()
         if idx == 0:
             footer_cells.append(f"**`{footer.row_count_formula}` → `{footer.total_rows} rows`**")
-        elif fname_lower == "logged_man_hours" or "logged" in fname_lower:
+        elif ("logged" in fname_lower) and sum_logged > 0:
             footer_cells.append(
                 f"**`{footer.sum_logged_man_hours_formula}` = `{footer.sum_logged_man_hours:.1f} hrs`**"
             )
-        elif fname_lower == "estimated_mttr_hours" or "mttr" in fname_lower:
+        elif ("mttr" in fname_lower) and avg_mttr > 0:
             footer_cells.append(
                 f"**`{footer.avg_estimated_mttr_hours_formula}` = `{footer.avg_estimated_mttr_hours:.2f} hrs`**"
             )
@@ -421,15 +423,17 @@ def execute_maintenance_sql(
             footer_cells.append("—")
     md_lines.append("| " + " | ".join(footer_cells) + " |")
 
+    # Build Formula Summary Bar items
+    summary_bar_items = [f"`{footer.row_count_formula} = {footer.total_rows}`"]
+    if has_logged_col and sum_logged > 0:
+        summary_bar_items.append(f"`{footer.sum_logged_man_hours_formula} = {footer.sum_logged_man_hours:.1f} hrs`")
+    if has_mttr_col and avg_mttr > 0:
+        summary_bar_items.append(f"`{footer.avg_estimated_mttr_hours_formula} = {footer.avg_estimated_mttr_hours:.2f} hrs`")
+
     md_lines.extend(
         [
             "",
-            (
-                f"**Formula Summary Bar:** `{footer.row_count_formula} = {footer.total_rows}` · "
-                f"`{footer.sum_logged_man_hours_formula} = {footer.sum_logged_man_hours:.1f} hrs` · "
-                f"`{footer.avg_estimated_mttr_hours_formula} = {footer.avg_estimated_mttr_hours:.2f} hrs` · "
-                f"[📥 Download .CSV (Excel / Google Sheets)]({export_info['download_url']})"
-            ),
+            f"**Formula Summary Bar:** " + " · ".join(summary_bar_items),
             "",
             "<details><summary>🔍 View Executed Query</summary>",
             "",

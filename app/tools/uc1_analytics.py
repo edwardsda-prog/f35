@@ -445,16 +445,16 @@ def check_actuator_fatigue_and_depot_inventory(
     fatigue_chart = _build_actuator_fatigue_threshold_chart(telemetry_rows)
 
     markdown_table = (
-        "| Tail Number | Serial Number | NSN | Flight Hours | Limit (Hrs) | Remaining (Hrs) | Status | Depot On-Hand | 30d Reserved | ETA (Hrs) | Assigned Sortie |\n"
-        "| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |\n"
-        f"| **{zm151_rec['tail_number']}** | `{zm151_rec['part_serial_number']}` | `{zm151_rec['nsn']}` | "
-        f"**{zm151_rec['current_flight_hours']:.1f}** | {zm151_rec['life_limit_threshold_hrs']:.1f} | "
-        f"{zm151_rec['hours_remaining']:.1f} | `{zm151_rec['mission_capable_status']}` | "
-        f"{on_hand} | {reserved_30d} | {eta_hrs:.1f} | `{impacted_sortie['sortie_id']}` ({impacted_sortie['assigned_pilot_callsign']}) |\n"
-        f"| **{zm154_rec['tail_number']}** | `{zm154_rec['part_serial_number']}` | `{zm154_rec['nsn']}` | "
-        f"**{zm154_rec['current_flight_hours']:.1f}** | {zm154_rec['life_limit_threshold_hrs']:.1f} | "
-        f"{zm154_rec['hours_remaining']:.1f} | `{zm154_rec['mission_capable_status']}` | "
-        f"{on_hand} | {reserved_30d} | {eta_hrs:.1f} | Spare Candidate for `{impacted_sortie['sortie_id']}` |"
+        "### ✈️ Aircraft & Component Status\n"
+        "| Tail | Serial No. | Flight Hours | Limit | Status |\n"
+        "| :--- | :--- | :---: | :---: | :---: |\n"
+        f"| **{zm151_rec['tail_number']}** | `{zm151_rec['part_serial_number']}` | **{zm151_rec['current_flight_hours']:.1f}** | {zm151_rec['life_limit_threshold_hrs']:.1f} | `{zm151_rec['mission_capable_status']}` |\n"
+        f"| **{zm154_rec['tail_number']}** | `{zm154_rec['part_serial_number']}` | **{zm154_rec['current_flight_hours']:.1f}** | {zm154_rec['life_limit_threshold_hrs']:.1f} | `{zm154_rec['mission_capable_status']}` |\n\n"
+        "### 📦 Regional Depot Inventory\n"
+        "| NSN | Depot Stock | 30-Day Reserved | Shipping ETA |\n"
+        "| :--- | :---: | :---: | :---: |\n"
+        f"| `{zm151_rec['nsn']}` | {on_hand} units | {reserved_30d} units | {eta_hrs:.1f} hrs |\n\n"
+        f"**Assigned Sortie:** `{impacted_sortie['sortie_id']}` ({impacted_sortie['assigned_pilot_callsign']} / Flt Lt Henderson)"
     )
 
     result = {

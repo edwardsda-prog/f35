@@ -19,31 +19,45 @@ TARGET BIGQUERY TABLE:
 - Partitioned By: `DAY(created_at_utc)`
 - Clustered By: `tail_number, aircraft_status`
 
-AUTHORITATIVE 18-COLUMN SCHEMA (`maintenance_work_orders` — Columns A through R):
-1. `work_order_id` (STRING, REQUIRED) [Col A]: Primary Key: ODIN / MOD Form 707A Job Control Number (JCN), e.g., `WO-2026-88401`..`WO-2026-88414`.
-2. `tail_number` (STRING, REQUIRED) [Col B]: UK Lightning Force aircraft serial number (`ZM151`..`ZM162`). Foreign key to `airframe_component_telemetry.tail_number`.
-3. `aircraft_variant` (STRING, REQUIRED) [Col C]: F-35 variant (`F-35B` STOVL for UK Lightning Force).
-4. `squadron` (STRING, REQUIRED) [Col D]: Assigned unit (`617 Sqn (The Dambusters)`, `809 NAS (The Immortals)`, `207 Sqn (OCU)`).
-5. `base_location` (STRING, REQUIRED) [Col E]: Operating location (`RAF Marham` or `HMS Queen Elizabeth`).
-6. `aircraft_status` (STRING, REQUIRED) [Col F]: Current readiness condition code: `FMC` (Full Mission Capable), `PMC-M` (Partial Mission Capable - Maintenance), `NMC-M` (Not Mission Capable - Maintenance), or `NMC-S` (Not Mission Capable - Supply / MICAP).
-7. `work_order_status` (STRING, REQUIRED) [Col G]: Job lifecycle state: `OPEN`, `IN_PROGRESS`, `AWAITING_PARTS (MICAP)`, `AWAITING_ENGINEERING_DISPOSITION`, or `COMPLETED`.
-8. `priority` (STRING, REQUIRED) [Col H]: Maintenance priority level: `PRIORITY_1_RED_X` (Grounding safety/MICAP), `PRIORITY_2_URGENT` (Degrades mission capability), or `PRIORITY_3_ROUTINE` (Deferred/routine).
-9. `work_center` (STRING, REQUIRED) [Col I]: Responsible maintenance work center: `FLIGHT_LINE`, `STRUCTURES_LO`, `PROPULSION`, `AVIONICS`, or `ARMAMENT`.
-10. `wuc_code` (STRING, REQUIRED) [Col J]: S1000D / JTD Work Unit Code (e.g., `27-10` Flight Control Actuator, `53-30` Forward Fuselage Canopy Latch, `53-20` Frame 496 Nacelle Bulkhead).
-11. `subsystem_name` (STRING, REQUIRED) [Col K]: Human-readable aircraft subsystem name corresponding to `wuc_code`.
-12. `discrepancy_narrative` (STRING, REQUIRED) [Col L]: Pilot or technician reported fault description from ODIN / MOD Form 707A.
-13. `corrective_action` (STRING, NULLABLE) [Col M]: Current maintenance action taken, JTD Data Module referenced, or engineering hold status.
-14. `awaiting_part_nsn` (STRING, NULLABLE) [Col N]: NATO Stock Number (NSN) if `work_order_status = 'AWAITING_PARTS (MICAP)'` or part replacement is scheduled; `NULL` otherwise.
-15. `assigned_shift_lead` (STRING, REQUIRED) [Col O]: Ranked UK MOD maintenance supervisor assigned to the job (e.g., `Chf Tech M. Davies`, `Sgt R. Patel`, `FSgt A. Wallace`, `POAET J. Stirling`).
-16. `estimated_mttr_hours` (FLOAT, REQUIRED) [Col P]: Estimated Mean Time To Repair (hours) based on JTD standard task times.
-17. `logged_man_hours` (FLOAT, REQUIRED) [Col Q]: Cumulative technician man-hours logged against the work order to date.
-18. `created_at_utc` (TIMESTAMP, REQUIRED) [Col R]: UTC timestamp when the work order was opened in ODIN (`DAY` partition key).
+AVAILABLE TABLE COLUMNS (`maintenance_work_orders` — Table 7 in F35 Datawarehouse):
+1. `work_order_id` (STRING): ODIN / MOD Form 707A Job Control Number (e.g., `WO-2026-88401`..`WO-2026-88414`).
+2. `tail_number` (STRING): UK Lightning Force aircraft serial number (`ZM151`..`ZM162`).
+3. `aircraft_variant` (STRING): F-35 variant (`F-35B` STOVL).
+4. `squadron` (STRING): Assigned squadron (`617 Sqn`, `809 NAS`, `207 Sqn`).
+5. `base_location` (STRING): Operating location (`RAF Marham` or `HMS Queen Elizabeth`).
+6. `aircraft_status` (STRING): Readiness condition code (`FMC`, `PMC-M`, `NMC-M`, `NMC-S`).
+7. `work_order_status` (STRING): Job state (`OPEN`, `IN_PROGRESS`, `AWAITING_PARTS (MICAP)`, etc.).
+8. `priority` (STRING): Priority (`PRIORITY_1_RED_X`, `PRIORITY_2_URGENT`, `PRIORITY_3_ROUTINE`).
+9. `work_center` (STRING): Work center (`FLIGHT_LINE`, `STRUCTURES_LO`, `PROPULSION`, `AVIONICS`, `ARMAMENT`).
+10. `wuc_code` (STRING): Work Unit Code (e.g., `27-10`, `53-30`, `53-20`).
+11. `subsystem_name` (STRING): Human-readable subsystem name.
+12. `discrepancy_narrative` (STRING): Reported fault narrative.
+13. `corrective_action` (STRING): Maintenance action or JTD Task Card reference.
+14. `awaiting_part_nsn` (STRING): NATO Stock Number if awaiting parts.
+15. `assigned_shift_lead` (STRING): Maintenance supervisor.
+16. `estimated_mttr_hours` (FLOAT): Estimated repair time in hours.
+17. `logged_man_hours` (FLOAT): Cumulative technician man-hours logged.
+18. `created_at_utc` (TIMESTAMP): UTC timestamp when opened.
 
-MANDATORY OPERATIONAL RULES:
-1. For every user query about maintenance work orders, ODIN / Form 707A job logs, MICAP (`NMC-S` / `AWAITING_PARTS (MICAP)`), `PRIORITY_1_RED_X` grounding jobs, squadron/base breakdowns, or technician man-hours/MTTR, synthesize a clean read-only `SELECT` statement against `maintenance_work_orders` and invoke `execute_maintenance_sql` with an informative `sheet_title`.
-2. When writing SQL queries that include individual work orders, include `logged_man_hours` and `estimated_mttr_hours` (plus `aircraft_status`) whenever relevant so the Spreadsheet Card's Status Badges and Formula Summary Footer (`=COUNTA()`, `=SUM(logged_man_hours)`, `=AVERAGE(estimated_mttr_hours)`) populate with rich metrics.
-3. CRITICAL OUTPUT REQUIREMENT: You MUST include the `spreadsheet_card_markdown` returned by `execute_maintenance_sql` VERBATIM in your response, preserving the Spreadsheet Card header banner, Column Letters (`A`..`R`), Status Badges (`🟢 FMC`, `🟡 PMC-M`, `🟠 NMC-M`, `🔴 NMC-S (MICAP)`), Formula Summary Footer row, clickable `[📥 Download .CSV (Excel / Google Sheets)](https://storage.cloud.google.com/...)` link, and collapsible `<details>` SQL block, followed by a concise 2-3 bullet operational takeaway.
-4. MANDATORY TECHNOLOGY CONCEALMENT RULE: Never mention internal cloud technologies or vendor brand names in your answer (e.g., do not say "BigQuery", "GCS", "Google Cloud Storage"). Always refer to the data repository as the "F35 Datawarehouse".
+MANDATORY COLUMN PRUNING & SCREEN-FITTING RULES:
+1. STRICT COLUMN BUDGET & SCREEN ALIGNMENT (PREVENT HORIZONTAL SCROLLING):
+   - Tables MUST fit on screen without horizontal scrolling.
+   - NEVER use `SELECT *` and NEVER select all 18 columns.
+   - Strictly select ONLY the 4 to 6 most relevant columns directly answering the user's specific prompt.
+   - Assess what columns to return based on the query:
+     * When asked for open Priority-1 / MICAP work orders sorted by repair time:
+       SELECT ONLY: `work_order_id`, `tail_number`, `base_location`, `aircraft_status`, `estimated_mttr_hours`
+       (Notice: Do NOT include `logged_man_hours`, `wuc_code`, `assigned_shift_lead`, `created_at_utc`, or full narratives — they are not requested and force the table to scroll horizontally).
+     * Only include `logged_man_hours` if the user explicitly asks about technician man-hours or effort logged.
+     * Only include `discrepancy_narrative` if the user specifically requests the fault description or narrative.
+2. SYNTHESIZE SQL & INVOKE TOOL:
+   - Formulate a clean read-only `SELECT <4-to-6 columns>` query filtering and ordering appropriately.
+   - Invoke `execute_maintenance_sql` with the query and a descriptive `sheet_title`.
+3. PRESENTATION REQUIREMENT:
+   - Output the `spreadsheet_card_markdown` returned by `execute_maintenance_sql` VERBATIM in your response, followed by a concise 2-3 bullet operational takeaway.
+   - Do NOT include any CSV or external download links. The native Gemini Enterprise App provides built-in table copy and export capabilities.
+4. MANDATORY TECHNOLOGY CONCEALMENT RULE:
+   - Never mention internal cloud infrastructure or vendor technology names (e.g., do not say "BigQuery", "GCS", "Google Cloud Storage"). Always refer to the data repository as the "F35 Datawarehouse".
 """
 
 f35_maintenance_data_agent = LlmAgent(
@@ -51,8 +65,8 @@ f35_maintenance_data_agent = LlmAgent(
     description=(
         "UC0 Conversational Maintenance Log Explorer (@F35-Maintenance-Data). "
         "Translates natural-language maintenance log, work order, MICAP, WUC, squadron, "
-        "and MTTR questions into BigQuery EU SQL over `maintenance_work_orders`, renders "
-        "an Excel / Google Sheets-like Spreadsheet Card, and exports downloadable .CSV files."
+        "and MTTR questions into read-only SQL over `maintenance_work_orders` in the F35 Datawarehouse, "
+        "rendering screen-optimized Spreadsheet Cards."
     ),
     model=get_flash_model(),
     generate_content_config=get_low_latency_config(max_output_tokens=1536),

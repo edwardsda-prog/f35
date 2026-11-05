@@ -73,9 +73,10 @@ ROOT_COORDINATOR_INSTRUCTION = COORDINATOR_INSTRUCTION
 root_agent = LlmAgent(
     name="f35_sustainment_coordinator",
     description=(
-        "Root coordinator for the F-35 Lightning II Fleet Sustainment Agent Platform "
-        "in europe-west1 / EU. Routes requests across UC0 Maintenance Data, UC1 Analytics, "
-        "UC2 JTD Search, and UC3 Airworthiness specialist sub-agents."
+        "AI decision-support coordinator for the UK F-35 Lightning II fleet, "
+        "empowering commanders and engineers to maximize aircraft availability, "
+        "accelerate maintenance triage, resolve complex technical faults, and "
+        "uphold sovereign airworthiness across RAF Marham and HMS Queen Elizabeth."
     ),
     model=get_gemini_model(
         model_name=COORDINATOR_MODEL,

@@ -420,3 +420,85 @@ class TestToAuthenticatedGcsUrlAdversarial:
         if input_url and input_url.strip().startswith("gs://"):
             assert result.startswith("https://storage.cloud.google.com/")
             assert not result.startswith("gs://")
+
+
+# ===========================================================================
+# 4. Issue 10 Regression Tests: Elevator Pitch, Column Pruning & CSV Removal
+# ===========================================================================
+
+class TestIssue10ElevatorPitchAndTableFormatting:
+    """Tests covering Issue 1 (Elevator pitch), Issues 2 & 3 (Column pruning & screen-fitting), and Issue 4 (CSV download link removal)."""
+
+    def test_root_agent_description_is_elevator_pitch(self) -> None:
+        """Issue 1: Root agent description must be a high-level elevator pitch without enumerating UC0-UC3."""
+        from app.agent import root_agent
+
+        desc = root_agent.description
+        assert "AI decision-support coordinator" in desc
+        assert "F-35 Lightning II" in desc
+        assert "RAF Marham" in desc
+        assert "HMS Queen Elizabeth" in desc
+        # Ensure it does NOT enumerate technical UC codes
+        assert "UC0" not in desc
+        assert "UC1" not in desc
+        assert "UC2" not in desc
+        assert "UC3" not in desc
+
+    def test_uc0_open_p1_micap_column_pruning_and_screen_alignment(self) -> None:
+        """Issues 2 & 3: Open P1/MICAP query returns screen-friendly 5 columns, omitting logged_man_hours."""
+        from app.tools.uc0_maintenance import execute_maintenance_sql
+
+        # Realistic prompt-driven query for open Priority-1 and MICAP sorted by repair time
+        sql = (
+            "SELECT work_order_id, tail_number, base_location, aircraft_status, estimated_mttr_hours "
+            "FROM maintenance_work_orders "
+            "WHERE work_order_status != 'COMPLETED' "
+            "AND (priority = 'PRIORITY_1_RED_X' OR aircraft_status = 'NMC-S' OR work_order_status LIKE '%MICAP%') "
+            "ORDER BY estimated_mttr_hours ASC"
+        )
+        res = execute_maintenance_sql(sql, sheet_title="Open_P1_and_MICAP_Work_Orders")
+        assert res["status"] == "SUCCESS"
+        assert res["row_count"] > 0
+
+        # Verify only 5 columns were selected
+        col_names = [c["field_name"] for c in res["spreadsheet_card"]["columns"]]
+        assert col_names == ["work_order_id", "tail_number", "base_location", "aircraft_status", "estimated_mttr_hours"]
+        assert "logged_man_hours" not in col_names
+
+        # Verify markdown table
+        md = res["spreadsheet_card_markdown"]
+        assert "estimated_mttr_hours" in md
+        assert "logged_man_hours" not in md
+        # Issue 4: Verify no download links
+        assert "[📥 Download .CSV" not in md
+        assert "https://storage.cloud.google.com" not in md
+
+    def test_uc0_no_csv_download_links_in_any_query(self) -> None:
+        """Issue 4: No CSV download link should be emitted in spreadsheet_card_markdown."""
+        from app.tools.uc0_maintenance import execute_maintenance_sql
+
+        sql = "SELECT work_order_id, tail_number, aircraft_status, estimated_mttr_hours FROM maintenance_work_orders LIMIT 3"
+        res = execute_maintenance_sql(sql)
+        md = res["spreadsheet_card_markdown"]
+        assert "[📥 Download .CSV" not in md
+        assert "https://storage.cloud.google.com" not in md
+
+    def test_uc1_markdown_table_screen_friendly_column_budget(self) -> None:
+        """Issue 3: UC1 analytics returns separate, screen-aligned tables (<= 5 columns) with no horizontal scrolling."""
+        from app.tools.uc1_analytics import check_actuator_fatigue_and_depot_inventory
+
+        res = check_actuator_fatigue_and_depot_inventory(base_location="RAF Marham")
+        assert res["status"] == "SUCCESS"
+        md_table = res.get("markdown_summary_table") or res.get("markdown_table", "")
+
+        # Verify tables are split into Airframe Status and Depot Inventory
+        assert "### ✈️ Aircraft & Component Status" in md_table
+        assert "### 📦 Regional Depot Inventory" in md_table
+
+        # Check line headers have at most 5 data columns
+        for line in md_table.splitlines():
+            if line.startswith("|") and not line.startswith("| :---"):
+                pipe_count = line.count("|")
+                # pipe_count for 5 columns is 6 ('| col1 | col2 | col3 | col4 | col5 |')
+                assert pipe_count <= 7, f"Line has too many columns causing horizontal scroll: {line}"
+

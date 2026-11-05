@@ -1125,7 +1125,7 @@ def test_uc0_execute_maintenance_sql_spreadsheet_card_and_csv_link() -> None:
     )
 
     md = res["spreadsheet_card_markdown"]
-    assert "[📥 Download .CSV (Excel / Google Sheets)]" in md
+    assert "[📥 Download .CSV (Excel / Google Sheets)]" not in md
     assert "🟡 PMC-M" in md
     assert "🔴 NMC-S (MICAP)" in md
 
