@@ -137,7 +137,7 @@ _FAST_PATH_CAPABILITY_RE = re.compile(
 )
 
 _DOMAIN_ENTITY_FALLTHROUGH_RE = re.compile(
-    r"\b(zm\s*\d+|wo-2026-\d+|lot\s*#?[\w-]+|act-[\w-]+|nsn\b|srt-[\w-]+|frame\s*\d+|form\s*700|doc-\d+|work\s+orders?|micap)\b",
+    r"\b(zm\s*\d+|wo-2026-\d+|phm-2026-\d+|res-2026-\d+|hrc-[\w-]+|lot\s*#?[\w-]+|act-[\w-]+|nsn\b|srt-[\w-]+|frame\s*\d+|form\s*700|doc-\d+|work\s+orders?|micap|sqep\b|qar\b|cnd\b|phm_bit_fault_events|work_center_tooling_and_sqep)\b",
     re.IGNORECASE,
 )
 

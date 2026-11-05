@@ -1,0 +1,112 @@
+{
+  "table_name": "work_center_tooling_and_sqep",
+  "description": "Flight-line and back-shop Suitably Qualified and Experienced Personnel (SQEP) shift authorizations, Quality Assurance Representative (QAR) independent inspector availability, calibrated Special Support Equipment (SSE / JTD tooling such as JTD-53-30-T14 and NDI-PAUT-496A), and maintenance bay dispatch readiness across RAF Marham and HMS Queen Elizabeth.",
+  "partition_field": "shift_updated_utc",
+  "partition_type": "DAY",
+  "clustering_fields": [
+    "base_location",
+    "work_center"
+  ],
+  "cluster_fields": [
+    "base_location",
+    "work_center"
+  ],
+  "fields": [
+    {
+      "name": "resource_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Primary Key (PK): Unique work center shift tooling and SQEP resource allocation identifier (e.g., RES-2026-00001)."
+    },
+    {
+      "name": "assigned_work_order_id",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Foreign Key (FK -> maintenance_work_orders.work_order_id): Active or historical Form 707A Work Order allocated to this bay/tooling package (e.g., 'WO-2026-88401')."
+    },
+    {
+      "name": "base_location",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Cluster Key: Operating location ('RAF Marham' or 'HMS Queen Elizabeth')."
+    },
+    {
+      "name": "work_center",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Cluster Key: Responsible maintenance work center ('FLIGHT_LINE', 'STRUCTURES_LO', 'PROPULSION', 'AVIONICS', or 'ARMAMENT')."
+    },
+    {
+      "name": "supported_wuc_code",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "S1000D / JTD Work Unit Code supported by the special tool and SQEP competency (e.g., '27-10', '53-30', '53-20')."
+    },
+    {
+      "name": "shift_code",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Active squadron maintenance shift identifier ('DAY_ALPHA', 'NIGHT_BRAVO', or 'CARRIER_WATCH_1')."
+    },
+    {
+      "name": "shift_lead_name",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Ranked UK MOD shift supervisor managing the work center allocation (matches maintenance_work_orders.assigned_shift_lead)."
+    },
+    {
+      "name": "sqep_certification_domain",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Mandatory Suitably Qualified & Experienced Personnel (SQEP) authorization stamp required by the JTD Data Module (e.g., 'SQEP-CANOPY-RIG', 'SQEP-NDI-CSCAN-L3')."
+    },
+    {
+      "name": "sqep_certified_techs_on_shift",
+      "type": "INTEGER",
+      "mode": "REQUIRED",
+      "description": "Count of currently rostered and currency-valid SQEP technicians on shift holding the required certification domain."
+    },
+    {
+      "name": "qar_inspector_available",
+      "type": "BOOLEAN",
+      "mode": "REQUIRED",
+      "description": "Indicates whether an independent Quality Assurance Representative (QAR) / Red-X authority is currently on shift for dual sign-off."
+    },
+    {
+      "name": "required_special_tool_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Serialized Special Support Equipment (SSE) or JTD precision tool identifier (e.g., 'JTD-53-30-T14', 'NDI-PAUT-496A', 'LO-IR-BLANKET-04')."
+    },
+    {
+      "name": "required_special_tool_name",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Nomenclature of the mandated JTD special support tool or test set (e.g., 'Digital Micro-Torque Spanner 45 in-lbs (JTD-53-30-T14)')."
+    },
+    {
+      "name": "tool_calibration_status",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Metrology calibration status: 'CALIBRATED_SERVICEABLE', 'CALIBRATION_DUE_WARNING', 'EXPIRED_OUT_OF_CAL', or 'IN_USE_OTHER_BAY'."
+    },
+    {
+      "name": "calibration_expiry_utc",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "UTC timestamp when the tool's UKAS / military metrology calibration certificate expires."
+    },
+    {
+      "name": "bay_dispatch_status",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Composite task dispatch readiness state: 'READY_TO_DISPATCH', 'BLOCKED_TOOL_OUT_OF_CAL', 'BLOCKED_NO_QAR_ON_SHIFT', or 'BLOCKED_AWAITING_MICAP_PART'."
+    },
+    {
+      "name": "shift_updated_utc",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "Partition Key (DAY): UTC timestamp of the latest shift handover and tool crib status synchronization."
+    }
+  ]
+}

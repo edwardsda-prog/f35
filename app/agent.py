@@ -31,10 +31,12 @@ F-35 LIGHTNING II JOINT TECHNICAL DATA (JTD) & ASIP AIRWORTHINESS REFERENCE HEAD
 - Platform: F-35A / F-35B / F-35C Joint Strike Fighter Sustainment Architecture
 - Governing Airworthiness Standards: MIL-HDBK-516C, MIL-STD-3001, UK MoD DEF STAN 00-970
 - GCP Data Residency: EU Multi-Region (BigQuery `EU`, Discovery Engine `eu`, Compute `europe-west1`)
-- UC0 Conversational Maintenance Log Explorer (`f35_maintenance_data_agent`):
-  * BigQuery Table 7: `antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders` (`EU`)
-  * 14 ODIN / MOD Form 707A Work Orders (`WO-2026-88401`..`WO-2026-88414`) across `617 Sqn`, `809 NAS`, and `207 Sqn`
-  * Renders Excel / Google Sheets-like Spreadsheet Cards (`A`..`R`, Status Badges, Formula Footer) + `.CSV` export
+- UC0 / UC0.1 / UC0.5 Conversational Maintenance, PHM/BIT & SQEP Tooling Explorer (`f35_maintenance_data_agent`):
+  * F35 Datawarehouse Tables 7, 8, and 9 (`EU`, 100 rows per table):
+    - Table 7 (`maintenance_work_orders`): ODIN / MOD Form 707A Work Orders (`WO-2026-88401`..`WO-2026-88500`) across `617 Sqn`, `809 NAS`, and `207 Sqn`
+    - Table 8 (`phm_bit_fault_events` — UC 0.1): Post-Sortie ODIN PHM / PMA Health Reporting Codes (`HRC-*`), BIT fault severity, Zero-BIT pilot discrepancies (`PILOT_REPORT_ONLY_NO_BIT`), CND repeat tracking (`cnd_flag`), and unactioned PHM advisories
+    - Table 9 (`work_center_tooling_and_sqep` — UC 0.5): Work-center SQEP technician shift authorizations, QAR inspector availability (`qar_inspector_available`), special tool calibration status (`JTD-53-30-T14`, `NDI-PAUT-496A`, `LO-IR-BLANKET-04`), and bay dispatch readiness (`bay_dispatch_status`)
+  * Renders Excel / Google Sheets-like Spreadsheet Cards (`A`..`Z`, Status Badges, Formula Footer) + `.CSV` export
 - UC1 Supply & Sortie Analytics (`f35_analytics_agent`):
   * BigQuery Dataset: `antig-dave.ukd_f35_sustainment_demo` (`EU`)
   * Primary Actuator Watch: Aileron Hydraulic Servo Actuator (`NSN 1680-01-619-4821`), 1,000.0-hr life limit
@@ -55,7 +57,7 @@ STATIC_S1000D_AND_ASIP_REFERENCE_HEADER = STATIC_S100D_AND_ASIP_REFERENCE_HEADER
 COORDINATOR_INSTRUCTION = """You are `f35_sustainment_coordinator`, the Root Sustainment Coordinator for the F-35 Lightning II Fleet Sustainment Agent Platform (`f35-sustainment-agent`) running in `europe-west1` (Belgium) / `EU`.
 
 ROUTING & ORCHESTRATION DIRECTIVES:
-0. **UC0 Conversational Maintenance Log Explorer & Work Order Spreadsheet Queries** (`maintenance_work_orders`, ODIN / MOD Form 707A job control numbers `WO-2026-*`, `PRIORITY_1_RED_X`, `AWAITING_PARTS (MICAP)`, `NMC-S` / `NMC-M`, `wuc_code`, `work_center`, `assigned_shift_lead`, `estimated_mttr_hours`, `logged_man_hours`, squadron/base work-order breakdowns, Excel / Google Sheets spreadsheet cards, or `.csv` exports):
+0. **UC0 / UC0.1 / UC0.5 Conversational Maintenance Log, PHM/BIT Fault & SQEP Tooling Spreadsheet Queries** (`maintenance_work_orders`, `phm_bit_fault_events`, `work_center_tooling_and_sqep`, ODIN / MOD Form 707A job control numbers `WO-2026-*`, `PHM-2026-*`, `RES-2026-*`, `HRC-*` Health Reporting Codes, BIT fault severity, CND repeat faults, Zero-BIT pilot discrepancies, SQEP shift authorizations, QAR inspector availability, tool calibration status `JTD-53-30-T14` / `LO-IR-BLANKET-04`, `bay_dispatch_status`, `PRIORITY_1_RED_X`, `AWAITING_PARTS (MICAP)`, `NMC-S` / `NMC-M`, `wuc_code`, `work_center`, `assigned_shift_lead`, `estimated_mttr_hours`, `logged_man_hours`, squadron/base work-order breakdowns, Excel / Google Sheets spreadsheet cards, or `.csv` exports):
    - Delegate immediately to `f35_maintenance_data_agent` (`@F35-Maintenance-Data`).
 1. **UC1 Supply Chain & Sortie Readiness Queries** (actuator flight hours, `ZM151` vs `ZM154`, `NSN 1680-01-619-4821` depot stock, sortie `SRT-MAR-20261103-01` tail swaps, Vega-Lite charts):
    - Delegate immediately to `f35_analytics_agent` (`@F35-Sustainment-Analytics`).

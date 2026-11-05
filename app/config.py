@@ -38,6 +38,8 @@ BQ_TABLES: dict[str, str] = {
     "as_maintained_mbom_fasteners": "as_maintained_mbom_fasteners",
     "airworthiness_release_ledger": "airworthiness_release_ledger",
     "maintenance_work_orders": f"{BQ_DATASET_FQN}.maintenance_work_orders",
+    "phm_bit_fault_events": f"{BQ_DATASET_FQN}.phm_bit_fault_events",
+    "work_center_tooling_and_sqep": f"{BQ_DATASET_FQN}.work_center_tooling_and_sqep",
 }
 
 # Attach non-_ROWS table aliases onto bq_seed_records for cross-feature compatibility
@@ -49,6 +51,8 @@ for _tbl_key, _rows_attr in (
     ("AS_MAINTAINED_MBOM_FASTENERS", "AS_MAINTAINED_MBOM_FASTENERS_ROWS"),
     ("AIRWORTHINESS_RELEASE_LEDGER", "AIRWORTHINESS_RELEASE_LEDGER_ROWS"),
     ("MAINTENANCE_WORK_ORDERS", "MAINTENANCE_WORK_ORDERS_ROWS"),
+    ("PHM_BIT_FAULT_EVENTS", "PHM_BIT_FAULT_EVENTS_ROWS"),
+    ("WORK_CENTER_TOOLING_AND_SQEP", "WORK_CENTER_TOOLING_AND_SQEP_ROWS"),
 ):
     if not hasattr(_bq_seed_records, _tbl_key) and hasattr(_bq_seed_records, _rows_attr):
         setattr(_bq_seed_records, _tbl_key, getattr(_bq_seed_records, _rows_attr))

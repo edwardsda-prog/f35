@@ -109,7 +109,11 @@ def _fetch_uc1_tables_from_bq(base_location: str) -> dict[str, list[dict[str, An
         ] or [dict(r) for r in AIRFRAME_COMPONENT_TELEMETRY_ROWS]
 
     if not inventory_rows:
-        inventory_rows = [dict(r) for r in GLOBAL_DEPOT_INVENTORY_ROWS]
+        inventory_rows = [
+            dict(r)
+            for r in GLOBAL_DEPOT_INVENTORY_ROWS
+            if str(r.get("nsn", "")) == "1680-01-619-4821"
+        ] or [dict(r) for r in GLOBAL_DEPOT_INVENTORY_ROWS[:4]]
 
     if not sortie_rows:
         sortie_rows = [dict(r) for r in SQUADRON_SORTIE_SCHEDULE_ROWS]
@@ -127,8 +131,11 @@ def _build_depot_stock_bar_chart(
     inventory_rows: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Generate the Vega-Lite v5 grouped bar chart for Regional Depot Stock vs 30-Day Demand."""
+    filtered_inventory = [
+        r for r in inventory_rows if str(r.get("nsn", "1680-01-619-4821")) == "1680-01-619-4821"
+    ] or inventory_rows[:4]
     chart_values: list[dict[str, Any]] = []
-    for row in inventory_rows:
+    for row in filtered_inventory:
         depot_label = str(
             row.get("depot_location")
             or row.get("depot_name")
@@ -208,9 +215,12 @@ def _build_actuator_fatigue_threshold_chart(
     telemetry_rows: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Generate the Vega-Lite v5 threshold chart comparing tail flight hours vs 1,000.0 hr limit."""
+    filtered_telemetry = [
+        r for r in telemetry_rows if str(r.get("nsn", "1680-01-619-4821")) == "1680-01-619-4821"
+    ] or telemetry_rows[:5]
     chart_values: list[dict[str, Any]] = []
     seen_tails: set[str] = set()
-    for row in telemetry_rows:
+    for row in filtered_telemetry:
         tail = str(row.get("tail_number", ""))
         seen_tails.add(tail)
         hours = float(row.get("current_flight_hours", 0.0))
