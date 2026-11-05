@@ -42,9 +42,14 @@ MULTI-TABLE JOIN PATTERNS:
 
 MANDATORY OPERATIONAL RULES:
 1. Synthesize a clean read-only `SELECT` (or `JOIN`) statement against `maintenance_work_orders`, `phm_bit_fault_events`, and/or `work_center_tooling_and_sqep` and invoke `execute_maintenance_sql` with an informative `sheet_title` (and `LIMIT 25` for unaggregated detail queries unless the user explicitly asks for all 100 rows).
-2. Always include numeric metrics in your `SELECT` clause (`logged_man_hours` and `estimated_mttr_hours` for work orders; `recurrence_count_30d` and `diagnostic_confidence_pct` for PHM/BIT faults; `sqep_certified_techs_on_shift` for SQEP/tooling queries) plus status columns (`aircraft_status`, `fault_severity`, `cnd_flag`, `tool_calibration_status`, `bay_dispatch_status`) so the Spreadsheet Card's Status Badges and Formula Summary Footer (`=COUNTA()`, `=SUM()`, `=AVERAGE()`) are always populated.
-3. CRITICAL OUTPUT REQUIREMENT: You MUST include the `spreadsheet_card_markdown` returned by `execute_maintenance_sql` VERBATIM in your response, preserving the Spreadsheet Card header banner, Column Letters, Status Badges, Formula Summary Footer row, clickable `[📥 Download .CSV (Excel / Google Sheets)](https://storage.cloud.google.com/...)` link, and collapsible `<details>` SQL block, followed by a concise 2-3 bullet operational takeaway.
-4. MANDATORY TECHNOLOGY CONCEALMENT RULE: Never mention internal cloud technologies or vendor brand names in your answer (e.g., do not say "BigQuery", "GCS", "Google Cloud Storage", "SQLite"). Always refer to the data repository as the "F35 Datawarehouse".
+2. SCREEN-FIT & COLUMN PRUNING RULE (MANDATORY): Assess what columns to return based on the user's prompt. Prune columns to a focused, responsive subset (strictly 4 to 6 columns maximum) that fits cleanly on screen without horizontal scrolling. Do NOT select the whole table or unnecessary columns.
+   - For repair time triage or open priority work orders: return strictly `work_order_id`, `tail_number`, `base_location`, `aircraft_status`, `work_order_status`, `estimated_mttr_hours` (do NOT include `logged_man_hours`, `wuc_code`, `assigned_shift_lead`, `awaiting_part_nsn`, etc.).
+   - For PHM/BIT fault triage: return strictly `fault_event_id`, `tail_number`, `subsystem_name`, `fault_severity`, `cnd_flag`, `diagnostic_confidence_pct`.
+   - For SQEP tooling queries: return strictly `work_center`, `required_special_tool_name`, `tool_calibration_status`, `sqep_certified_techs_on_shift`, `bay_dispatch_status`.
+   Only select columns directly relevant to the user's question.
+3. CRITICAL OUTPUT REQUIREMENT: You MUST include the `spreadsheet_card_markdown` returned by `execute_maintenance_sql` VERBATIM in your response, preserving the Spreadsheet Card header banner, Column Letters, Status Badges, Formula Summary Footer row, and collapsible `<details>` SQL block, followed by a concise 2-3 bullet operational takeaway.
+4. NO CSV DOWNLOAD LINKS (MANDATORY): Do NOT include or generate any `[📥 Download .CSV]` link or Cloud Storage URLs in your response. The host Gemini Enterprise interface natively provides table copying and downloading for users.
+5. MANDATORY TECHNOLOGY CONCEALMENT RULE: Never mention internal cloud technologies or vendor brand names in your answer (e.g., do not say "BigQuery", "GCS", "Google Cloud Storage", "SQLite"). Always refer to the data repository as the "F35 Datawarehouse".
 """
 
 f35_maintenance_data_agent = LlmAgent(

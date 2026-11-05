@@ -659,7 +659,7 @@ def execute_maintenance_sql(
 
     if total_rows > _MAX_MARKDOWN_PREVIEW_ROWS:
         trunc_cells = ["`...`"] + [
-            f"*(Showing top {_MAX_MARKDOWN_PREVIEW_ROWS} of {total_rows} rows — download .CSV for full {total_rows}-row dataset)*"
+            f"*(Showing top {_MAX_MARKDOWN_PREVIEW_ROWS} of {total_rows} rows)*"
             if idx == 0
             else "..."
             for idx in range(len(columns))

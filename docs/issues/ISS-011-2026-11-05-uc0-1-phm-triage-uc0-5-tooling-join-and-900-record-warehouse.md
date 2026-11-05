@@ -2,7 +2,7 @@
 issue_id: "ISS-011"
 title: "UC 0.1 PHM/BIT Fault Triage, UC 0.5 Multi-Table SQEP/Tooling Join, 9-Table 900-Record Data Warehouse Expansion & Unified E2E Test Harness"
 date: "2026-11-05"
-status: "RESOLVED"
+status: "VERIFIED_IN_PROD"
 severity: "P2-HIGH"
 domain: "UC0-Maintenance-Data"
 sub_agent: "f35_maintenance_data_agent"
@@ -87,6 +87,7 @@ uv run pytest tests/unit/ tests/e2e/ -q
 | **BigQuery `EU` Tables & Records Seeded** | `7 tables` (`30 rows`) | `9 tables × 100 rows` (`900 rows`) | `9 tables × 100 rows` | **✅ PASS** |
 | **BigQuery Table & Column Descriptions (`Tables 1–9`)** | `7 tables` | `9 tables` (`100% described`) | `100%` | **✅ PASS** |
 | **Unified Unit + E2E Test Suite (`tests/unit/` + `tests/e2e/`)** | `9 failed in e2e` | `412 passed, 0 failed` | `100% Pass` | **✅ PASS** |
+| **Production Reasoning Engine `:streamQuery` (`europe-west1`)** | `N/A` | `5022570215192395776` (`op: 5793478293197946880`, session `8760145314171584512`) | `UC 0.1 & UC 0.5 Pass` | **✅ PASS** |
 
 ---
 
