@@ -304,7 +304,7 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
         "content": (
             "LOW OBSERVABLE (LO) MAINTENANCE MANUAL (MAM) SECTION 9-1 | S1000D DMC-F35B-51-70-09-01A-720A-A. "
             "SUBSYSTEM: OUTER MOLD LINE (OML) COATING & RADAR ABSORBENT MATERIAL (RAM) THERMAL RESTORATION. "
-            "APPLICABILITY: F-35A / F-35B / F-35C (RAF Marham & RN 809 NAS HMS Queen Elizabeth). "
+            "APPLICABILITY: F-35A / F-35B / F-35C (RAF Marham & RN 809 NAS HMS Queen Elizabeth / HMS Prince of Wales). "
             "HIGH-TEMPERATURE THERMAL ZONE RULE (220 C EXPOSURE): "
             "When performing OML panel access, canopy frame sealing, or fastener torque-recheck restoration "
             "(including Frame 496 and aft canopy fairing zones) subjected to boundary-layer aerodynamic "

@@ -32,7 +32,7 @@ Fifth-generation aircraft sustainment generates petabytes of structured sensor t
 
 | Use Case & Modality | Operational Scenario | Data Viewpoint | Trad. Time-to-Action | Gemini Time-to-Action |
 | :---- | :---- | :---- | :---- | :---- |
-| UC 0: Conversational Maintenance Data Text-to-SQL + Spreadsheet Card | Morning Maintenance Stand-Up & ODIN Work Order Triage (Conversational Text-to-SQL against Table 7 `maintenance_work_orders`, 100 records across RAF Marham & HMS Queen Elizabeth; status badges, formula summary row & clickable CSV export). | Structured Data Only (BigQuery SQL Table 7: `maintenance_work_orders` — ODIN / MOD Form 707A, 100 records) | 45 to 90 Minutes (Manual ODIN/ERP exports, Excel pivot tables & status color-coding) | Near-Instantaneous (< 1.5s Text-to-SQL + Spreadsheet Card & automatic `.CSV` download link) |
+| UC 0: Conversational Maintenance Data Text-to-SQL + Spreadsheet Card | Morning Maintenance Stand-Up & ODIN Work Order Triage (Conversational Text-to-SQL against Table 7 `maintenance_work_orders`, 100 records across RAF Marham, HMS Queen Elizabeth & HMS Prince of Wales; status badges, formula summary row & clickable CSV export). | Structured Data Only (BigQuery SQL Table 7: `maintenance_work_orders` — ODIN / MOD Form 707A, 100 records) | 45 to 90 Minutes (Manual ODIN/ERP exports, Excel pivot tables & status color-coding) | Near-Instantaneous (< 1.5s Text-to-SQL + Spreadsheet Card & automatic `.CSV` download link) |
 | UC 0.1: Post-Sortie PHM / BIT Fault & Repeat CND Triage | Post-flight Portable Maintenance Aid (PMA) Health Reporting Code (`HRC`) triage, `PILOT_REPORT_ONLY_NO_BIT` anomaly isolation (`ZM151` Canopy Latch), repeat `CND` rogue fault detection, and unactioned PHM advisories (`linked_work_order_id IS NULL`). | Structured Data Only (BigQuery SQL Table 8: `phm_bit_fault_events`, 100 records) | 60 to 120 Minutes (Manual PMA log reconciliation & CND correlation) | Near-Instantaneous (< 1.5s Text-to-SQL + PHM Severity/CND Badges & `.CSV` export) |
 | UC 0.5: Multi-Table Shift Dispatch, SQEP & Calibrated Tooling Join | Conversational 2- and 3-table SQL `JOIN` across `maintenance_work_orders`, `work_center_tooling_and_sqep`, and `phm_bit_fault_events` to check SQEP technician headcount, QAR availability, and calibrated special tools (`JTD-53-30-T14`, `NDI-PAUT-496A`, `LO-IR-BLANKET-04`). | Structured Multi-Table Join (BigQuery SQL Tables 7, 8 & 9 — 300 combined records in 900-record warehouse) | 90 to 180 Minutes (Manual cross-checking of shift rosters, calibration logs & Form 707A work orders) | Near-Instantaneous (< 1.6s Multi-Table SQL `JOIN` + Calibration/Dispatch Badges & `.CSV` export) |
 | UC1: Conversational Analytics + On-Demand Charts | Automatic Part Replenishment & Fleet Readiness (Tail ZM151 Left Horizontal Tail Actuator S/N ACT-99812-F exceeding 1,000-hr limit at 1,000.4 hrs; NSN 1680-01-619-4821 stock = 4). | Structured Data Only (BigQuery SQL Telemetry, Inventory & Sortie Schedules) | 2 to 4 Hours (Manual SQL, ERP lookups & shift replanning) | Near-Instantaneous (< 2.5s query + on-demand 16:9 presentation slide rendering & GCS upload in ~500–789 ms) |
@@ -74,7 +74,7 @@ In **Use Case 0 (`@F35-Maintenance-Data`)**, the sub-agent (`f35_maintenance_dat
 | `B: tail_number` | STRING | CLUSTER KEY | UK military aircraft registration tail identifier (`ZM151`, `ZM152`, `ZM154`, `ZM155`, `ZM158`, `ZM161`, `ZM163`). |
 | `C: aircraft_variant` | STRING | NOT NULL | F-35 variant designation: `F-35A` (CTOL) or `F-35B` (STOVL). |
 | `D: squadron` | STRING | NOT NULL | Assigned operational squadron: `617 Sqn (The Dambusters)`, `207 Sqn (OCU)`, or `809 NAS (The Immortals)`. |
-| `E: base_location` | STRING | NOT NULL | Current operating station or carrier deployment base: `RAF Marham` or `HMS Queen Elizabeth`. |
+| `E: base_location` | STRING | NOT NULL | Current operating station or carrier deployment base: `RAF Marham`, `HMS Queen Elizabeth`, or `HMS Prince of Wales`. |
 | `F: aircraft_status` | STRING | CLUSTER KEY | DoD/MOD availability status code: `FMC`, `PMC-M`, `NMC-M`, or `NMC-S`. |
 | `G: work_order_status` | STRING | NOT NULL | Work order execution status: `OPEN`, `IN_PROGRESS`, `AWAITING_PARTS`, `AWAITING_NDI`, or `CLOSED`. |
 | `H: priority_level` | STRING | NOT NULL | Maintenance priority tier: `PRIORITY_1_EMERGENCY`, `PRIORITY_2_URGENT`, or `PRIORITY_3_ROUTINE`. |
@@ -110,10 +110,7 @@ To guarantee responsive flight-line interaction (< 2.5s SLA) and eliminate token
   - The user asks: *"Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot stock with visual charts, and recommend a tail swap for morning sortie SRT-MAR-20261103-01."*
   - Gemini translates this into an optimized partition-pruned SQL query joining `airframe_component_telemetry`, `global_depot_inventory`, and `squadron_sortie_schedule`.
   - The agent emits a structured Markdown summary table, recommends reallocating Pilot Henderson's sortie to Spare Tail `ZM154` (`842.0` hrs, Mission Capable), confirms depot replenishment for `NSN: 1680-01-619-4821` (4 on hand, 2 reserved, 18-hr ETA), and **explicitly prompts the user for chart selection**:
-    > *"Would you like me to render:*  
-    > *1. **Actuator Fatigue Threshold Chart** (Tail ZM151 at 1,000.4 hrs vs ZM154 at 842.0 hrs vs 1,000.0-hr threshold)*  
-    > *2. **Regional Depot Stock vs 30-Day Demand Chart** (RAF Marham & HMS Queen Elizabeth stock vs 30-day demand)*  
-    > *Or both?"*
+    > *"Would you like me to render: 1. Actuator Fatigue Threshold Chart, 2. Regional Depot Stock vs 30-Day Demand Chart, or the full Executive Briefing Dashboard for your presentation slide deck?"*
   - Structured query records are cached in ADK session state (`tool_context.session.state["last_uc1_metrics"]`).
 
 * **Turn 2: On-Demand Presentation Graphics & Canvas Rendering (`render_sustainment_chart`):**
@@ -134,7 +131,7 @@ Three relational tables in Google Cloud BigQuery power Use Case 1\. Partitioning
 | telemetry\_record\_id | STRING | PRIMARY KEY | Unique post-flight upload identifier (e.g., \`TEL-20261102-0941\`) |
 | tail\_number | STRING | PARTITION / CLUSTER | Aircraft identifier (e.g., \`ZM151\`, \`ZM154\`) |
 | aircraft\_variant | STRING | NOT NULL | F-35 variant (\`F-35A\`, \`F-35B\`) |
-| base\_location | STRING | NOT NULL | Assigned operating base (\`RAF Marham\`, \`HMS Queen Elizabeth\`) |
+| base\_location | STRING | NOT NULL | Assigned operating base (\`RAF Marham\`, \`HMS Queen Elizabeth\`, \`HMS Prince of Wales\`) |
 | part\_serial\_number | STRING | CLUSTER KEY | Installed component S/N (\`ACT-99812-F\`) |
 | nsn | STRING | FOREIGN KEY | NATO Stock Number (\`1680-01-619-4821\`) |
 | component\_name | STRING | NOT NULL | \`Left Horizontal Tail Actuator\` |
@@ -181,7 +178,7 @@ To prevent multi-second token generation latency and guarantee deterministic JSO
 * **Signature:** `render_sustainment_chart(chart_name: str, tool_context: ToolContext = None) -> dict`
 * **Supported Charts & Slide Formats:**
   1. `actuator_fatigue_threshold_chart`: Horizontal threshold bar/line chart plotting Tail `ZM151` (`1,000.4` hrs, Red Breach Marker `#dc2626`) and `ZM154` (`842.0` hrs, Green Serviceable Marker `#16a34a`) against the `1,000.0`-hr condemnation threshold line.
-  2. `depot_stock_vs_demand_bar_chart`: Grouped bar chart comparing available stock (`4` units) vs 30-day demand (`2` units) across RAF Marham and HMS Queen Elizabeth with net available callouts.
+  2. `depot_stock_vs_demand_bar_chart`: Grouped bar chart comparing available stock (`4` units) vs 30-day demand (`2` units) across RAF Marham, HMS Queen Elizabeth, and HMS Prince of Wales with net available callouts.
   3. `executive_dashboard` / `both`: Unified Full HD 16:9 widescreen presentation slide (composite dual-panel with master header, subtitle, and bottom operational decision callout banner).
 * **Execution Mechanism & Data Flow:**
   - **On-the-Fly In-Memory Synthesis:** `app/tools/chart_painter.py` dynamically renders publication-quality graphics using Matplotlib (headless `Agg` backend) from live BigQuery records in session state. Visual assets are **not** static pre-existing images; they are programmatically generated on the fly.

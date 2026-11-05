@@ -78,7 +78,7 @@ root_agent = LlmAgent(
         "AI decision-support coordinator for the UK F-35 Lightning II fleet, "
         "empowering commanders and engineers to maximize aircraft availability, "
         "accelerate maintenance triage, resolve complex technical faults, and "
-        "uphold sovereign airworthiness across RAF Marham and HMS Queen Elizabeth."
+        "uphold sovereign airworthiness across RAF Marham and the HMS Queen Elizabeth Carrier Strike Group."
     ),
     model=get_gemini_model(
         model_name=COORDINATOR_MODEL,

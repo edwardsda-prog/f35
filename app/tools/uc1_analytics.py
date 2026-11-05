@@ -646,7 +646,7 @@ def render_sustainment_chart(
 
     is_fatigue = any(k in raw_name for k in ("fatigue", "actuator", "threshold", "1")) or raw_name == "actuator_fatigue_threshold_chart"
     is_depot = any(k in raw_name for k in ("depot", "stock", "demand", "inventory", "2")) or raw_name == "depot_stock_vs_demand_bar_chart"
-    is_both = any(k in raw_name for k in ("both", "all", "3", "dashboard", "slide")) or (is_fatigue and is_depot) or raw_name in ("charts", "visualizations")
+    is_both = any(k in raw_name for k in ("both", "all", "3", "dashboard", "slide", "executive", "briefing")) or (is_fatigue and is_depot) or raw_name in ("charts", "visualizations")
 
     if is_both:
         resolved_name = "both"

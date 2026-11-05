@@ -108,7 +108,7 @@ _SQUADRON_ROSTER: tuple[tuple[str, str, str], ...] = (
     ("809 NAS (The Immortals)", "HMS Queen Elizabeth", "POAET J. Stirling"),
     ("207 Sqn (OCU)", "RAF Marham", "Sgt R. Patel"),
     ("617 Sqn (The Dambusters)", "RAF Marham", "FSgt A. Wallace"),
-    ("809 NAS (The Immortals)", "HMS Queen Elizabeth", "CPOAET H. Evans"),
+    ("809 NAS (The Immortals)", "HMS Prince of Wales", "CPOAET H. Evans"),
     ("207 Sqn (OCU)", "RAF Marham", "Chf Tech K. Lindqvist"),
 )
 
@@ -171,12 +171,23 @@ _BASE_AIRFRAME_COMPONENT_TELEMETRY_ROWS: list[dict[str, Any]] = [
         "current_flight_hours": 610.0,
         "life_limit_threshold_hrs": 1000.0,
     },
+    {
+        "telemetry_record_id": "TEL-ZM160-ACT-77560",
+        "tail_number": "ZM160",
+        "aircraft_variant": "F-35B",
+        "base_location": "HMS Prince of Wales",
+        "part_serial_number": "ACT-77560-E",
+        "nsn": "1680-01-619-4821",
+        "component_name": "Port Electro-Hydrostatic Actuator (EHA)",
+        "current_flight_hours": 745.8,
+        "life_limit_threshold_hrs": 1000.0,
+    },
 ]
 
 AIRFRAME_COMPONENT_TELEMETRY_ROWS: list[dict[str, Any]] = list(
     _BASE_AIRFRAME_COMPONENT_TELEMETRY_ROWS
 )
-for _idx in range(5, 100):
+for _idx in range(6, 100):
     _tail = _FLEET_TAILS[_idx % len(_FLEET_TAILS)]
     _sub = _SUBSYSTEM_CATALOG[_idx % len(_SUBSYSTEM_CATALOG)]
     _sqn_info = _SQUADRON_ROSTER[_idx % len(_SQUADRON_ROSTER)]
@@ -220,19 +231,30 @@ _BASE_GLOBAL_DEPOT_INVENTORY_ROWS: list[dict[str, Any]] = [
         "reorder_point_threshold": 2,
         "avg_shipping_eta_hours": 36.0,
     },
+    {
+        "nsn": "1680-01-619-4821",
+        "part_name": "Port Electro-Hydrostatic Actuator (EHA)",
+        "depot_id": "DEPOT-PWLS-03",
+        "depot_name": "HMS Prince of Wales Afloat Spares",
+        "quantity_on_hand": 2,
+        "quantity_reserved_30d": 1,
+        "reorder_point_threshold": 2,
+        "avg_shipping_eta_hours": 36.0,
+    },
 ]
 
 _DEPOT_SITES: tuple[tuple[str, str, float], ...] = (
     ("DEPOT-MAR-01", "RAF Marham Regional Sustainment Hub", 18.0),
     ("DEPOT-QNLZ-02", "HMS Queen Elizabeth Afloat Spares", 36.0),
-    ("DEPOT-BAE-SAMLESBURY-03", "BAE Systems Samlesbury Aerostructures Hub", 12.0),
-    ("DEPOT-LM-FORTWORTH-04", "Lockheed Martin Fort Worth Global Sustainment Hub", 48.0),
+    ("DEPOT-PWLS-03", "HMS Prince of Wales Afloat Spares", 36.0),
+    ("DEPOT-BAE-SAMLESBURY-04", "BAE Systems Samlesbury Aerostructures Hub", 12.0),
+    ("DEPOT-LM-FORTWORTH-05", "Lockheed Martin Fort Worth Global Sustainment Hub", 48.0),
 )
 
 GLOBAL_DEPOT_INVENTORY_ROWS: list[dict[str, Any]] = list(
     _BASE_GLOBAL_DEPOT_INVENTORY_ROWS
 )
-for _idx in range(2, 100):
+for _idx in range(3, 100):
     _depot_id, _depot_name, _base_eta = _DEPOT_SITES[_idx % len(_DEPOT_SITES)]
     _sub = _SUBSYSTEM_CATALOG[_idx % len(_SUBSYSTEM_CATALOG)]
     _fsc = 1560 + (_idx % 12) * 110
@@ -282,6 +304,14 @@ _BASE_SQUADRON_SORTIE_SCHEDULE_ROWS: list[dict[str, Any]] = [
         "spare_tail_candidate": "ZM159",
         "sortie_readiness_status": "MC",
     },
+    {
+        "sortie_id": "SRT-PWLS-20261103-01",
+        "scheduled_departure_utc": "2026-11-03T11:00:00Z",
+        "assigned_tail_number": "ZM160",
+        "assigned_pilot_callsign": "Lt RN MacFarlane / IMMORTAL-2",
+        "spare_tail_candidate": "ZM161",
+        "sortie_readiness_status": "MC",
+    },
 ]
 
 _PILOT_CALLSIGNS: tuple[str, ...] = (
@@ -298,11 +328,11 @@ _PILOT_CALLSIGNS: tuple[str, ...] = (
 SQUADRON_SORTIE_SCHEDULE_ROWS: list[dict[str, Any]] = list(
     _BASE_SQUADRON_SORTIE_SCHEDULE_ROWS
 )
-for _idx in range(3, 100):
-    _day = 3 + ((_idx - 3) // 20)
-    _hour = 10 + (((_idx - 3) % 20) // 2)
+for _idx in range(4, 100):
+    _day = 3 + ((_idx - 4) // 20)
+    _hour = 10 + (((_idx - 4) % 20) // 2)
     _minute = 15 if (_idx % 2 == 0) else 45
-    _loc_code = "MAR" if (_idx % 3 != 1) else "QNLZ"
+    _loc_code = ("MAR", "QNLZ", "PWLS")[_idx % 3]
     _assigned_tail = _FLEET_TAILS[_idx % len(_FLEET_TAILS)]
     _spare_tail = _FLEET_TAILS[(_idx + 3) % len(_FLEET_TAILS)]
     SQUADRON_SORTIE_SCHEDULE_ROWS.append(
@@ -732,17 +762,17 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         "tail_number": "ZM158",
         "aircraft_variant": "F-35B",
         "squadron": "809 NAS (The Immortals)",
-        "base_location": "HMS Queen Elizabeth",
+        "base_location": "HMS Prince of Wales",
         "aircraft_status": "FMC",
         "work_order_status": "COMPLETED",
         "priority": "PRIORITY_3_ROUTINE",
         "work_center": "FLIGHT_LINE",
         "wuc_code": "32-40",
         "subsystem_name": "Main Landing Gear Carbon Brake Pack",
-        "discrepancy_narrative": "Scheduled carrier arrestment/STOVL brake wear pin gauge measurement.",
+        "discrepancy_narrative": "Scheduled carrier arrestment/STOVL brake wear pin gauge measurement on HMS Prince of Wales flight deck.",
         "corrective_action": "Wear pin at 68% remaining life; logged in ODIN and released for flight operations.",
         "awaiting_part_nsn": None,
-        "assigned_shift_lead": "POAET J. Stirling",
+        "assigned_shift_lead": "CPOAET N. Armstrong",
         "estimated_mttr_hours": 1.0,
         "logged_man_hours": 0.9,
         "created_at_utc": "2026-11-01T18:30:00Z",
@@ -752,7 +782,7 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         "tail_number": "ZM159",
         "aircraft_variant": "F-35B",
         "squadron": "809 NAS (The Immortals)",
-        "base_location": "HMS Queen Elizabeth",
+        "base_location": "HMS Prince of Wales",
         "aircraft_status": "NMC-M",
         "work_order_status": "OPEN",
         "priority": "PRIORITY_1_RED_X",
@@ -760,13 +790,13 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         "wuc_code": "72-50",
         "subsystem_name": "3-Bearing Swivel Duct Nozzle Actuator",
         "discrepancy_narrative": (
-            "3BSD pitch nozzle actuator feedback RVDT sensor discrepancy during deck spot movement."
+            "3BSD pitch nozzle actuator feedback RVDT sensor discrepancy during carrier deck spot movement on HMS Prince of Wales."
         ),
         "corrective_action": (
             "Troubleshooting harness continuity between 3BSD RVDT channel B and propulsion control module."
         ),
         "awaiting_part_nsn": None,
-        "assigned_shift_lead": "CPOAET H. Evans",
+        "assigned_shift_lead": "POAET T. Campbell",
         "estimated_mttr_hours": 8.0,
         "logged_man_hours": 1.5,
         "created_at_utc": "2026-11-02T20:40:00Z",
@@ -1349,11 +1379,11 @@ _BASE_WORK_CENTER_TOOLING_AND_SQEP_ROWS: list[dict[str, Any]] = [
     {
         "resource_id": "RES-2026-00010",
         "assigned_work_order_id": "WO-2026-88410",
-        "base_location": "HMS Queen Elizabeth",
+        "base_location": "HMS Prince of Wales",
         "work_center": "FLIGHT_LINE",
         "supported_wuc_code": "32-40",
         "shift_code": "CARRIER_WATCH_1",
-        "shift_lead_name": "POAET J. Stirling",
+        "shift_lead_name": "CPOAET N. Armstrong",
         "sqep_certification_domain": "SQEP-FL-UNDERCART",
         "sqep_certified_techs_on_shift": 4,
         "qar_inspector_available": True,
@@ -1367,11 +1397,11 @@ _BASE_WORK_CENTER_TOOLING_AND_SQEP_ROWS: list[dict[str, Any]] = [
     {
         "resource_id": "RES-2026-00011",
         "assigned_work_order_id": "WO-2026-88411",
-        "base_location": "HMS Queen Elizabeth",
+        "base_location": "HMS Prince of Wales",
         "work_center": "PROPULSION",
         "supported_wuc_code": "72-50",
         "shift_code": "CARRIER_WATCH_1",
-        "shift_lead_name": "CPOAET H. Evans",
+        "shift_lead_name": "POAET T. Campbell",
         "sqep_certification_domain": "SQEP-PROP-3BSD",
         "sqep_certified_techs_on_shift": 2,
         "qar_inspector_available": True,
@@ -1446,7 +1476,7 @@ for _idx in range(14, 100):
     _sub = _SUBSYSTEM_CATALOG[_idx % len(_SUBSYSTEM_CATALOG)]
     _shift_code = (
         "CARRIER_WATCH_1"
-        if _wo["base_location"] == "HMS Queen Elizabeth"
+        if _wo["base_location"] in ("HMS Queen Elizabeth", "HMS Prince of Wales")
         else ("DAY_ALPHA" if _idx % 2 == 0 else "NIGHT_BRAVO")
     )
     WORK_CENTER_TOOLING_AND_SQEP_ROWS.append(

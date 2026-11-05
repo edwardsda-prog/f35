@@ -1,6 +1,6 @@
 {
   "table_name": "work_center_tooling_and_sqep",
-  "description": "Flight-line and back-shop Suitably Qualified and Experienced Personnel (SQEP) shift authorizations, Quality Assurance Representative (QAR) independent inspector availability, calibrated Special Support Equipment (SSE / JTD tooling such as JTD-53-30-T14 and NDI-PAUT-496A), and maintenance bay dispatch readiness across RAF Marham and HMS Queen Elizabeth.",
+  "description": "Flight-line and back-shop Suitably Qualified and Experienced Personnel (SQEP) shift authorizations, Quality Assurance Representative (QAR) independent inspector availability, calibrated Special Support Equipment (SSE / JTD tooling such as JTD-53-30-T14 and NDI-PAUT-496A), and maintenance bay dispatch readiness across RAF Marham, HMS Queen Elizabeth, and HMS Prince of Wales.",
   "partition_field": "shift_updated_utc",
   "partition_type": "DAY",
   "clustering_fields": [
@@ -28,7 +28,7 @@
       "name": "base_location",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Cluster Key: Operating location ('RAF Marham' or 'HMS Queen Elizabeth')."
+      "description": "Cluster Key: Operating location ('RAF Marham', 'HMS Queen Elizabeth', or 'HMS Prince of Wales')."
     },
     {
       "name": "work_center",

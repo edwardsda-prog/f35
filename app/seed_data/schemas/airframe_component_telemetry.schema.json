@@ -29,7 +29,7 @@
       "name": "base_location",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Current operating station or carrier deployment base: 'RAF Marham' or 'HMS Queen Elizabeth'."
+      "description": "Current operating station or carrier deployment base: 'RAF Marham', 'HMS Queen Elizabeth', or 'HMS Prince of Wales'."
     },
     {
       "name": "part_serial_number",

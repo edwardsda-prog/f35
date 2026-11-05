@@ -23,13 +23,13 @@
       "name": "depot_id",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Cluster Key: Depot facility code (e.g., DEPOT-MAR-01 / DEP-UK-01 for RAF Marham Regional Sustainment Hub, DEPOT-QNLZ-02 / DEP-UK-02 for HMS Queen Elizabeth Mobile Spares Group)."
+      "description": "Cluster Key: Depot facility code (e.g., DEPOT-MAR-01 / DEP-UK-01 for RAF Marham Regional Sustainment Hub, DEPOT-QNLZ-02 for HMS Queen Elizabeth Afloat Spares, DEPOT-PWLS-03 for HMS Prince of Wales Afloat Spares)."
     },
     {
       "name": "depot_name",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Full facility description of the warehouse or afloat forward logistics site (e.g., RAF Marham Regional Sustainment Hub, HMS Queen Elizabeth Mobile Spares Group)."
+      "description": "Full facility description of the warehouse or afloat forward logistics site (e.g., RAF Marham Regional Sustainment Hub, HMS Queen Elizabeth Afloat Spares, HMS Prince of Wales Afloat Spares)."
     },
     {
       "name": "quantity_on_hand",

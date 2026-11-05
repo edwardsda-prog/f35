@@ -1,6 +1,6 @@
 {
   "table_name": "phm_bit_fault_events",
-  "description": "Lockheed Martin ODIN Prognostics & Health Management (PHM) and Portable Maintenance Aid (PMA) post-sortie Health Reporting Codes (HRCs) and Built-In Test (BIT) fault telemetry events across RAF Marham (617 Sqn, 207 Sqn) and HMS Queen Elizabeth (809 NAS). Tracks continuous BIT, initiated BIT, prognostic threshold exceedances, Pilot-Reported-Only (Zero-BIT) anomalies, Can-Not-Duplicate (CND) chronic repeat rates, diagnostic isolation confidence, and linked Form 707A maintenance work orders.",
+  "description": "Lockheed Martin ODIN Prognostics & Health Management (PHM) and Portable Maintenance Aid (PMA) post-sortie Health Reporting Codes (HRCs) and Built-In Test (BIT) fault telemetry events across RAF Marham (617 Sqn, 207 Sqn), HMS Queen Elizabeth (809 NAS), and HMS Prince of Wales (809 NAS). Tracks continuous BIT, initiated BIT, prognostic threshold exceedances, Pilot-Reported-Only (Zero-BIT) anomalies, Can-Not-Duplicate (CND) chronic repeat rates, diagnostic isolation confidence, and linked Form 707A maintenance work orders.",
   "partition_field": "fault_timestamp_utc",
   "partition_type": "DAY",
   "clustering_fields": [
@@ -40,7 +40,7 @@
       "name": "base_location",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Operating air station or carrier strike group location ('RAF Marham' or 'HMS Queen Elizabeth')."
+      "description": "Operating air station or carrier strike group location ('RAF Marham', 'HMS Queen Elizabeth', or 'HMS Prince of Wales')."
     },
     {
       "name": "sortie_id",

@@ -470,7 +470,7 @@ def generate_sustainment_graphics(
 
     is_fatigue = any(k in raw_name for k in ("fatigue", "actuator", "threshold", "1"))
     is_depot = any(k in raw_name for k in ("depot", "stock", "demand", "inventory", "2"))
-    is_both = any(k in raw_name for k in ("both", "all", "3", "dashboard", "slide")) or (is_fatigue and is_depot) or raw_name in ("charts", "visualizations")
+    is_both = any(k in raw_name for k in ("both", "all", "3", "dashboard", "slide", "executive", "briefing")) or (is_fatigue and is_depot) or raw_name in ("charts", "visualizations")
 
     rendered_assets: list[dict[str, Any]] = []
     total_render_ms = 0.0

@@ -1,6 +1,6 @@
 {
   "table_name": "maintenance_work_orders",
-  "description": "Lockheed Martin ODIN / UK MOD Form 707A Aircraft Maintenance Log Work Orders across RAF Marham (617 Sqn, 207 Sqn) and HMS Queen Elizabeth (809 NAS). Tracks active and historical maintenance discrepancies (JCN), S1000D / JTD work unit codes (WUC), aircraft readiness status (FMC, PMC-M, NMC-M, NMC-S), MICAP supply holds, technician assignments, and MTTR metrics.",
+  "description": "Lockheed Martin ODIN / UK MOD Form 707A Aircraft Maintenance Log Work Orders across RAF Marham (617 Sqn, 207 Sqn), HMS Queen Elizabeth (809 NAS), and HMS Prince of Wales (809 NAS). Tracks active and historical maintenance discrepancies (JCN), S1000D / JTD work unit codes (WUC), aircraft readiness status (FMC, PMC-M, NMC-M, NMC-S), MICAP supply holds, technician assignments, and MTTR metrics.",
   "partition_field": "created_at_utc",
   "partition_type": "DAY",
   "clustering_fields": [
@@ -40,7 +40,7 @@
       "name": "base_location",
       "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Operating location (RAF Marham or HMS Queen Elizabeth)."
+      "description": "Operating location (RAF Marham, HMS Queen Elizabeth, or HMS Prince of Wales)."
     },
     {
       "name": "aircraft_status",

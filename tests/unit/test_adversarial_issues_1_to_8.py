@@ -430,19 +430,48 @@ class TestIssue10ElevatorPitchAndTableFormatting:
     """Tests covering Issue 1 (Elevator pitch), Issues 2 & 3 (Column pruning & screen-fitting), and Issue 4 (CSV download link removal)."""
 
     def test_root_agent_description_is_elevator_pitch(self) -> None:
-        """Issue 1: Root agent description must be a high-level elevator pitch without enumerating UC0-UC3."""
+        """Issue 1: Root agent description must be a high-level elevator pitch without enumerating UC0-UC3, ending with Carrier Strike Group."""
         from app.agent import root_agent
 
         desc = root_agent.description
         assert "AI decision-support coordinator" in desc
         assert "F-35 Lightning II" in desc
-        assert "RAF Marham" in desc
-        assert "HMS Queen Elizabeth" in desc
+        assert "Carrier Strike Group" in desc
         # Ensure it does NOT enumerate technical UC codes
         assert "UC0" not in desc
         assert "UC1" not in desc
         assert "UC2" not in desc
         assert "UC3" not in desc
+
+    def test_three_operating_locations_reflected_in_warehouse(self) -> None:
+        """Issue 2: Verify RAF Marham, HMS Queen Elizabeth, and HMS Prince of Wales are all present in seed records."""
+        from app.seed_data.bq_seed_records import (
+            MAINTENANCE_WORK_ORDERS_ROWS,
+            GLOBAL_DEPOT_INVENTORY_ROWS,
+            AIRFRAME_COMPONENT_TELEMETRY_ROWS,
+        )
+
+        wo_bases = {r["base_location"] for r in MAINTENANCE_WORK_ORDERS_ROWS}
+        assert "RAF Marham" in wo_bases
+        assert "HMS Queen Elizabeth" in wo_bases
+        assert "HMS Prince of Wales" in wo_bases
+
+        telem_bases = {r["base_location"] for r in AIRFRAME_COMPONENT_TELEMETRY_ROWS}
+        assert "HMS Prince of Wales" in telem_bases
+
+        depot_names = [r["depot_name"] for r in GLOBAL_DEPOT_INVENTORY_ROWS]
+        assert any("HMS Prince of Wales" in d for d in depot_names)
+
+    def test_uc1_chart_presentation_prompt_text(self) -> None:
+        """Issue 3: Verify UC1 chart prompt wording matches the requested elevator prompt."""
+        from app.sub_agents.uc1_analytics_agent import UC1_SYSTEM_INSTRUCTION
+
+        expected_prompt = (
+            "Would you like me to render: 1. Actuator Fatigue Threshold Chart, "
+            "2. Regional Depot Stock vs 30-Day Demand Chart, or the full Executive Briefing Dashboard "
+            "for your presentation slide deck?"
+        )
+        assert expected_prompt in UC1_SYSTEM_INSTRUCTION
 
     def test_uc0_open_p1_micap_column_pruning_and_screen_alignment(self) -> None:
         """Issues 2 & 3: Open P1/MICAP query returns screen-friendly 5 columns, omitting logged_man_hours."""
