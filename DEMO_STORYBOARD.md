@@ -11,13 +11,13 @@
 
 > [!TIP]
 > **The Entire Demo Takes 6 Fast Executive Prompts (5–6 Minutes Total).**  
-> Each prompt is written in natural Commander / Chief Engineer language and triggers live BigQuery (`EU`) tabular data, Excel / Google Sheets Cards with `.CSV` export, on-demand 16:9 presentation graphics, grounded JTD citations (`eu`), deterministic physics calculations, and Human-in-the-Loop airworthiness sign-offs.
+> Each prompt is written in natural Commander / Chief Engineer language and triggers live BigQuery (`EU`) tabular data, Excel / Google Sheets Cards with `.CSV` export, on-demand presentation graphics, grounded JTD citations (`eu`), deterministic physics calculations, and Human-in-the-Loop airworthiness sign-offs.
 
 | Step | Act & Persona | Exact Executive Prompt to Paste into `F35 Support` | What Appears on Screen | Live EU Speed |
 | :---: | :--- | :--- | :--- | :---: |
 | **0** | **Act 0: Morning Maintenance Stand-Up**<br/>*(Squadron Maintenance Officer — UC0)* | `Show me all open Priority-1 and MICAP maintenance work orders across RAF Marham and HMS Queen Elizabeth, sorted by estimated repair time.` | **Excel / Google Sheets Card**: Renders Spreadsheet Grid (`A`..`I`) with Status Badges (`🔴 NMC-S (MICAP)`, `🟠 NMC-M`, `🟡 PMC-M`), Formula Footer (`=COUNTA()`, `=SUM()`, `=AVERAGE()`), and clickable **[📥 Download .CSV](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/...)** link—surfacing **ZM151**'s open actuator, canopy, and Frame 496 tickets. | **`< 1.5s`**<br/>*(SQL `< 350ms`)* |
-| **1A** | **Act 1A: Protect the Morning Sortie (Turn 1)**<br/>*(Squadron Logistics Officer — UC1)* | `Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot stock with visual charts, and recommend a tail swap for morning sortie SRT-MAR-20261103-01.` | **Tabular Fleet Briefing**: Flags **ZM151** (`1,000.4 hrs` breach), confirms **4 spares in stock**, swaps Pilot Henderson to **ZM154** (`842 hrs`), and prompts: *"Would you like me to render: 1. Actuator Fatigue Threshold Chart, 2. Regional Depot Stock vs 30-Day Demand Chart, or the full 16:9 Executive Briefing Dashboard for your presentation slide deck?"* | **`1.2s`**<br/>*(TTFT `269ms`)* |
-| **1B** | **Act 1B: On-Demand Slide Graphic Rendering (Turn 2)**<br/>*(Squadron Logistics Officer — UC1)* | `Render the full 16:9 Executive Briefing Dashboard for my presentation slide deck.` | **Full HD 16:9 Presentation Graphic**: Renders 1920×1080 composite slide image with **ZM151 in Red (`1,000.4 hrs`)** vs **ZM154 in Green (`842.0 hrs`)** against limit line, alongside Regional Depot Stock vs Demand bar chart, with clickable **[📥 Download 16:9 Executive Slide Graphic (PNG)]** link for direct insertion into slide decks. | **`< 0.8s`**<br/>*(Chart Painter `< 790ms`)* |
+| **1A** | **Act 1A: Protect the Morning Sortie (Turn 1)**<br/>*(Squadron Logistics Officer — UC1)* | `Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot stock, and recommend a tail swap for morning sortie SRT-MAR-20261103-01.` | **Tabular Fleet Briefing**: Flags **ZM151** (`1,000.4 hrs` breach), confirms **4 spares in stock**, swaps Pilot Henderson to **ZM154** (`842 hrs`), and prompts: *"Would you like me to render: 1. Actuator Fatigue Threshold Chart, 2. Regional Depot Stock vs 30-Day Demand Chart, or the full Executive Briefing Dashboard for your presentation slide deck?"* | **`1.2s`**<br/>*(TTFT `269ms`)* |
+| **1B** | **Act 1B: On-Demand Slide Graphic Rendering (Turn 2)**<br/>*(Squadron Logistics Officer — UC1)* | `Render the full Executive Briefing Dashboard for my presentation slide deck.` | **Full HD Presentation Graphic**: Renders 1920×1080 composite slide image with **ZM151 in Red (`1,000.4 hrs`)** vs **ZM154 in Green (`842.0 hrs`)** against limit line, alongside Regional Depot Stock vs Demand bar chart, with clickable **[📥 Download Executive Slide Graphic (PNG)]** link for direct insertion into slide decks. | **`< 0.8s`**<br/>*(Chart Painter `< 790ms`)* |
 | **2** | **Act 2: Fix the Unexplained Fault**<br/>*(Flight-Line Maintenance Chief — UC2)* | `Our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, with zero BIT faults. Have allied squadrons seen this, and what is the JTD fix?` | **Grounded Checklist & Authenticated Browser Citations**: Matches USMC sister-squadron log (**silicon sealant debris in roller track**) + **JTD 53-30-01** cleaning/lubrication spec via browser URLs. | **`0.38s`**<br/>*(`100%` Cited)* |
 | **3** | **Act 3A: Assess Structural Over-G**<br/>*(Lead Airworthiness Engineer — UC3)* | `Tail ZM151 logged a severe 14:22Z shudder during a Mach 1.3 split-S on Frame 496. Using C-scan DOC-06, run the ASIP airworthiness assessment and stage the Form 700 release.` | **4-Way Parallel Assessment**: `9.4G` at `14:22:18Z`, **`104.2%` yield** (Miner's Rule), **`0.012"` Hole #14** (`< 0.015"` limit, **no teardown**), flags **14 global jets** (`Lot #8841-B`), stages **Form 700** with authenticated SAR URL. | **`0.54s`**<br/>*(`1.0ms` Physics)* |
 | **4** | **Act 3B: Human-in-the-Loop Sign-Off**<br/>*(Chief Technical Officer / Lead Stress Eng)* | `I am the Lead Stress Engineer. I have verified the deterministic Miner's Rule math and C-scan overlay for package AWR-700-20261102-ZM151. Confirm Form 700 release.` | **Authorised Release Certificate**: Unlocks the safety gate and transitions `AWR-700-20261102-ZM151` to **`CONFIRMED_BY_ENGINEER`** under **DEF STAN 00-970**. | **`< 0.1s`**<br/>*(Safety Gate)* |
@@ -29,7 +29,7 @@
 ```mermaid
 flowchart LR
     A0["Act 0 (Prompt 0 · 0.5 Min) | MORNING STAND-UP: Live ODIN Work Orders in Excel/Sheets Card + CSV Export"] --> A1A["Act 1A (Prompt 1A · 1 Min) | GENERATE MORE SORTIES: Spot ZM151 Breach, Check Stock & Auto-Swap to ZM154"]
-    A1A --> A1B["Act 1B (Prompt 1B · 0.5 Min) | VISUALIZE FLEET DATA: On-Demand 16:9 Executive Dashboard Slide PNG (< 790ms)"]
+    A1A --> A1B["Act 1B (Prompt 1B · 0.5 Min) | VISUALIZE FLEET DATA: On-Demand Executive Dashboard Slide PNG (< 790ms)"]
     A1B --> A2["Act 2 (Prompt 2 · 1.5 Mins) | EMPOWER MAINTAINERS: Solve Zero-BIT Canopy Fault via Allied USMC/RAF Experience"]
     A2 --> A3["Act 3 (Prompts 3 & 4 · 2 Mins) | CERTIFY AIRWORTHINESS SAFELY: Deterministic Over-G Physics, Fleet Lot Audit & Human Sign-Off"]
 ```
@@ -75,17 +75,17 @@ flowchart LR
 flowchart LR
     U1A["Prompt 1A: Logistics Officer (07:30Z Sortie Risk)"] --> R1A["@F35-Sustainment-Analytics (BigQuery EU Join · 1.2s)"]
     R1A --> S1["Tabular Briefing: ZM151 Breached (1,000.4 hrs) + Auto-Swap to ZM154 (842 hrs)"]
-    S1 --> P1["Prompt User: Render Chart 1, Chart 2, or 16:9 Executive Dashboard?"]
-    P1 --> U1B["Prompt 1B: 'Render the full 16:9 Executive Briefing Dashboard...'"]
+    S1 --> P1["Prompt User: Render Chart 1, Chart 2, or Executive Dashboard?"]
+    P1 --> U1B["Prompt 1B: 'Render the full Executive Briefing Dashboard...'"]
     U1B --> T1["render_sustainment_chart Tool (< 790ms Headless Matplotlib + GCS Upload)"]
-    T1 --> C1["Full HD 16:9 Presentation Graphic + Clickable PNG Download Link"]
+    T1 --> C1["Full HD Presentation Graphic + Clickable PNG Download Link"]
 ```
 
 * **The Executive Challenge:** Tail **`ZM151`** is scheduled to lead the `07:30Z` morning wave with **Flt Lt Henderson (`VIPER-1`)**. Just before launch, post-flight telemetry shows its Left Horizontal Tail Actuator crossed its `1,000.0`-hour safety limit.
 
 #### Step 1A — Paste Prompt 1A (Fleet Readiness Analysis & Tail Swap)
 ```text
-Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot stock with visual charts, and recommend a tail swap for morning sortie SRT-MAR-20261103-01.
+Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot stock, and recommend a tail swap for morning sortie SRT-MAR-20261103-01.
 ```
 
 * **What the Executive Audience Sees:**
@@ -98,20 +98,20 @@ Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot s
      > *"Would you like me to render:*  
      > *1. **Actuator Fatigue Threshold Chart** (Tail ZM151 at 1,000.4 hrs vs ZM154 at 842.0 hrs vs 1,000.0-hr threshold)*  
      > *2. **Regional Depot Stock vs 30-Day Demand Chart** (RAF Marham & HMS Queen Elizabeth stock vs 30-day demand)*  
-     > *Or the full **16:9 Executive Briefing Dashboard** for your presentation slide deck?"*
+     > *Or the full **Executive Briefing Dashboard** for your presentation slide deck?"*
 
 #### Step 1B — Paste Prompt 1B (On-Demand Presentation Slide Graphic Rendering)
 ```text
-Render the full 16:9 Executive Briefing Dashboard for my presentation slide deck.
+Render the full Executive Briefing Dashboard for my presentation slide deck.
 ```
 
 * **What the Executive Audience Sees:**
   - The agent invokes the dedicated `render_sustainment_chart` tool, executing headless Matplotlib rendering in **`< 790 ms`** and uploading to Google Cloud Storage (`europe-west1`).
-  - The UI displays the publication-quality **Full HD 16:9 widescreen presentation slide graphic (1920×1080 at 160 DPI)**:
+  - The UI displays the publication-quality **Full HD widescreen presentation slide graphic (1920×1080 at 160 DPI)**:
     - **Panel 1 (Actuator Fatigue Threshold):** Tail **ZM151** in **Red** at `1,000.4 hrs` breaching the dashed `1,000.0-hr` condemnation limit; Tail **ZM154** in **Green** at `842.0 hrs` (serviceable).
     - **Panel 2 (Regional Depot Stock vs 30-Day Demand):** Grouped bar chart comparing RAF Marham and HMS Queen Elizabeth stock on hand, 30-day demand, and net uncommitted spares.
   - **Clickable Download Link for Briefing Decks:**
-    - Provides a direct link: **`[📥 Download 16:9 Executive Slide Graphic (PNG)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/charts/f35_sustainment_executive_dashboard.png)`** allowing officers to immediately paste the asset into Keynote / PowerPoint.
+    - Provides a direct link: **`[📥 Download Executive Slide Graphic (PNG)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/charts/f35_sustainment_executive_dashboard.png)`** allowing officers to immediately paste the asset into Keynote / PowerPoint.
 
 > [!IMPORTANT]
 > **Act 1 Executive Takeaway ("The So What?")**

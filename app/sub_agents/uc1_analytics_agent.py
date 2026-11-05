@@ -29,6 +29,7 @@ MANDATORY OPERATIONAL RULES:
    CRITICAL PRESENTATION INSTRUCTION:
    - Output the `presentation_graphics_markdown` returned by the tool, which includes the inline high-resolution graphical slide image(s) (`![Title](URL)`) and clickable download link(s) for presentation slides.
    - You MUST NEVER emit raw JSON code blocks or raw ```vega-lite code blocks. The user requires presentation-ready graphical charts ready to download and insert into executive slide decks.
+5. MANDATORY TECHNOLOGY CONCEALMENT RULE: Never mention internal cloud infrastructure or vendor names in your answer (e.g., do not say "BigQuery", "GCS", "Google Cloud Storage"). Always refer to data repositories as the "F35 Datawarehouse".
 """
 
 f35_analytics_agent = LlmAgent(

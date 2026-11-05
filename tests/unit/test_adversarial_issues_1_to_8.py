@@ -120,11 +120,14 @@ class TestFastPathRegexAdversarial:
         resp = _invoke_callback(query)
         assert resp is not None, f"Expected fast-path match for query: {query!r}"
         assert resp == _FAST_PATH_CAPABILITY_RESPONSE
-        # Verify response text includes core sustainment capabilities
+        # Verify response text includes core sustainment purpose and benefits (Issue 1 & 2)
         text = resp.content.parts[0].text
-        assert "UC1: Predictive Actuator Analytics" in text
-        assert "UC2: JTD Maintenance Search" in text
-        assert "UC3: ASIP Structural Exceedance" in text
+        assert "Core Purpose & Operational Benefits" in text
+        assert "Accelerate Fleet Readiness" in text
+        assert "Actionable Decision Support" in text
+        assert "Authoritative Engineering Guidance" in text
+        for tech in ("BigQuery", "GCS", "Google Cloud Storage", "ADK", "UC1:", "UC2:", "UC3:"):
+            assert tech not in text, f"Found '{tech}' in capability response"
 
     @pytest.mark.parametrize(
         "domain_query",

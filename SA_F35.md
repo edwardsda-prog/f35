@@ -16,7 +16,7 @@ Executive Summary: This Solution Design Document (SDD) defines the target archit
 | Author & Role | David Edwards — Customer Engineer, Google Cloud UK/IE Public Sector & Defense |
 | Target Platform | Gemini Enterprise & Agent Platform (GE Search & Conversation, Agent Runtime, Agent Registry) |
 | Operational Domain | Fifth-Generation Fighter Sustainment (RAF Marham / Joint F-35 Force ODIN & ALIS) |
-| Demonstration Scope | UC1: Conversational Analytics & Charting \| UC2: Enterprise Search \| UC3: Agentic AI Orchestration |
+| Demonstration Scope | UC0: Maintenance Data Stand-Up \| UC1: Conversational Analytics & Charting \| UC2: Enterprise Search \| UC3: Agentic AI Orchestration |
 | Reference Baseline | Aligned with SDD-GE-UKD-002 (Gemini Enterprise demo design) and Enterprise Agent SDD v2.0 |
 
 ## 1.1 Strategic Context & Dual-Track Delivery Approach

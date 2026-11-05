@@ -480,11 +480,11 @@ def generate_sustainment_graphics(
         total_upload_ms += u_ms
         rendered_assets.append({
             "asset_id": "executive_dashboard",
-            "title": "F-35 Sustainment Executive Briefing Dashboard (16:9 Presentation Slide)",
+            "title": "F-35 Sustainment Executive Briefing Dashboard (Presentation Slide)",
             "filename": "f35_sustainment_executive_dashboard.png",
             "url": dash_url,
             "markdown_img": f"![F-35 Sustainment Executive Dashboard]({dash_url})",
-            "download_link": f"[📥 Download 16:9 Executive Slide Graphic (PNG)]({dash_url})",
+            "download_link": f"[📥 Download Executive Slide Graphic (PNG)]({dash_url})",
             "render_ms": round(r_ms, 2),
             "upload_ms": round(u_ms, 2),
             "size_bytes": len(dash_bytes),

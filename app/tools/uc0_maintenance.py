@@ -378,7 +378,7 @@ def execute_maintenance_sql(
     md_lines: list[str] = [
         f"### 📊 Spreadsheet Card: `{clean_title}`",
         (
-            f"**Dataset:** `{_TABLE_FQN}` (`{BQ_LOCATION}`) · "
+            f"**Repository:** F35 Datawarehouse (`maintenance_work_orders`) · "
             f"**Rows:** `{total_rows}` · **Columns:** `{len(columns)}` (`A`–`{columns[-1].column_letter if columns else 'A'}`) · "
             f"**Latency:** `{latency_ms} ms` · "
             f"[📥 Download .CSV (Excel / Google Sheets)]({export_info['download_url']})"
@@ -431,7 +431,7 @@ def execute_maintenance_sql(
                 f"[📥 Download .CSV (Excel / Google Sheets)]({export_info['download_url']})"
             ),
             "",
-            "<details><summary>🔍 View Executed BigQuery SQL (EU)</summary>",
+            "<details><summary>🔍 View Executed Query</summary>",
             "",
             "```sql",
             bq_sql,

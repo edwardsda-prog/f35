@@ -106,9 +106,9 @@ _FAST_PATH_EMPTY_RESPONSE: LlmResponse = LlmResponse(
         parts=[
             types.Part.from_text(
                 text=(
-                    "F-35 Lightning II Fleet Sustainment Coordinator online "
-                    "(EU / europe-west1). Ready for UC1 Supply & Sortie Analytics, "
-                    "UC2 JTD Technical Search, or UC3 Airworthiness Evaluation."
+                    "F-35 Lightning II Fleet Sustainment Coordinator online. "
+                    "Ready to assist with maintenance work orders, component analytics, "
+                    "technical publications, or structural airworthiness evaluations."
                 )
             )
         ],
@@ -121,10 +121,9 @@ _FAST_PATH_GREETING_RESPONSE: LlmResponse = LlmResponse(
         parts=[
             types.Part.from_text(
                 text=(
-                    "F-35 Fleet Sustainment Agent Platform (`f35_sustainment_coordinator`) "
-                    "is operational in `europe-west1` / `EU`. Specify a tail number (e.g., "
-                    "`ZM151`), supply NSN (`1680-01-619-4821`), JTD symptom query, or "
-                    "airworthiness exceedance event to begin."
+                    "F-35 Fleet Sustainment Agent Platform is operational. "
+                    "Specify a tail number (e.g., `ZM151`), supply NSN (`1680-01-619-4821`), "
+                    "maintenance symptom query, or airworthiness exceedance event to begin."
                 )
             )
         ],
@@ -148,22 +147,13 @@ _FAST_PATH_CAPABILITY_RESPONSE: LlmResponse = LlmResponse(
         parts=[
             types.Part.from_text(
                 text=(
-                    "**F-35 Fleet Sustainment Agent Platform (`f35-sustainment-agent`) Operational Capabilities**\n\n"
-                    "I am an enterprise AI sustainment agent built on Google Agent Developer Kit (ADK 2.0) and Gemini 3.8 Flash, "
-                    "deployed to `europe-west1` (Belgium) with data residency strictly in `EU`.\n\n"
-                    "### Core Capabilities:\n"
-                    "0. **UC0: Conversational Maintenance Log Explorer & Spreadsheet Card** (`@F35-Maintenance-Data (UC0)`)\n"
-                    "   - Dynamic Text-to-SQL over BigQuery EU Table 7 (`maintenance_work_orders`, ODIN / MOD Form 707A logs).\n"
-                    "   - Interactive Excel / Google Sheets-like Spreadsheet Card (`A`..`R`, Status Badges, Formula Summary Footer) with one-click `.CSV` export.\n\n"
-                    "1. **UC1: Predictive Actuator Analytics & Supply Chain Orchestration** (`@F35-Sustainment-Analytics`)\n"
-                    "   - Partition-pruned BigQuery analysis of telemetry, supply depot stock, and sortie schedules.\n"
-                    "   - Two-turn interactive Vega-Lite chart rendering (`render_sustainment_chart`) and automated tail-swap recommendations.\n\n"
-                    "2. **UC2: JTD Maintenance Search & Multi-Service Repair Synthesis** (`@F35-JTD-Search`)\n"
-                    "   - Single-pass grounded retrieval over S1000D Joint Technical Data and 5-year cross-service narrative logs.\n"
-                    "   - Dialect normalization (UK/US MoD terms) and authenticated Google Cloud Storage citation links (`https://storage.cloud.google.com/...`).\n\n"
-                    "3. **UC3: ASIP Structural Exceedance & HITL Airworthiness Release** (`@F35-Airworthiness-Agent`)\n"
-                    "   - Parallel 4-way fan-out (`assess_airframe_airworthiness` via `asyncio.gather`): 1553 bus sync, deterministic Palmgren-Miner's Rule fatigue math, ultrasonic C-scan NDI CAD mapping, and mBOM fastener lot audit.\n"
-                    "   - Two-turn Human-in-the-Loop (HITL) Form 700 airworthiness release gating and SAR package generation."
+                    "**F-35 Fleet Sustainment Agent Platform**\n\n"
+                    "An intelligent sustainment and engineering decision-support platform for the F-35 Lightning II fleet.\n\n"
+                    "**Core Purpose & Operational Benefits:**\n"
+                    "- **Accelerate Fleet Readiness:** Rapidly analyses maintenance work orders, component health telemetry, and global depot inventory across operational squadrons and carrier strike groups to eliminate mission-impairing bottlenecks.\n"
+                    "- **Actionable Decision Support:** Recommends timely maintenance interventions, parts replenishment, and sortie aircraft swaps to maximize sortie generation rates.\n"
+                    "- **Authoritative Engineering Guidance:** Synthesizes verified technical manuals, multi-service historical repair narratives, and structural flight envelope exceedance evaluations with strict human-in-the-loop engineering governance.\n\n"
+                    "How can I assist your squadron or maintenance control team today?"
                 )
             )
         ],

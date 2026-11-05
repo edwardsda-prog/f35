@@ -798,8 +798,27 @@ class TestFastPathCapabilityInterception:
             f"Capability interception took {elapsed_ms:.3f} ms, exceeding 5.0 ms SLA"
         )
         part_text = response.content.parts[0].text
-        assert "Operational Capabilities" in part_text
-        assert "UC1" in part_text and "UC2" in part_text and "UC3" in part_text
+        assert "F-35 Fleet Sustainment Agent Platform" in part_text
+        assert "Core Purpose & Operational Benefits" in part_text
+        assert "Accelerate Fleet Readiness" in part_text
+        assert "Actionable Decision Support" in part_text
+        assert "Authoritative Engineering Guidance" in part_text
+        # Verify technology names and fragile use-case breakdowns are not present (Issue 1 & 2)
+        for tech in ("BigQuery", "GCS", "Google Cloud Storage", "ADK", "Table 7", "Discovery Engine", "UC0", "UC1", "UC2", "UC3"):
+            assert tech not in part_text, f"Internal technology or brittle use-case name '{tech}' found in capability response"
+
+    def test_fast_path_greetings_conceal_technology_names(self) -> None:
+        """Verify fast-path greetings and status responses do not leak internal technology names."""
+        from app.callbacks import fast_path_before_model_callback
+
+        for prompt in ("", "hello", "hi"):
+            cb_ctx = DummyCallbackContext(state={}, user_text=prompt)
+            llm_req = DummyLlmRequest(user_text=prompt)
+            resp = fast_path_before_model_callback(callback_context=cb_ctx, llm_request=llm_req)
+            assert resp is not None
+            text = resp.content.parts[0].text
+            for tech in ("BigQuery", "GCS", "Google Cloud Storage", "europe-west1", "Discovery Engine"):
+                assert tech not in text, f"Internal technology name '{tech}' leaked in response to '{prompt}'"
 
     @pytest.mark.parametrize(
         "prompt",

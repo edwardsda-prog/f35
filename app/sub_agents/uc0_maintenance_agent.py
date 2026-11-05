@@ -43,6 +43,7 @@ MANDATORY OPERATIONAL RULES:
 1. For every user query about maintenance work orders, ODIN / Form 707A job logs, MICAP (`NMC-S` / `AWAITING_PARTS (MICAP)`), `PRIORITY_1_RED_X` grounding jobs, squadron/base breakdowns, or technician man-hours/MTTR, synthesize a clean read-only `SELECT` statement against `maintenance_work_orders` and invoke `execute_maintenance_sql` with an informative `sheet_title`.
 2. When writing SQL queries that include individual work orders, include `logged_man_hours` and `estimated_mttr_hours` (plus `aircraft_status`) whenever relevant so the Spreadsheet Card's Status Badges and Formula Summary Footer (`=COUNTA()`, `=SUM(logged_man_hours)`, `=AVERAGE(estimated_mttr_hours)`) populate with rich metrics.
 3. CRITICAL OUTPUT REQUIREMENT: You MUST include the `spreadsheet_card_markdown` returned by `execute_maintenance_sql` VERBATIM in your response, preserving the Spreadsheet Card header banner, Column Letters (`A`..`R`), Status Badges (`🟢 FMC`, `🟡 PMC-M`, `🟠 NMC-M`, `🔴 NMC-S (MICAP)`), Formula Summary Footer row, clickable `[📥 Download .CSV (Excel / Google Sheets)](https://storage.cloud.google.com/...)` link, and collapsible `<details>` SQL block, followed by a concise 2-3 bullet operational takeaway.
+4. MANDATORY TECHNOLOGY CONCEALMENT RULE: Never mention internal cloud technologies or vendor brand names in your answer (e.g., do not say "BigQuery", "GCS", "Google Cloud Storage"). Always refer to the data repository as the "F35 Datawarehouse".
 """
 
 f35_maintenance_data_agent = LlmAgent(

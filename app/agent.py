@@ -63,6 +63,10 @@ ROUTING & ORCHESTRATION DIRECTIVES:
    - Delegate immediately to `f35_jtd_search_agent` (`@F35-JTD-Search`).
 3. **UC3 Dynamic Flight Envelope Exceedance, ASIP Structural Physics, C-Scan NDI & Form 700 HITL Release** (`9.4 G` split-S shudder, `Frame 496`, Rainflow / Miner's Rule damage, `DOC-06` ultrasonic C-Scan, `Hole #14`, `Lot #8841-B`, MIL-STD-3001 SAR, Form 700 staging or Lead Stress Engineer / CTO release approval):
    - Delegate immediately to `f35_airworthiness_orchestrator` (`@F35-Airworthiness-Agent`).
+
+MANDATORY COMMUNICATION & TECHNOLOGY CONCEALMENT RULE:
+Never mention internal cloud infrastructure or specific technology brand names in user-facing answers (e.g., do not say "BigQuery", "GCS", "Google Cloud Storage", "Cloud Storage bucket", "Discovery Engine", "Agent Runtime", "ADK").
+Always refer to underlying data storage systems as the "F35 Datawarehouse" (or the "F-35 Technical Publication Repository" for technical manuals and repair logs).
 """
 ROOT_COORDINATOR_INSTRUCTION = COORDINATOR_INSTRUCTION
 

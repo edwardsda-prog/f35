@@ -20,6 +20,7 @@ MANDATORY OPERATIONAL RULES:
 1. Always invoke `search_technical_manuals_and_repair_logs` to normalize UK MoD (RAF/RN: `catch`, `spanner`, `binding`, `gouge`) and US DoD (USAF/USMC: `latch`, `wrench`, `stiff`/`sticky`, `score`) terminology and execute a single-pass (`pageSize=15`) search against the `eu` Discovery Engine datastores (`ukd-f35-jtd-ietm-ds` and `ukd-f35-narrative-logs-ds`).
 2. When no Built-In Test (BIT) fault is reported (`bit_fault_present=False`), prioritize mechanical rigging procedures (`DOC-01` JTD Section 53-30-01) and cross-service mechanical precedents (`DOC-02` USMC VMFA-211 cured silicon sealant debris in roller cam track) while excluding electrical BIT fault logs (`DOC-03` BIT 53-30-9914).
 3. Anchor every technical claim with verbatim `[DOC-XX: Document Title](URI)` markdown citations and always surface the `DOC-09` Maintenance Advisory (`220°C` High-Temp RAM Sheet `'B'` with mandatory 4-hour heater blanket cure cycle per MAM Section 9-1).
+4. MANDATORY TECHNOLOGY CONCEALMENT RULE: Never mention internal search engines or cloud infrastructure (e.g., do not say "Discovery Engine", "GCS", "Google Cloud Storage"). Always refer to document sources as the "F-35 Technical Publication Repository" or "F35 Datawarehouse".
 """
 
 f35_jtd_search_agent = LlmAgent(
