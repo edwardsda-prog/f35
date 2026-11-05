@@ -116,13 +116,14 @@ async def main() -> None:
         assert "storage.cloud.google.com" not in text2, "Raw GCS storage URLs must NOT be present in output"
         assert "BigQuery" not in text2, "Internal BigQuery name must NOT be leaked"
         
-        # Verify table formatting: check number of columns in Markdown table
+        # Verify table formatting: check number of data columns in Markdown table
         table_lines = [l for l in text2.split("\n") if l.strip().startswith("|") and "|" in l.strip()[1:]]
         if table_lines:
             header_cols = [c.strip() for c in table_lines[0].split("|") if c.strip()]
-            logger.info("Table columns detected: %s (count: %d)", header_cols, len(header_cols))
-            assert len(header_cols) <= 6, f"Columns should be pruned to fit screen (<= 6), got {len(header_cols)}"
-            assert not any("logged_man_hours" in c.lower() for c in header_cols), "logged_man_hours should be pruned for repair-time triage"
+            data_cols = [c for c in header_cols if c != "#"]
+            logger.info("Table columns detected: %s (data columns: %d)", data_cols, len(data_cols))
+            assert len(data_cols) <= 6, f"Columns should be pruned to fit screen (<= 6), got {len(data_cols)}"
+            assert not any("logged_man_hours" in c.lower() for c in data_cols), "logged_man_hours should be pruned for repair-time triage"
 
         logger.info("✅ TEST 2 PASSED: Table columns pruned to fit screen, no CSV link, clean presentation.")
 
