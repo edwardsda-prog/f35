@@ -1,28 +1,31 @@
-# Feature Specification: Use Case 0 (UC0) — Conversational F-35 Maintenance Data (Text-to-SQL & Spreadsheet Card)
+# Feature Specification: Use Case 0 Trilogy (`UC 0`, `UC 0.1`, `UC 0.5`) — Conversational F-35 Maintenance Data Warehouse (Text-to-SQL, Multi-Table JOINs & Spreadsheet Card)
 
-> **Parent Specification:** [.agents-cli-spec.md](./.agents-cli-spec.md) & [SA_F35.md](./SA_F35.md) (`SDD-GE-F35-001`, v1.3)  
+> **Parent Specification:** [.agents-cli-spec.md](./.agents-cli-spec.md) & [SA_F35.md](./SA_F35.md) (`SDD-GE-F35-001`, v1.4)  
 > **Target Platform:** Google Cloud Agent Platform (Gemini Enterprise Search & Conversation, Agent Runtime, Agent Registry — *Agent Gateway excluded for Demo Track*)  
-> **Target GCP Project & Region (`REG-01`):** `antig-dave` (`284046449012`) · BigQuery in `EU` · GCS & Agent Runtime in `europe-west1` (Belgium)  
+> **Target GCP Project & Region (`REG-01`):** `antig-dave` (`284046449012`) · BigQuery in `EU` (9 Tables · 100 Consistent Records per Table = 900 Total Warehouse Records) · GCS & Agent Runtime in `europe-west1` (Belgium)  
 > **Specialist Sub-Agent:** `f35_maintenance_data_agent` (`@F35-Maintenance-Data`) (`app/sub_agents/uc0_maintenance_agent.py` & `app/tools/uc0_maintenance.py`)
 
 ---
 
 ## 1. Feature Overview & Operational Objective
 
-**Use Case 0 (UC0)** is a foundational, ultra-low-latency conversational analytics use case (simpler than UC1, UC2, and UC3) designed for **Act 0: Morning Maintenance Stand-Up** inside the **Gemini Enterprise UI (`F35 Support`)**.
+The **Use Case 0 Trilogy (`UC 0` → `UC 0.1` → `UC 0.5`)** provides a progressive, ultra-low-latency conversational Text-to-SQL foundation for **Act 0: Morning Maintenance Stand-Up** inside the **Gemini Enterprise UI (`F35 Support`)**:
+- **UC 0 (Act 0.0 — Work Order Stand-Up):** Single-table conversational Text-to-SQL over **Table 7 (`maintenance_work_orders`, 100 records)** tracking Lockheed Martin ODIN / UK MOD Form 707A Aircraft Maintenance Log Work Orders.
+- **UC 0.1 (Act 0.1 — Post-Sortie PHM / BIT Fault & Repeat CND Triage):** Single-table conversational Text-to-SQL over **Table 8 (`phm_bit_fault_events`, 100 records)** tracking Portable Maintenance Aid (PMA) post-flight Health Reporting Codes (`HRCs`), `PILOT_REPORT_ONLY_NO_BIT` anomalies (`ZM151` Canopy Latch), chronic repeat Could Not Duplicate (`CND`) rogue faults, and unactioned PHM advisories (`linked_work_order_id IS NULL`).
+- **UC 0.5 (Act 0.5 — Multi-Table Shift Dispatch, SQEP & Calibrated Tooling Join):** Multi-table conversational SQL `JOIN` across **Table 7 (`maintenance_work_orders`)**, **Table 9 (`work_center_tooling_and_sqep`, 100 records)**, and/or **Table 8 (`phm_bit_fault_events`)**, cross-referencing open Priority 1/2 work orders against SQEP technician headcount, QAR inspector availability, and calibrated special support equipment (`JTD-53-30-T14` Digital Torque Spanner, `NDI-PAUT-496A` Ultrasonic C-Scan Rig, `LO-IR-BLANKET-04` RAM Cure Blanket).
 
-Its primary objective is to allow Squadron Maintenance Control Officers, Line Chiefs, and Logistics Planners to query F-35 operational maintenance data (**Lockheed Martin ODIN / UK MOD Form 707A Aircraft Maintenance Log Work Orders**) in BigQuery (`antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders` in `EU`) via natural-language **Pure Dynamic Text-to-SQL**, and receive back an **Excel / Google Sheets-like Spreadsheet Card** complete with:
+Across all three sub-use-cases (`UC 0`, `UC 0.1`, `UC 0.5`), `execute_maintenance_sql` returns an **Excel / Google Sheets-like Spreadsheet Card** complete with:
 1. **Spreadsheet Grid Layout** with Column Letters (`A`, `B`, `C`...), formatted column headers, and row numbers (`1..N`).
-2. **Operational Status Badges**:
-   - `🟢 FMC` (Fully Mission Capable)
-   - `🟡 PMC-M` (Partially Mission Capable — Maintenance)
-   - `🟠 NMC-M` (Not Mission Capable — Maintenance)
-   - `🔴 NMC-S (MICAP)` (Not Mission Capable — Supply / Mission Impaired Capability Awaiting Parts)
-3. **Deterministic Formula Summary Footer Row**:
-   - Total Work Orders: `=COUNTA(A2:A{N})`
-   - Total Logged Man-Hours: `=SUM(logged_man_hours)`
-   - Average Estimated MTTR: `=AVERAGE(estimated_mttr_hours)`
-   - Active MICAP Count & Aircraft Status Breakdown
+2. **Context-Aware Operational Status Badges**:
+   - **Aircraft Readiness (`aircraft_status`):** `🟢 FMC`, `🟡 PMC-M`, `🟠 NMC-M`, `🔴 NMC-S (MICAP)`
+   - **PHM Fault Severity (`fault_severity` — UC 0.1):** `🔴 CRITICAL_GROUNDING`, `🟠 DEGRADED_PMC`, `🟡 ADVISORY_PHM`, `⚪ NO_BIT_FAULT_LOGGED`
+   - **CND Repeat Indicator (`cnd_flag` — UC 0.1):** `⚠️ CND (Repeat)` vs `✅ Verified`
+   - **Tool Calibration Status (`tool_calibration_status` — UC 0.5):** `🟢 CALIBRATED_SERVICEABLE`, `🟡 CALIBRATION_DUE_WARNING`, `🔴 EXPIRED_OUT_OF_CAL`, `🟠 IN_USE_OTHER_BAY`
+   - **Bay Dispatch Readiness (`bay_dispatch_status` — UC 0.5):** `🟢 READY_TO_DISPATCH`, `🔴 BLOCKED_TOOL_OUT_OF_CAL`, `🟠 BLOCKED_NO_QAR_ON_SHIFT`, `🔴 BLOCKED_AWAITING_MICAP_PART`
+3. **Deterministic Context-Aware Formula Summary Footer Row**:
+   - Total Rows: `=COUNTA(A2:A{N})`
+   - Dynamic Sum (`=SUM(...)`): `logged_man_hours` (UC 0 / UC 0.5), `recurrence_count_30d` (UC 0.1), or `sqep_certified_techs_on_shift` (UC 0.5 tooling)
+   - Dynamic Average (`=AVERAGE(...)`): `estimated_mttr_hours` (UC 0 / UC 0.5) or `diagnostic_confidence_pct` (UC 0.1)
 4. **Automatic Clickable GCS `.csv` Download Link on Every Card**:
    - Automatically exports the exact SQL result set to `gs://antig-dave-f35-staging-europe-west1/exports/<filename>.csv` using pre-warmed in-memory Application Default Credentials (`PERF-01`, `PERF-07`) and embeds an authenticated browser download link (`[📥 Download .CSV (Excel / Google Sheets)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/...)`) directly in the Spreadsheet Card footer (`ISS-005` compliant).
 
@@ -79,6 +82,16 @@ To guarantee zero-shot Text-to-SQL accuracy and sub-350ms BigQuery execution in 
 | **P** | `estimated_mttr_hours` | `FLOAT64` | `REQUIRED` | Unit: hours (hrs). Estimated Mean Time To Repair (MTTR) required to complete the maintenance action and restore airworthiness. |
 | **Q** | `etic_utc` | `TIMESTAMP` | `REQUIRED` | Estimated Time in Commission (ETIC) in UTC ISO-8601 format indicating when the aircraft is projected to return to `FMC` status. |
 | **R** | `created_at_utc` | `TIMESTAMP` | `REQUIRED` | Partition Key: UTC timestamp when the work order was opened in ODIN / MOD Form 707A. |
+
+### 3.3 Table 8 Schema & Semantic Descriptions (`phm_bit_fault_events` — UC 0.1, 100 Records)
+- **Partitioning:** `DAY` partitioning on `fault_timestamp_utc`
+- **Clustering:** `["tail_number", "fault_severity"]`
+- **Columns (`A`..`P`):** `fault_event_id` (PK), `tail_number`, `aircraft_variant`, `squadron`, `base_location`, `sortie_id`, `wuc_code`, `subsystem_name`, `hrc_code` (Health Reporting Code), `fault_severity` (`CRITICAL_GROUNDING`, `DEGRADED_PMC`, `ADVISORY_PHM`, `NO_BIT_FAULT_LOGGED`), `bit_trigger_type` (`CONTINUOUS_BIT`, `INITIATED_BIT`, `PHM_PROGNOSTIC_THRESHOLD`, `PILOT_REPORT_ONLY_NO_BIT`), `recurrence_count_30d`, `cnd_flag` (`BOOL`), `diagnostic_confidence_pct`, `linked_work_order_id` (FK -> `maintenance_work_orders.work_order_id` or `NULL`), `fault_timestamp_utc`.
+
+### 3.4 Table 9 Schema & Semantic Descriptions (`work_center_tooling_and_sqep` — UC 0.5, 100 Records)
+- **Partitioning:** `DAY` partitioning on `shift_updated_utc`
+- **Clustering:** `["base_location", "work_center"]`
+- **Columns (`A`..`P`):** `resource_id` (PK), `assigned_work_order_id` (FK -> `maintenance_work_orders.work_order_id`), `base_location`, `work_center`, `supported_wuc_code`, `shift_code`, `shift_lead_name`, `sqep_certification_domain`, `sqep_certified_techs_on_shift`, `qar_inspector_available` (`BOOL`), `required_special_tool_id` (`JTD-53-30-T14`, `NDI-PAUT-496A`, `LO-IR-BLANKET-04`), `required_special_tool_name`, `tool_calibration_status` (`CALIBRATED_SERVICEABLE`, `CALIBRATION_DUE_WARNING`, `EXPIRED_OUT_OF_CAL`, `IN_USE_OTHER_BAY`), `calibration_expiry_utc`, `bay_dispatch_status` (`READY_TO_DISPATCH`, `BLOCKED_TOOL_OUT_OF_CAL`, `BLOCKED_NO_QAR_ON_SHIFT`, `BLOCKED_AWAITING_MICAP_PART`), `shift_updated_utc`.
 
 ---
 
