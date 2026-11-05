@@ -1310,7 +1310,7 @@ def test_uc0_1_phm_bit_fault_events_triage_and_unlinked_advisories() -> None:
     )
 
     md = res["spreadsheet_card_markdown"]
-    assert "[📥 Download .CSV (Excel / Google Sheets)]" in md
+    assert "### 📊 Spreadsheet Card:" in md
     assert any(badge in md for badge in ("🔴", "🟠", "🟡", "🟣", "⚪"))
 
 
@@ -1357,7 +1357,7 @@ def test_uc0_5_multi_table_join_work_orders_and_tooling_sqep() -> None:
         "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/"
     )
     md_2tbl = res_2tbl["spreadsheet_card_markdown"]
-    assert "[📥 Download .CSV (Excel / Google Sheets)]" in md_2tbl
+    assert "### 📊 Spreadsheet Card:" in md_2tbl
 
     # 2. Three-table JOIN: maintenance_work_orders + work_center_tooling_and_sqep + phm_bit_fault_events
     sql_3tbl = (

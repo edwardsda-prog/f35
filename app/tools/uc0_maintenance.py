@@ -627,8 +627,7 @@ def execute_maintenance_sql(
         (
             f"**Repository:** F35 Datawarehouse ({repo_tables_label}) · "
             f"**Rows:** `{total_rows}` · **Columns:** `{len(columns)}` (`A`–`{columns[-1].column_letter if columns else 'A'}`) · "
-            f"**Latency:** `{latency_ms} ms` · "
-            f"[📥 Download .CSV (Excel / Google Sheets)]({export_info['download_url']})"
+            f"**Latency:** `{latency_ms} ms`"
         ),
         "",
         "| " + " | ".join(header_cells) + " |",
@@ -691,8 +690,7 @@ def execute_maintenance_sql(
             (
                 f"**Formula Summary Bar:** `{footer.row_count_formula} = {footer.total_rows}` · "
                 f"`{footer.sum_logged_man_hours_formula}` · "
-                f"`{footer.avg_estimated_mttr_hours_formula}` · "
-                f"[📥 Download .CSV (Excel / Google Sheets)]({export_info['download_url']})"
+                f"`{footer.avg_estimated_mttr_hours_formula}`"
             ),
             "",
             "<details><summary>🔍 View Executed Query</summary>",

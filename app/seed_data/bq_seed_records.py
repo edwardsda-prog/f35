@@ -1132,7 +1132,7 @@ _BASE_PHM_BIT_FAULT_EVENTS_ROWS: list[dict[str, Any]] = [
         "sortie_id": None,
         "wuc_code": "53-30",
         "subsystem_name": "Forward Fuselage Canopy Latch",
-        "hrc_code": "HRC-5330-000-NONE",
+        "hrc_code": "HRC-5330-14C",
         "fault_severity": "ADVISORY_PHM",
         "bit_trigger_type": "PILOT_REPORT_ONLY_NO_BIT",
         "recurrence_count_30d": 4,
@@ -1161,11 +1161,7 @@ for _idx in range(14, 100):
             "sortie_id": _sortie_ref,
             "wuc_code": _wo["wuc_code"],
             "subsystem_name": _wo["subsystem_name"],
-            "hrc_code": (
-                "HRC-5330-000-NONE"
-                if _is_zero_bit
-                else f"{_sub['hrc_prefix']}-{100 + _idx}A"
-            ),
+            "hrc_code": f"{_sub['hrc_prefix']}-{100 + _idx}A",
             "fault_severity": (
                 "NO_BIT_FAULT_LOGGED" if _is_zero_bit else "ADVISORY_PHM"
             ),

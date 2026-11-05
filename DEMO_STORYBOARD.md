@@ -11,16 +11,16 @@
 
 > [!TIP]
 > **The Entire Demo Takes 6 Fast Executive Prompts (4–5 Minutes Total).**  
-> Each prompt is written in natural Commander / Maintenance Officer language and triggers live BigQuery (`EU`) tabular data, Excel / Google Sheets Cards with `.CSV` export, multi-table SQL joins, on-demand presentation graphics, and grounded JTD citations (`eu`).
+> Every prompt is written in plain, natural operational language—with **zero references to backend systems, database tables, or SQL joins**—just as a Squadron Commander, Maintenance Controller, or Flight-Line Chief would ask a colleague.
 
 | Step | Act & Persona | Exact Executive Prompt to Paste into `F35 Support` | What Appears on Screen | Live EU Speed |
 | :---: | :--- | :--- | :--- | :---: |
-| **0.0** | **Act 0.0: Morning Maintenance Stand-Up**<br/>*(Squadron Maintenance Officer — UC 0)* | `Show me all open Priority-1 and MICAP maintenance work orders across RAF Marham and HMS Queen Elizabeth, sorted by estimated repair time.` | **Excel / Google Sheets Card (`maintenance_work_orders`)**: Renders Spreadsheet Grid (`A`..`L`) with Status Badges (`🔴 NMC-S (MICAP)`, `🟠 NMC-M`, `🟡 PMC-M`), Formula Footer (`=COUNTA()`, `=SUM()`, `=AVERAGE()`), and clickable **[📥 Download .CSV](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/...)** link—surfacing **ZM151**'s open actuator and canopy tickets. | **`< 1.5s`**<br/>*(SQL `< 350ms`)* |
-| **0.1** | **Act 0.1: Post-Sortie PHM / BIT Fault & CND Triage**<br/>*(Flight-Line Avionics Lead — UC 0.1)* | `Query our PHM and BIT fault event log for all ZM151 post-sortie fault events and any unactioned PHM advisories across the fleet that do not have a linked work order yet.` | **Excel / Google Sheets Card (`phm_bit_fault_events`)**: Highlights **ZM151**'s `HRC-2710-88A` (Actuator), `HRC-5330-000-NONE` (**`PILOT_REPORT_ONLY_NO_BIT` + `⚠️ CND (Repeat)`** on Canopy Latch), and `HRC-5320-94G` (`🔴 CRITICAL_GROUNDING`), plus 3 unlinked fleet PHM advisories (`linked_work_order_id IS NULL`). | **`< 1.5s`**<br/>*(SQL `< 350ms`)* |
-| **0.5** | **Act 0.5: Shift Dispatch, SQEP & Calibrated Tooling Join**<br/>*(Wing Maintenance Controller — UC 0.5)* | `Join our open maintenance work orders with work center tooling and SQEP shift readiness to show which active jobs are ready to dispatch versus blocked by expired tool calibration or QAR availability.` | **Multi-Table Joined Spreadsheet Card (`maintenance_work_orders` ⋈ `work_center_tooling_and_sqep`)**: Confirms **ZM151**'s Canopy Latch (`JTD-53-30-T14` calibrated torque spanner) and NDI inspection (`NDI-PAUT-496A` rig) are `🟢 READY_TO_DISPATCH`, while flagging `🔴 EXPIRED_OUT_OF_CAL` (`LO-IR-BLANKET-04`) and `🟠 BLOCKED_NO_QAR_ON_SHIFT` bottlenecks on sister tails. | **`< 1.6s`**<br/>*(2-Table SQL `< 360ms`)* |
-| **1A** | **Act 1A: Protect the Morning Sortie (Turn 1)**<br/>*(Squadron Logistics Officer — UC 1A)* | `Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot stock, and recommend a tail swap for morning sortie SRT-MAR-20261103-01.` | **Tabular Fleet Briefing**: Flags **ZM151** (`1,000.4 hrs` breach), confirms **4 spares in stock**, swaps Pilot Henderson to **ZM154** (`842 hrs`), and prompts: *"Would you like me to render: 1. Actuator Fatigue Threshold Chart, 2. Regional Depot Stock vs 30-Day Demand Chart, or the full Executive Briefing Dashboard for your presentation slide deck?"* | **`1.2s`**<br/>*(TTFT `269ms`)* |
+| **0.0** | **Act 0.0: Morning Maintenance Stand-Up**<br/>*(Squadron Maintenance Officer — UC 0)* | `What are our most urgent maintenance jobs and grounded aircraft across RAF Marham and HMS Queen Elizabeth right now, ordered by how long they will take to fix?` | **Excel / Google Sheets Card (`maintenance_work_orders`)**: Renders Spreadsheet Grid (`A`..`L`) with Status Badges (`🔴 NMC-S (MICAP)`, `🟠 NMC-M`, `🟡 PMC-M`), Formula Footer (`=COUNTA()`, `=SUM()`, `=AVERAGE()`), and clickable **[📥 Download .CSV](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/...)** link—surfacing **ZM151**'s open actuator and canopy tickets. | **`< 1.5s`**<br/>*(SQL `< 350ms`)* |
+| **0.1** | **Act 0.1: Post-Sortie Fault & Repeat Discrepancy Triage**<br/>*(Flight-Line Avionics Lead — UC 0.1)* | `What faults or pilot-reported issues were raised on ZM151 after its last flight, and are there any fleet-wide health warnings that haven't been scheduled for repair yet?` | **Excel / Google Sheets Card (`phm_bit_fault_events`)**: Highlights **ZM151**'s `HRC-2710-88A` (Actuator), `HRC-5330-000-NONE` (**`PILOT_REPORT_ONLY_NO_BIT` + `⚠️ CND (Repeat)`** on Canopy Latch), and `HRC-5320-94G` (`🔴 CRITICAL_GROUNDING`), plus 3 unscheduled fleet advisories (`linked_work_order_id IS NULL`). | **`< 1.5s`**<br/>*(SQL `< 350ms`)* |
+| **0.5** | **Act 0.5: Shift Dispatch, Crew & Tooling Readiness**<br/>*(Wing Maintenance Controller — UC 0.5)* | `Which of our open maintenance jobs are ready to start on this shift, and which ones are held up waiting for certified technicians, an inspector, or calibrated tools?` | **Multi-Table Spreadsheet Card (`maintenance_work_orders` ⋈ `work_center_tooling_and_sqep`)**: Confirms **ZM151**'s Canopy Latch (`JTD-53-30-T14` calibrated torque spanner) and NDI inspection (`NDI-PAUT-496A` rig) are `🟢 READY_TO_DISPATCH`, while flagging `🔴 EXPIRED_OUT_OF_CAL` (`LO-IR-BLANKET-04`) and `🟠 BLOCKED_NO_QAR_ON_SHIFT` bottlenecks on sister tails. | **`< 1.6s`**<br/>*(2-Table SQL `< 360ms`)* |
+| **1A** | **Act 1A: Protect the Morning Sortie (Turn 1)**<br/>*(Squadron Logistics Officer — UC 1A)* | `Check RAF Marham F-35A horizontal tail actuator hours against our 30-day spare parts stock, and recommend an aircraft swap for morning sortie SRT-MAR-20261103-01.` | **Tabular Fleet Briefing**: Flags **ZM151** (`1,000.4 hrs` breach), confirms **4 spares in stock**, swaps Pilot Henderson to **ZM154** (`842 hrs`), and prompts: *"Would you like me to render: 1. Actuator Fatigue Threshold Chart, 2. Regional Depot Stock vs 30-Day Demand Chart, or the full Executive Briefing Dashboard for your presentation slide deck?"* | **`1.2s`**<br/>*(TTFT `269ms`)* |
 | **1B** | **Act 1B: On-Demand Slide Graphic Rendering (Turn 2)**<br/>*(Squadron Logistics Officer — UC 1B)* | `Render the full Executive Briefing Dashboard for my presentation slide deck.` | **Full HD Presentation Graphic**: Renders 1920×1080 composite slide image with **ZM151 in Red (`1,000.4 hrs`)** vs **ZM154 in Green (`842.0 hrs`)** against limit line, alongside Regional Depot Stock vs Demand bar chart, with clickable **[📥 Download Executive Slide Graphic (PNG)]** link for direct insertion into slide decks. | **`< 0.8s`**<br/>*(Chart Painter `< 790ms`)* |
-| **2** | **Act 2: Fix the Unexplained Fault**<br/>*(Flight-Line Maintenance Chief — UC 2)* | `Our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, with zero BIT faults. Have allied squadrons seen this, and what is the JTD fix?` | **Grounded Checklist & Authenticated Browser Citations**: Matches USMC sister-squadron log (**silicon sealant debris in roller track**) + **JTD 53-30-01** cleaning/lubrication spec via browser URLs. | **`0.38s`**<br/>*(`100%` Cited)* |
+| **2** | **Act 2: Fix the Unexplained Fault**<br/>*(Flight-Line Maintenance Chief — UC 2)* | `Our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, with no fault codes logged on the jet. Have allied squadrons seen this before, and what is the approved fix?` | **Grounded Checklist & Authenticated Browser Citations**: Matches USMC sister-squadron experience (**silicon sealant debris in roller track**) + **Section 53-30-01** cleaning/lubrication spec via browser URLs. | **`0.38s`**<br/>*(`100%` Cited)* |
 
 ---
 
@@ -28,17 +28,17 @@
 
 ```mermaid
 flowchart LR
-    A0["Act 0.0 (UC 0 · 0.5 Min) | MORNING STAND-UP: Open Priority-1 & MICAP Work Orders in Excel/Sheets Card"] --> A01["Act 0.1 (UC 0.1 · 0.5 Min) | PHM / BIT & CND TRIAGE: Spot ZM151 Zero-BIT Repeat Fault & Unlinked Fleet Advisories"]
-    A01 --> A05["Act 0.5 (UC 0.5 · 0.5 Min) | SHIFT DISPATCH JOIN: 2-Table SQL Join (Work Orders ⋈ SQEP & Calibrated Tooling)"]
-    A05 --> A1A["Act 1A (UC 1A · 1 Min) | GENERATE MORE SORTIES: Spot ZM151 Actuator Breach, Check Stock & Auto-Swap to ZM154"]
+    A0["Act 0.0 (UC 0 · 0.5 Min) | MORNING STAND-UP: Urgent Jobs & Grounded Aircraft in Excel/Sheets Card"] --> A01["Act 0.1 (UC 0.1 · 0.5 Min) | POST-FLIGHT TRIAGE: Spot ZM151 Repeat Canopy Issue & Unscheduled Fleet Warnings"]
+    A01 --> A05["Act 0.5 (UC 0.5 · 0.5 Min) | SHIFT READINESS: Check Which Jobs Have Certified Crews, Inspectors & Calibrated Tools"]
+    A05 --> A1A["Act 1A (UC 1A · 1 Min) | GENERATE MORE SORTIES: Spot ZM151 Actuator Breach, Check Spares & Auto-Swap to ZM154"]
     A1A --> A1B["Act 1B (UC 1B · 0.5 Min) | VISUALIZE FLEET DATA: On-Demand Executive Dashboard Slide PNG (< 790ms)"]
-    A1B --> A2["Act 2 (UC 2 · 1 Min) | EMPOWER MAINTAINERS: Solve Zero-BIT Canopy Fault via Allied USMC/RAF Experience"]
+    A1B --> A2["Act 2 (UC 2 · 1 Min) | EMPOWER MAINTAINERS: Solve Zero-Code Canopy Fault via Allied USMC/RAF Experience"]
 ```
 
 ### Presenter Opening Talk-Track
-> *"Every time an F-35 lands at RAF Marham, it downloads gigabytes of flight telemetry and PHM fault events alongside millions of pages of technical manuals, work center tooling logs, and allied maintenance narratives. Today, that data lives in disconnected silos. When an aircraft has an unlinked PHM advisory, a component near life-limit, or a mysterious mechanical fault with zero computer codes, our teams spend **hours** manually cross-checking ODIN tables, shift rosters, supply depots, and PDF manuals.*
+> *"Every time an F-35 lands at RAF Marham, it generates post-flight health data alongside thousands of maintenance jobs, tool calibration records, spare parts inventories, and allied repair reports. Today, that information lives in disconnected systems—and our commanders and flight-line maintainers shouldn't have to be data analysts or know which database to query just to get an answer.*
 >
-> *In the next **4 minutes**, using **just 6 prompts** inside **Gemini Enterprise (`F35 Support`)**, we will follow F-35 Tail **`ZM151`** from the `06:45Z` morning maintenance stand-up (`UC 0`, `UC 0.1`, `UC 0.5`), through morning sortie protection and on-demand executive slide generation (`UC 1A` & `UC 1B`), to resolving a zero-BIT mechanical fault using 5-year coalition fleet logs (`UC 2`)."*
+> *In the next **4 minutes**, using **just 6 plain-English questions** inside **Gemini Enterprise (`F35 Support`)**, we will follow F-35 Tail **`ZM151`** from the `06:45Z` morning maintenance stand-up (`UC 0`, `UC 0.1`, `UC 0.5`), through protecting the morning sortie and generating a briefing slide (`UC 1A` & `UC 1B`), to resolving a mysterious mechanical fault using 5 years of allied squadron experience (`UC 2`)."*
 
 ---
 
@@ -46,45 +46,45 @@ flowchart LR
 
 ---
 
-### Act 0 Trilogy: Morning Maintenance Stand-Up, PHM/BIT Triage & Shift Resource Join (`UC 0` → `UC 0.1` → `UC 0.5`)
+### Act 0 Trilogy: Morning Maintenance Stand-Up, Post-Sortie Triage & Shift Readiness (`UC 0` → `UC 0.1` → `UC 0.5`)
 
 ```mermaid
 flowchart LR
-    U0["Prompt 0.0 (UC 0): Open Priority-1 & MICAP Work Orders"] --> U01["Prompt 0.1 (UC 0.1): Post-Sortie PHM / BIT Fault & CND Triage"]
-    U01 --> U05["Prompt 0.5 (UC 0.5): 2-Table SQL JOIN (Work Orders ⋈ SQEP & Calibrated Tooling)"]
+    U0["Prompt 0.0 (UC 0): Urgent Jobs & Grounded Aircraft"] --> U01["Prompt 0.1 (UC 0.1): ZM151 Post-Flight Issues & Unscheduled Fleet Warnings"]
+    U01 --> U05["Prompt 0.5 (UC 0.5): Jobs Ready to Start vs Held Up by Crews, Inspectors or Tools"]
     U05 --> E0["Excel / Google Sheets Cards + Clickable .CSV Exports -> Tees Up Acts 1 & 2"]
 ```
 
-* **The Executive Challenge:** Every morning at `06:45Z`, the Squadron Maintenance Officer at RAF Marham reviews the **9-Table, 900-Record F-35 Data Warehouse** (`100` consistent records per table across `maintenance_work_orders`, `phm_bit_fault_events`, and `work_center_tooling_and_sqep`) covering `617 Squadron`, `207 Squadron`, and `809 Naval Air Squadron` embarked on `HMS Queen Elizabeth`. Today, correlating open Form 707A work orders against post-flight PHM Health Reporting Codes (HRCs), SQEP technician shift rosters, and calibrated special tooling requires hours of manual ODIN exports and VLOOKUP spreadsheets.
+* **The Executive Challenge:** Every morning at `06:45Z`, the Squadron Maintenance Officer at RAF Marham needs to know which aircraft are grounded across `617 Squadron`, `207 Squadron`, and `809 Naval Air Squadron` embarked on `HMS Queen Elizabeth`, what issues came off the jets after last night's flying, and which jobs can actually be started on the morning shift. Today, answering those three everyday operational questions requires pulling data from three separate systems and cross-checking spreadsheets by hand.
 
-#### Step 0.0 — Paste Prompt 0.0 (`UC 0`: Single-Table Work Order Backlog)
+#### Step 0.0 — Paste Prompt 0.0 (`UC 0`: Urgent Jobs & Grounded Aircraft)
 ```text
-Show me all open Priority-1 and MICAP maintenance work orders across RAF Marham and HMS Queen Elizabeth, sorted by estimated repair time.
+What are our most urgent maintenance jobs and grounded aircraft across RAF Marham and HMS Queen Elizabeth right now, ordered by how long they will take to fix?
 ```
-* **What Appears on Screen:** `@F35-Maintenance-Data` queries Table 7 (`maintenance_work_orders`, 100 records) in `< 350 ms`, rendering an **Excel / Google Sheets Card** with Status Badges (`🔴 NMC-S (MICAP)`, `🟠 NMC-M`, `🟡 PMC-M`), Formula Footer (`=COUNTA()`, `=SUM()`, `=AVERAGE()`), and a clickable **[📥 Download .CSV (Excel / Google Sheets)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/F35_ODIN_Maintenance_Work_Orders.csv)** link—surfacing Tail **`ZM151`**'s active discrepancies (`WO-2026-88401` EHA actuator, `WO-2026-88402` Canopy latch, and `WO-2026-88403` Frame 496 inspection).
+* **What Appears on Screen:** `@F35-Maintenance-Data` automatically translates the plain-English question into a query against `maintenance_work_orders` in `< 350 ms`, rendering an **Excel / Google Sheets Card** with Status Badges (`🔴 NMC-S (MICAP)`, `🟠 NMC-M`, `🟡 PMC-M`), Formula Footer (`=COUNTA()`, `=SUM()`, `=AVERAGE()`), and a clickable **[📥 Download .CSV (Excel / Google Sheets)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/F35_ODIN_Maintenance_Work_Orders.csv)** link—surfacing Tail **`ZM151`**'s active jobs (`WO-2026-88401` EHA actuator, `WO-2026-88402` Canopy latch, and `WO-2026-88403` Frame 496 inspection).
 
-#### Step 0.1 — Paste Prompt 0.1 (`UC 0.1`: Post-Sortie PHM / BIT Fault & Repeat CND Triage)
+#### Step 0.1 — Paste Prompt 0.1 (`UC 0.1`: Post-Sortie Issues & Unscheduled Fleet Warnings)
 ```text
-Query our PHM and BIT fault event log for all ZM151 post-sortie fault events and any unactioned PHM advisories across the fleet that do not have a linked work order yet.
+What faults or pilot-reported issues were raised on ZM151 after its last flight, and are there any fleet-wide health warnings that haven't been scheduled for repair yet?
 ```
-* **What Appears on Screen:** `@F35-Maintenance-Data` queries Table 8 (`phm_bit_fault_events`, 100 records), rendering a Spreadsheet Card with PHM Severity & CND Badges:
+* **What Appears on Screen:** Without the user needing to name any onboard diagnostic system, `@F35-Maintenance-Data` queries `phm_bit_fault_events` and renders a Spreadsheet Card with Severity & Repeat-Fault Badges:
   - **`PHM-2026-99101` (`ZM151` · `HRC-2710-88A` · `🟠 DEGRADED_PMC`):** Port EHA actuator crossed `1,000.0` hr limit (`1,000.4` hrs) → *Tees up Act 1 (`UC 1A` & `UC 1B`)*.
-  - **`PHM-2026-99102` (`ZM151` · `HRC-5330-000-NONE` · `⚪ NO_BIT_FAULT_LOGGED` · `⚠️ CND (Repeat)`):** Pilot-reported canopy latch mechanical binding with **zero BIT fault logged** (`PILOT_REPORT_ONLY_NO_BIT`, 3 repeats in 30 days) → *Tees up Act 2 (`UC 2`)*.
+  - **`PHM-2026-99102` (`ZM151` · `HRC-5330-000-NONE` · `⚪ NO_BIT_FAULT_LOGGED` · `⚠️ CND (Repeat)`):** Pilot-reported canopy latch mechanical binding with **zero computer fault codes logged** (`PILOT_REPORT_ONLY_NO_BIT`, 3 repeats in 30 days) → *Tees up Act 2 (`UC 2`)*.
   - **`PHM-2026-99103` (`ZM151` · `HRC-5320-94G` · `🔴 CRITICAL_GROUNDING`):** `9.4G / Mach 1.3` over-G structural strain exceedance on Frame 496.
-  - Surfaces **3 unactioned fleet PHM advisories** (`linked_work_order_id IS NULL` on `ZM154`, `ZM159`, `ZM162`) and computes `=COUNTA()`, `=SUM(recurrence_count_30d)`, and `=AVERAGE(diagnostic_confidence_pct)`.
+  - Surfaces **3 unscheduled fleet warnings** (`linked_work_order_id IS NULL` on `ZM154`, `ZM159`, `ZM162`) that do not have a repair job raised yet, and computes `=COUNTA()`, `=SUM(recurrence_count_30d)`, and `=AVERAGE(diagnostic_confidence_pct)`.
 
-#### Step 0.5 — Paste Prompt 0.5 (`UC 0.5`: Multi-Table SQL JOIN — Work Orders ⋈ SQEP & Calibrated Tooling)
+#### Step 0.5 — Paste Prompt 0.5 (`UC 0.5`: Shift Dispatch, Technicians & Tooling Readiness)
 ```text
-Join our open maintenance work orders with work center tooling and SQEP shift readiness to show which active jobs are ready to dispatch versus blocked by expired tool calibration or QAR availability.
+Which of our open maintenance jobs are ready to start on this shift, and which ones are held up waiting for certified technicians, an inspector, or calibrated tools?
 ```
-* **What Appears on Screen:** `@F35-Maintenance-Data` executes a live BigQuery `EU` SQL `JOIN` across Table 7 (`maintenance_work_orders`) and Table 9 (`work_center_tooling_and_sqep`, 100 records):
-  - Confirms **`ZM151`**'s Canopy Latch (`WO-2026-88402` with calibrated Digital Micro-Torque Spanner **`JTD-53-30-T14`**) and Frame 496 NDI inspection (`WO-2026-88403` with Phased-Array Ultrasonic C-Scan Rig **`NDI-PAUT-496A`**) are **`🟢 READY_TO_DISPATCH`** with SQEP crews and QAR inspectors on shift.
-  - Immediately isolates shift resource bottlenecks on other tails: **`🔴 EXPIRED_OUT_OF_CAL`** on LO Infrared RAM Cure Blanket (`LO-IR-BLANKET-04`) and **`🟠 BLOCKED_NO_QAR_ON_SHIFT`** on night watch.
+* **What Appears on Screen:** Behind the scenes, `@F35-Maintenance-Data` automatically links open maintenance jobs (`maintenance_work_orders`) with shift staffing and tool calibration records (`work_center_tooling_and_sqep`) in `< 360 ms`:
+  - Confirms **`ZM151`**'s Canopy Latch (`WO-2026-88402` with calibrated Digital Micro-Torque Spanner **`JTD-53-30-T14`**) and Frame 496 inspection (`WO-2026-88403` with Ultrasonic C-Scan Rig **`NDI-PAUT-496A`**) are **`🟢 READY_TO_DISPATCH`** with qualified crews and inspectors on shift.
+  - Immediately isolates shift bottlenecks holding up other aircraft: **`🔴 EXPIRED_OUT_OF_CAL`** on Infrared Cure Blanket (`LO-IR-BLANKET-04`) and **`🟠 BLOCKED_NO_QAR_ON_SHIFT`** where no Quality Assurance Representative is on watch.
 
 > [!IMPORTANT]
 > **Act 0 Trilogy Executive Takeaway ("The So What?")**
-> - **Operational Impact:** Instant visibility across work orders (`UC 0`), unlinked PHM/BIT fault advisories & repeat CND anomalies (`UC 0.1`), and SQEP/calibrated tooling dispatch readiness (`UC 0.5`).
-> - **Time Compressed:** **1–2 hours** of morning ODIN data pulls and manual VLOOKUP spreadsheets compressed into **three `< 1.5s` conversational prompts**.
+> - **Zero Analytics Training Required:** Maintainers and controllers ask plain-English questions about aircraft, faults, crews, and tools—the agent figures out which tables to query and link automatically.
+> - **Time Compressed:** **1–2 hours** of morning data pulls and manual spreadsheet cross-checking compressed into **three `< 1.5s` conversational questions**.
 
 ---
 
@@ -92,27 +92,27 @@ Join our open maintenance work orders with work center tooling and SQEP shift re
 
 ```mermaid
 flowchart LR
-    U1A["Prompt 1A (UC 1A): Logistics Officer (07:30Z Sortie Risk)"] --> R1A["@F35-Sustainment-Analytics (BigQuery EU Join · 1.2s)"]
+    U1A["Prompt 1A (UC 1A): Logistics Officer (07:30Z Sortie Risk)"] --> R1A["@F35-Sustainment-Analytics (Readiness & Spares Check · 1.2s)"]
     R1A --> S1["Tabular Briefing: ZM151 Breached (1,000.4 hrs) + Auto-Swap to ZM154 (842 hrs)"]
     S1 --> P1["Prompt User: Render Chart 1, Chart 2, or Executive Dashboard?"]
     P1 --> U1B["Prompt 1B (UC 1B): 'Render the full Executive Briefing Dashboard...'"]
-    U1B --> T1["render_sustainment_chart Tool (< 790ms Headless Matplotlib + GCS Upload)"]
+    U1B --> T1["render_sustainment_chart Tool (< 790ms Headless Matplotlib + Cloud Upload)"]
     T1 --> C1["Full HD Presentation Graphic + Clickable PNG Download Link"]
 ```
 
-* **The Executive Challenge:** Tail **`ZM151`** is scheduled to lead the `07:30Z` morning wave with **Flt Lt Henderson (`VIPER-1`)**. Just before launch, post-flight telemetry shows its Left Horizontal Tail Actuator crossed its `1,000.0`-hour safety limit.
+* **The Executive Challenge:** Tail **`ZM151`** is scheduled to lead the `07:30Z` morning wave with **Flt Lt Henderson (`VIPER-1`)**. Just before launch, post-flight checks show its Left Horizontal Tail Actuator crossed its `1,000.0`-hour safety limit.
 
-#### Step 1A — Paste Prompt 1A (`UC 1A`: Fleet Readiness Analysis & Tail Swap)
+#### Step 1A — Paste Prompt 1A (`UC 1A`: Fleet Readiness Analysis & Aircraft Swap)
 ```text
-Check RAF Marham F-35A horizontal tail actuator hours against our 30-day depot stock, and recommend a tail swap for morning sortie SRT-MAR-20261103-01.
+Check RAF Marham F-35A horizontal tail actuator hours against our 30-day spare parts stock, and recommend an aircraft swap for morning sortie SRT-MAR-20261103-01.
 ```
 
 * **What the Executive Audience Sees:**
-  1. **Operational Readiness Table:** Displays real-time BigQuery EU status:
+  1. **Operational Readiness Table:** Displays real-time fleet and spares status:
      - **Tail ZM151 (`S/N ACT-99812-F`)**: `1,000.4 hrs` (Breached by `+0.4 hrs`, `PMC-M`).
      - **Spare Tail ZM154 (`S/N ACT-88401-B`)**: `842.0 hrs` (`158.0 hrs` remaining, `MC`).
-     - **Depot Stock (`DEPOT-MAR-01` RAF Marham)**: `4` serviceable units on hand vs `2` units reserved for 30-day demand (`18.0-hr` shipping ETA).
-  2. **Automated Action Plan:** Reallocates Flt Lt Henderson's `07:30Z` sortie (`SRT-MAR-20261103-01`) to Spare Tail **`ZM154`** and drafts Priority-1 depot supply requisition for `NSN: 1680-01-619-4821`.
+     - **Regional Spares (`RAF Marham`)**: `4` serviceable units on hand vs `2` units reserved for 30-day demand (`18.0-hr` shipping ETA).
+  2. **Automated Action Plan:** Reallocates Flt Lt Henderson's `07:30Z` sortie (`SRT-MAR-20261103-01`) to Spare Tail **`ZM154`** and drafts a Priority-1 supply requisition for `NSN: 1680-01-619-4821`.
   3. **Interactive Chart Prompt:**
      > *"Would you like me to render:*  
      > *1. **Actuator Fatigue Threshold Chart** (Tail ZM151 at 1,000.4 hrs vs ZM154 at 842.0 hrs vs 1,000.0-hr threshold)*  
@@ -125,19 +125,18 @@ Render the full Executive Briefing Dashboard for my presentation slide deck.
 ```
 
 * **What the Executive Audience Sees:**
-  - The agent invokes the dedicated `render_sustainment_chart` tool, executing headless Matplotlib rendering in **`< 790 ms`** and uploading to Google Cloud Storage (`europe-west1`).
+  - The agent invokes `render_sustainment_chart`, rendering the presentation graphic in **`< 790 ms`**.
   - The UI displays the publication-quality **Full HD widescreen presentation slide graphic (1920×1080 at 160 DPI)**:
     - **Panel 1 (Actuator Fatigue Threshold):** Tail **ZM151** in **Red** at `1,000.4 hrs` breaching the dashed `1,000.0-hr` condemnation limit; Tail **ZM154** in **Green** at `842.0 hrs` (serviceable).
     - **Panel 2 (Regional Depot Stock vs 30-Day Demand):** Grouped bar chart comparing RAF Marham and HMS Queen Elizabeth stock on hand, 30-day demand, and net uncommitted spares.
   - **Clickable Download Link for Briefing Decks:**
-    - Provides a direct link: **`[📥 Download Executive Slide Graphic (PNG)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/charts/f35_sustainment_executive_dashboard.png)`** allowing officers to immediately paste the asset into Keynote / PowerPoint.
+    - Provides a direct link: **`[📥 Download Executive Slide Graphic (PNG)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/charts/f35_sustainment_executive_dashboard.png)`** allowing officers to immediately paste the asset into Google Slides / PowerPoint.
 
 > [!IMPORTANT]
 > **Act 1 Executive Takeaway ("The So What?")**
 > - **Operational Impact:** Morning training wave launches on time; zero mission cancellation.
-> - **Time Compressed:** **2–4 hours** of manual ERP, supply, and flight-schedule reconciliation reduced to **1.2 seconds**.
-> - **Zero Latency Spikes:** Decoupling tabular analysis (`UC 1A`) from on-demand chart rendering (`UC 1B`) via `render_sustainment_chart` cuts response time by 90% (`< 2.5s` turn 1, `< 0.8s` turn 2).
-> - **Sovereign Data Proof:** Live query executed directly against EU-resident BigQuery (`ukd_f35_sustainment_demo`).
+> - **Time Compressed:** **2–4 hours** of manual supply and flight-schedule reconciliation reduced to **1.2 seconds**.
+> - **Zero Latency Spikes:** Decoupling tabular analysis (`UC 1A`) from on-demand chart rendering (`UC 1B`) cuts response time by 90% (`< 2.5s` turn 1, `< 0.8s` turn 2).
 
 ---
 
@@ -145,15 +144,15 @@ Render the full Executive Briefing Dashboard for my presentation slide deck.
 
 ```mermaid
 flowchart LR
-    U2["Prompt 2 (UC 2): Maintenance Chief (Stiff Canopy Handle · Zero BIT Faults)"] --> R2["@F35-JTD-Search (Discovery Engine eu Single-Pass · 0.38s)"]
+    U2["Prompt 2 (UC 2): Maintenance Chief (Stiff Canopy Handle · No Fault Codes)"] --> R2["@F35-JTD-Search (Single-Pass Search · 0.38s)"]
     R2 --> D2["Coalition Jargon Bridge: Links UK RAF Query to USMC Silicon Debris Log (DOC-02)"]
-    D2 --> J2["100% Cited Checklist: JTD 53-30-01 Roller Clearance (0.020-0.035 in) & 18.5 N·m Torque"]
+    D2 --> J2["100% Cited Checklist: Section 53-30-01 Roller Clearance (0.020-0.035 in) & 18.5 N·m Torque"]
 ```
 
-* **The Executive Challenge:** Following up on `PHM-2026-99102` (`PILOT_REPORT_ONLY_NO_BIT`) from `Act 0.1`, a night-sortie pilot reported a stiff canopy release handle that hesitated to lock—but the aircraft computer logged **zero Built-In Test (BIT) fault codes**. Normally, technicians waste an entire shift tearing down the canopy electrical system because keyword search can't find a match—especially when the real answer is buried in a US Marine Corps log using American terminology (`latch/wrench` vs UK `catch/spanner`).
+* **The Executive Challenge:** Following up on the repeat canopy issue raised on `ZM151` in `Act 0.1`, a night-sortie pilot reported a stiff canopy release handle that hesitated to latch—with **no fault codes logged on the jet**. Normally, technicians waste an entire shift tearing down the canopy electrical system because keyword search can't find a match—especially when the real answer is buried in a US Marine Corps log using American terminology (`latch/wrench` vs UK `catch/spanner`).
 * **Paste Prompt 2 into `F35 Support`:**
   ```text
-  Our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, with zero BIT faults. Have allied squadrons seen this, and what is the JTD fix?
+  Our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, with no fault codes logged on the jet. Have allied squadrons seen this before, and what is the approved fix?
   ```
 * **What the Executive Audience Sees:**
   1. **Cross-Service Fleet Memory:** Automatically bridges UK and US maintenance terminology across 5 years of RAF, Royal Navy, USAF, and USMC logs (`DOC-02`), pinpointing a **USMC sister-squadron fix**: **cured silicon sealant debris wedged in the forward canopy roller track**.
@@ -163,7 +162,7 @@ flowchart LR
 > **Act 2 Executive Takeaway ("The So What?")**
 > - **Operational Impact:** Turns every junior maintainer into a 20-year joint-fleet veteran by unlocking allied coalition maintenance experience.
 > - **Time Compressed:** **4–8 hours** of manual PDF/XML manual hunting and unnecessary teardown reduced to **< 1 second (`378 ms`)**.
-> - **Safety & Trust Proof:** **Zero hallucinated torque specs**—every step is anchored with a clickable link to the official S1000D technical manual.
+> - **Safety & Trust Proof:** **Zero hallucinated torque specs**—every step is anchored with a clickable link to the official technical manual.
 
 ---
 
@@ -173,5 +172,5 @@ If an engineer or safety regulator in the audience asks a deep technical questio
 
 | If an Executive Asks... | Paste This Back-Pocket Prompt | What It Proves Live on Screen |
 | :--- | :--- | :--- |
-| *"Does it really understand British vs. American military slang?"* | `Canopy catch mechanism binding on pre-flight—check spanner torque and silicon fouling across allied squadron logs.` | **Coalition Interoperability**: Translates UK `catch/spanner/binding` into US `latch/wrench/stiff` and pulls the USMC fix. |
-| *"Can it prevent a technician from applying the wrong stealth coating in a high-heat engine zone?"* | `Can Standard Liquid RAM Compound 'A' be applied to a 0.045-inch gouge in Wing Zone 4B given a 220°C peak EGT thermal profile?` | **Zero-Hallucination Safety Warning**: Cites **MAM Section 9-1 (`DOC-09`)**—warns Compound 'A' fails at `175°C` and mandates **High-Temp RAM Sheet 'B'** (`4-hr` blanket cure). |
+| *"Does it really understand British vs. American military slang?"* | `The canopy catch is binding on pre-flight—what is the spanner torque spec and have allied squadrons seen fouling in this mechanism?` | **Coalition Interoperability**: Translates UK `catch/spanner/binding` into US `latch/wrench/stiff` and pulls the USMC fix. |
+| *"Can it prevent a technician from applying the wrong stealth coating in a high-heat engine zone?"* | `Can we use Standard Liquid RAM Compound 'A' on a 0.045-inch gouge in Wing Zone 4B where exhaust temperatures reach 220°C?` | **Zero-Hallucination Safety Warning**: Cites **Section 9-1 (`DOC-09`)**—warns Compound 'A' fails at `175°C` and mandates **High-Temp RAM Sheet 'B'** (`4-hr` blanket cure). |
