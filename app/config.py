@@ -34,9 +34,6 @@ BQ_TABLES: dict[str, str] = {
     "airframe_component_telemetry": "airframe_component_telemetry",
     "global_depot_inventory": "global_depot_inventory",
     "squadron_sortie_schedule": "squadron_sortie_schedule",
-    "high_freq_strain_telemetry": "high_freq_strain_telemetry",
-    "as_maintained_mbom_fasteners": "as_maintained_mbom_fasteners",
-    "airworthiness_release_ledger": "airworthiness_release_ledger",
     "maintenance_work_orders": f"{BQ_DATASET_FQN}.maintenance_work_orders",
     "phm_bit_fault_events": f"{BQ_DATASET_FQN}.phm_bit_fault_events",
     "work_center_tooling_and_sqep": f"{BQ_DATASET_FQN}.work_center_tooling_and_sqep",
@@ -47,9 +44,6 @@ for _tbl_key, _rows_attr in (
     ("AIRFRAME_COMPONENT_TELEMETRY", "AIRFRAME_COMPONENT_TELEMETRY_ROWS"),
     ("GLOBAL_DEPOT_INVENTORY", "GLOBAL_DEPOT_INVENTORY_ROWS"),
     ("SQUADRON_SORTIE_SCHEDULE", "SQUADRON_SORTIE_SCHEDULE_ROWS"),
-    ("HIGH_FREQ_STRAIN_TELEMETRY", "HIGH_FREQ_STRAIN_TELEMETRY_ROWS"),
-    ("AS_MAINTAINED_MBOM_FASTENERS", "AS_MAINTAINED_MBOM_FASTENERS_ROWS"),
-    ("AIRWORTHINESS_RELEASE_LEDGER", "AIRWORTHINESS_RELEASE_LEDGER_ROWS"),
     ("MAINTENANCE_WORK_ORDERS", "MAINTENANCE_WORK_ORDERS_ROWS"),
     ("PHM_BIT_FAULT_EVENTS", "PHM_BIT_FAULT_EVENTS_ROWS"),
     ("WORK_CENTER_TOOLING_AND_SQEP", "WORK_CENTER_TOOLING_AND_SQEP_ROWS"),
@@ -97,7 +91,6 @@ COORDINATOR_MODEL: str = "gemini-3.8-flash"
 UC0_MODEL: str = "gemini-3.8-flash"
 UC1_MODEL: str = "gemini-3.8-flash"
 UC2_MODEL: str = "gemini-3.8-flash"
-UC3_MODEL: str = "gemini-3.8-flash"
 
 ThinkingLevelType = Literal["LOW", "MEDIUM", "HIGH"]
 

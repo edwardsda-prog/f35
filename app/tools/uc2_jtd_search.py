@@ -296,23 +296,6 @@ def search_technical_manuals_and_repair_logs(
         preferred_branch=preferred_branch,
     )
 
-    is_uc3_structural_query = any(
-        kw in q_lower
-        for kw in (
-            "496",
-            "hole #14",
-            "hole 14",
-            "c-scan",
-            "cscan",
-            "ultrasonic",
-            "9.4",
-            "53-11",
-            "51-40",
-            "8841-b",
-            "form 700",
-        )
-    ) or sub_filter in ("53-11", "51-40", "53-10")
-
     scored_docs: list[tuple[float, dict[str, Any]]] = []
     for doc in JTD_CORPUS_DOCS:
         doc_id = str(doc["doc_id"])
@@ -321,18 +304,14 @@ def search_technical_manuals_and_repair_logs(
         doc_uri = to_authenticated_gcs_url(str(doc.get("uri") or doc.get("gcs_uri") or ""))
         score = 10.0
 
-        if is_uc3_structural_query:
-            if doc_id in ("DOC-04", "DOC-05", "DOC-06", "DOC-07", "DOC-08"):
-                score += 40.0
-        else:
-            if doc_sub == sub_filter:
-                score += 25.0
-            if doc_id == "DOC-01":
-                score += 35.0
-            elif doc_id == "DOC-02":
-                score += 32.0
-            elif doc_id == "DOC-09":
-                score += 28.0
+        if doc_sub == sub_filter:
+            score += 25.0
+        if doc_id == "DOC-01":
+            score += 35.0
+        elif doc_id == "DOC-02":
+            score += 32.0
+        elif doc_id == "DOC-09":
+            score += 28.0
 
         # Soft boost UK MoD records (matching Discovery Engine boostSpec)
         if str(doc.get("service_branch_origin", "")).upper() in ("RAF", "RN"):

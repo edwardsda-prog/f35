@@ -104,27 +104,6 @@
           ]
         }
       }
-    },
-    {
-      "eval_case_id": "uc3_frame496_exceedance_and_form700_stage",
-      "prompt": {
-        "role": "user",
-        "parts": [
-          {
-            "text": "Tail ZM151 returned from sortie with pilot debrief reporting a severe airframe shudder at roughly 14:22 Zulu during a defensive split-S maneuver. Run the full parallel ASIP airworthiness assessment on Frame 496 with C-Scan DOC-06 and stage the MIL-STD-3001 Structural Appraisal Report and Form 700 release package for engineering review."
-          }
-        ]
-      },
-      "reference": {
-        "response": {
-          "role": "model",
-          "parts": [
-            {
-              "text": "Event EXC-20261102-ZM151 at 2026-11-02T14:22:18.420Z recorded a 9.4 G peak asymmetric load at Mach 1.3 and 220.0°C EGT on Frame 496. Deterministic Palmgren-Miner cumulative damage delta is 0.0042 and calculated yield stress is 104.2% (> 100% limit), mandating CLASS_A_ULTRASONIC_C_SCAN per JTD Rule 53-11-00 (DOC-04). Multimodal C-Scan (DOC-06) mapped against SRM Chapter 51-40 (DOC-05) isolates a 0.012-inch shear elongation at Frame 496 — Fastener Hole #14. mBOM audit (MBOM-ZM151-F496-H14) confirms Titanium Ti-6Al-4V Lot #8841-B (312.0 hrs since install) has an allowable limit of 0.015 inches (0.012 in < 0.015 in), so ZM151 is SERVICEABLE_WITH_TORQUE_RECHECK per JTD Task Card 53-11-00-280, while 14 other global F-35 tails carry Lot #8841-B. Form 700 package AWR-700-20261102-ZM151 has been staged in PENDING_HITL_REVIEW status awaiting Lead Stress Engineer / CTO sign-off."
-            }
-          ]
-        }
-      }
     }
   ]
 }

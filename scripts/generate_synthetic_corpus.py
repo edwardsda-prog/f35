@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-"""Generate authoritative structured CSVs, declarative schema copies, PDFs, C-Scan PNG, and Discovery Engine JSONL manifests."""
+"""Generate authoritative structured CSVs, declarative schema copies, PDFs, and Discovery Engine JSONL manifests."""
 
 from __future__ import annotations
 
 import csv
 import json
-import math
 import shutil
 import sys
 from pathlib import Path
 from typing import Any
 
-from PIL import Image, ImageDraw, ImageFont
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -30,11 +28,12 @@ STRUCTURED_TABLES_DIR = STRUCTURED_DIR / "tables"
 STRUCTURED_SCHEMAS_DIR = STRUCTURED_DIR / "schemas"
 UNSTRUCTURED_DIR = OUTPUT_ROOT / "unstructured"
 UNSTRUCTURED_DOCS_DIR = UNSTRUCTURED_DIR / "docs"
-UNSTRUCTURED_SAR_DIR = UNSTRUCTURED_DIR / "sar"
 
 
 def generate_structured_csvs() -> list[Path]:
-    """Write Tables 1-6 CSVs and copy declarative JSON schemas to data/synthetic_seed/structured/."""
+    """Write the 6 active tables' CSVs and copy declarative JSON schemas to data/synthetic_seed/structured/."""
+    if STRUCTURED_DIR.exists():
+        shutil.rmtree(STRUCTURED_DIR)
     STRUCTURED_DIR.mkdir(parents=True, exist_ok=True)
     STRUCTURED_TABLES_DIR.mkdir(parents=True, exist_ok=True)
     STRUCTURED_SCHEMAS_DIR.mkdir(parents=True, exist_ok=True)
@@ -139,132 +138,11 @@ def _render_pdf_document(pdf_path: Path, doc: dict[str, Any]) -> None:
     doc_template.build(story)
 
 
-def generate_cscan_png(png_path: Path) -> Path:
-    """Render high-resolution annotated Phased-Array Ultrasonic C-Scan image for DOC-06."""
-    png_path.parent.mkdir(parents=True, exist_ok=True)
-    width, height = 1024, 720
-    img = Image.new("RGB", (width, height), color=(10, 18, 34))
-    draw = ImageDraw.Draw(img)
-    font = ImageFont.load_default()
-
-    # Header banner
-    draw.rectangle([0, 0, width, 68], fill=(16, 36, 68))
-    draw.text(
-        (20, 14),
-        "DOC-06 | PHASED-ARRAY ULTRASONIC C-SCAN NDI — TAIL ZM151 | STATION: FRAME 496 (PORT BULKHEAD)",
-        fill=(235, 245, 255),
-        font=font,
-    )
-    draw.text(
-        (20, 38),
-        "PROBE: 10 MHz 64-EL | CAD DATUM: FS 496.00, BL -42.50, WL 118.25 | FASTENER LOT: #8841-B (Ti-6Al-4V)",
-        fill=(140, 210, 255),
-        font=font,
-    )
-
-    # Ultrasonic C-scan attenuation grid canvas
-    grid_x0, grid_y0, grid_x1, grid_y1 = 60, 100, 700, 560
-    draw.rectangle([grid_x0, grid_y0, grid_x1, grid_y1], fill=(14, 48, 86), outline=(90, 160, 220), width=2)
-
-    # Draw coordinate grid lines
-    for gx in range(grid_x0, grid_x1 + 1, 40):
-        draw.line([(gx, grid_y0), (gx, grid_y1)], fill=(25, 70, 115), width=1)
-    for gy in range(grid_y0, grid_y1 + 1, 40):
-        draw.line([(grid_x0, gy), (grid_x1, gy)], fill=(25, 70, 115), width=1)
-
-    # Draw neighboring reference fastener holes (#12, #13, #15) — nominal green/cyan echoes
-    nominal_holes = [
-        ("Hole #12 (0.002 in)", 210, 316),
-        ("Hole #13 (0.003 in)", 325, 316),
-        ("Hole #15 (0.003 in)", 555, 316),
-    ]
-    for label, cx, cy in nominal_holes:
-        draw.ellipse([cx - 20, cy - 20, cx + 20, cy + 20], fill=(30, 180, 120), outline=(180, 255, 210), width=2)
-        draw.ellipse([cx - 10, cy - 10, cx + 10, cy + 10], fill=(10, 25, 45))
-        draw.text((cx - 48, cy + 28), label, fill=(180, 240, 210), font=font)
-
-    # Draw target Fastener Hole #14 with asymmetric shear elongation echo at [412, 288, 468, 344]
-    cx14, cy14 = 440, 316
-    for r, col in [(26, (220, 65, 40)), (21, (250, 140, 30)), (16, (255, 220, 60))]:
-        draw.ellipse([cx14 - r - 4, cy14 - r, cx14 + r + 6, cy14 + r], fill=col)
-    draw.ellipse([cx14 - 9, cy14 - 9, cx14 + 12, cy14 + 9], fill=(10, 18, 34))
-
-    # Bounding box [412, 288, 468, 344]
-    bbox = [412, 288, 468, 344]
-    draw.rectangle(bbox, outline=(255, 50, 50), width=3)
-    draw.text(
-        (375, 266),
-        "ROI [412, 288, 468, 344] — Fastener Hole #14",
-        fill=(255, 110, 110),
-        font=font,
-    )
-    draw.text(
-        (368, 352),
-        "Measured Shear Elongation: 0.012 in (< 0.015 in Limit)",
-        fill=(255, 230, 110),
-        font=font,
-    )
-
-    # Right-hand telemetry & metrology readout panel
-    panel_x0, panel_y0, panel_x1, panel_y1 = 720, 100, 995, 560
-    draw.rectangle([panel_x0, panel_y0, panel_x1, panel_y1], fill=(18, 32, 58), outline=(100, 160, 220), width=2)
-    readout_lines = [
-        "NDI METROLOGY READOUT",
-        "------------------------------",
-        "Tail Number: ZM151 (RAF Marham)",
-        "Station: Frame 496",
-        "Feature: Fastener Hole #14",
-        "CAD FS: 496.00 | BL: -42.50",
-        "CAD WL: 118.25",
-        "Pixel BBox: [412,288,468,344]",
-        "",
-        "MEASURED ELONGATION:",
-        "  0.012 in (0.305 mm)",
-        "",
-        "ALLOWABLE LIMIT (SRM 51-40):",
-        "  0.015 in (0.381 mm)",
-        "",
-        "MARGIN TO CONDEMNATION:",
-        "  +0.003 in (WITHIN LIMIT)",
-        "",
-        "FASTENER mBOM RECORD:",
-        "  ID: MBOM-ZM151-F496-H14",
-        "  Material: Titanium Ti-6Al-4V",
-        "  Batch: Lot #8841-B",
-        "  Install Hrs: 312.0 hrs",
-        "  Fleet Affected: 14 Tails",
-        "",
-        "MANDATED ACTION:",
-        "  JTD Task Card 53-11-00-280",
-        "  SERVICEABLE_WITH_TORQUE_RECHECK",
-    ]
-    y_cursor = panel_y0 + 16
-    for line in readout_lines:
-        color = (255, 220, 90) if "0.012" in line or "0.015" in line or "SERVICEABLE" in line else (220, 235, 250)
-        draw.text((panel_x0 + 12, y_cursor), line, fill=color, font=font)
-        y_cursor += 15
-
-    # Bottom A-scan waveform trace
-    wave_y0, wave_y1 = 585, 695
-    draw.rectangle([60, wave_y0, 995, wave_y1], fill=(12, 26, 48), outline=(70, 120, 180), width=1)
-    draw.text((72, wave_y0 + 8), "A-SCAN RF ECHO GATE — HOLE #14 SHEAR INTERFACE (PEAK: 9.4G / 104.2% YIELD)", fill=(160, 215, 255), font=font)
-    points: list[tuple[int, int]] = []
-    for x in range(80, 975, 3):
-        rel = (x - 440) / 28.0
-        envelope = math.exp(-(rel * rel))
-        y = int((wave_y0 + wave_y1) / 2 + 36 * envelope * math.sin((x - 80) * 0.35))
-        points.append((x, y))
-    if len(points) > 1:
-        draw.line(points, fill=(80, 250, 160), width=2)
-
-    img.save(png_path, format="PNG")
-    return png_path
-
-
 def generate_unstructured_corpus() -> list[Path]:
-    """Generate DOC-01..DOC-09 PDFs/JSONL/PNG, SAR PDF, and Discovery Engine metadata JSONL manifests."""
+    """Generate DOC-01, DOC-02, DOC-03, and DOC-09 PDFs/JSONL and Discovery Engine metadata JSONL manifests."""
+    if UNSTRUCTURED_DIR.exists():
+        shutil.rmtree(UNSTRUCTURED_DIR)
     UNSTRUCTURED_DOCS_DIR.mkdir(parents=True, exist_ok=True)
-    UNSTRUCTURED_SAR_DIR.mkdir(parents=True, exist_ok=True)
 
     generated: list[Path] = []
     jtd_manifest_lines: list[str] = []
@@ -281,13 +159,7 @@ def generate_unstructured_corpus() -> list[Path]:
         json_chunk_path.write_text(json.dumps(doc, indent=2), encoding="utf-8")
         generated.append(json_chunk_path)
 
-        if filename.endswith(".png"):
-            generate_cscan_png(file_path)
-            generated.append(file_path)
-            pdf_companion = UNSTRUCTURED_DOCS_DIR / doc.get("pdf_filename", f"{doc_id}.pdf")
-            _render_pdf_document(pdf_companion, doc)
-            generated.append(pdf_companion)
-        elif filename.endswith(".jsonl"):
+        if filename.endswith(".jsonl"):
             # Write multi-record maintenance narrative log JSONL for DOC-02 + PDF companion
             log_entries = [
                 {
@@ -367,11 +239,6 @@ def generate_unstructured_corpus() -> list[Path]:
             narrative_manifest_lines.append(line_str)
         else:
             jtd_manifest_lines.append(line_str)
-
-    # Also generate the signed/staged SAR PDF referenced in Table 6
-    sar_pdf_path = UNSTRUCTURED_SAR_DIR / "SAR-20261102-ZM151.pdf"
-    _render_pdf_document(sar_pdf_path, JTD_CORPUS_DOCUMENTS[7])  # DOC-08 SAR template & ZM151 data
-    generated.append(sar_pdf_path)
 
     # Write jtd_metadata.jsonl, narrative_metadata.jsonl, and unified metadata.jsonl
     jtd_manifest_path = UNSTRUCTURED_DIR / "jtd_metadata.jsonl"

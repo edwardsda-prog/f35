@@ -20,8 +20,6 @@
 - **UC1 Supply & Readiness Analytics Canvas (`components/VegaCanvas.tsx`)**:
   - Dual-compatible Vega-Lite v5 JSON visual specifications emitted by UC1 tools for Gemini Enterprise Canvas rendering.
   - Markdown table structures mirroring Vega-Lite chart payloads for environments lacking canvas execution (`agents-cli playground`, `agents-cli eval`).
-- **UC3 Airworthiness Review Studio (`components/Form700ReviewStudio.tsx`)**:
-  - Form 700 / AFTO Form 781 airworthiness review component templates and HITL review confirmation dialog structures.
 
 ## Invariants
 - Visual specifications must strictly conform to Vega-Lite schema `https://vega.github.io/schema/vega-lite/v5.json`.

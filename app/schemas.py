@@ -1,14 +1,12 @@
-"""Pydantic v2 data contracts for UC0 Maintenance Data, UC1 Analytics, UC2 JTD Search, and UC3 Airworthiness.
+"""Pydantic v2 data contracts for UC0 Maintenance Data, UC1 Analytics, and UC2 JTD Search.
 
 Provides strict schema validation for BigQuery maintenance work orders / Spreadsheet Cards,
-telemetry/inventory records, Vega-Lite v5 visualizations, S1000D JTD citations,
-deterministic ASIP Miner's Rule fatigue results, 3D CAD flaw mappings, mBOM lot audits,
-MIL-STD-3001 SAR, and Form 700 HITL release packages.
+telemetry/inventory records, Vega-Lite v5 visualizations, and S1000D JTD citations.
 """
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -55,6 +53,9 @@ class VegaLiteSpec(BaseModel):
     layer: list[dict[str, Any]] | None = Field(default=None)
 
 
+VegaLiteChartSpec = VegaLiteSpec
+
+
 class SortieSwapRecommendation(BaseModel):
     """UC1 sortie tail-swap and regional depot replenishment recommendation."""
 
@@ -69,6 +70,18 @@ class SortieSwapRecommendation(BaseModel):
     depot_quantity_reserved_30d: int = Field(default=2, ge=0)
     shipping_eta_hours: float = Field(default=18.0, ge=0.0)
     action_status: str = Field(default="RECOMMENDED_SWAP_AND_REPLENISH")
+
+
+class UC1AnalyticsOutput(BaseModel):
+    """Composite UC1 analytics output contract."""
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+    actuator_records: list[ActuatorReadinessRecord] = Field(default_factory=list)
+    swap_recommendation: SortieSwapRecommendation | None = Field(default=None)
+    vega_lite_charts: dict[str, VegaLiteSpec | dict[str, Any]] = Field(
+        default_factory=dict
+    )
 
 
 class JtdCitation(BaseModel):
@@ -98,114 +111,15 @@ class JtdCitation(BaseModel):
         return data
 
 
-class AsipFatigueResult(BaseModel):
-    """UC3 deterministic Rainflow & Palmgren-Miner cumulative damage output (SAFE-01)."""
+class UC2SearchOutput(BaseModel):
+    """Composite UC2 grounded search output contract."""
 
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
-    tail_number: str = Field(default="ZM151")
-    structural_station_id: str = Field(default="Frame 496")
-    mach_number: float = Field(default=1.3)
-    peak_nz_g: float = Field(default=9.4)
-    peak_egt_celsius: float = Field(default=220.0)
-    miners_rule_damage_delta: float = Field(..., ge=0.0)
-    calculated_yield_pct: float = Field(..., ge=0.0)
-    yield_limit_pct: float = Field(default=100.0)
-    exceeds_yield_limit: bool = Field(default=True)
-    required_ndi_class: str = Field(default="CLASS_A_ULTRASONIC_C_SCAN")
-    mandated_jtd_rule: str = Field(default="JTD Rule 53-11-00")
-    compliance_standard: str = Field(default="MIL-HDBK-516C / DEF STAN 00-970")
-    rainflow_cycles: list[dict[str, Any]] = Field(default_factory=list)
-
-    @model_validator(mode="before")
-    @classmethod
-    def _compute_exceeds_yield(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            yield_pct = data.get("calculated_yield_pct")
-            limit_pct = data.get("yield_limit_pct", 100.0)
-            if yield_pct is not None and "exceeds_yield_limit" not in data:
-                data = dict(data)
-                data["exceeds_yield_limit"] = float(yield_pct) > float(limit_pct)
-        return data
-
-
-class CScanCadMappingResult(BaseModel):
-    """UC3 Ultrasonic C-Scan anomaly extraction and 3D CAD station mapping result."""
-
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
-
-    c_scan_document_id: str = Field(default="DOC-06")
-    srm_document_id: str = Field(default="DOC-05")
-    mapped_cad_station: str = Field(default="Frame 496 — Fastener Hole #14")
-    fastener_hole_id: str = Field(default="Hole #14")
-    measured_ndi_elongation_in: float = Field(..., ge=0.0)
-    allowable_elongation_in: float = Field(default=0.015, gt=0.0)
-    within_allowable_limits: bool = Field(default=True)
-    cad_coordinates_mm: dict[str, float] = Field(
-        default_factory=lambda: {"fs_x": 4960.0, "bl_y": -342.5, "wl_z": 118.2}
-    )
-    disposition: str = Field(default="SERVICEABLE_WITH_TORQUE_RECHECK")
-    mandated_jtd_task_card: str = Field(default="JTD Task Card 53-11-00-280")
-
-
-class MbomFastenerAuditResult(BaseModel):
-    """UC3 as-maintained mBOM fastener lot audit and global fleet exposure result."""
-
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
-
-    mbom_record_id: str = Field(default="MBOM-ZM151-F496-H14")
-    tail_number: str = Field(default="ZM151")
-    station_id: str = Field(default="Frame 496 — Fastener Hole #14")
-    fastener_material_spec: str = Field(default="Ti-6Al-4V")
-    fastener_lot_number: str = Field(default="Lot #8841-B")
-    hours_since_install: float = Field(default=312.0, ge=0.0)
-    allowable_elongation_in: float = Field(default=0.015, gt=0.0)
-    measured_ndi_elongation_in: float = Field(default=0.012, ge=0.0)
-    within_limits: bool = Field(default=True)
-    global_fleet_affected_count: int = Field(default=14, ge=0)
-    fleet_inspection_directive: str = Field(
-        default="Proactive 30-day inspection across 14 global F-35 tails carrying Lot #8841-B"
-    )
-
-
-class StructuralAppraisalReport(BaseModel):
-    """MIL-STD-3001 / DEF STAN 00-970 Structural Appraisal Report (SAR) model."""
-
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
-
-    sar_id: str = Field(default="SAR-20261102-ZM151")
-    tail_number: str = Field(default="ZM151")
-    station_id: str = Field(default="Frame 496 — Fastener Hole #14")
-    compliance_standard: str = Field(default="MIL-STD-3001 / DEF STAN 00-970")
-    telemetry_event_id: str = Field(default="EXC-20261102-ZM151")
-    fatigue_result: AsipFatigueResult | dict[str, Any] | None = Field(default=None)
-    cscan_mapping: CScanCadMappingResult | dict[str, Any] | None = Field(default=None)
-    mbom_audit: MbomFastenerAuditResult | dict[str, Any] | None = Field(default=None)
-    engineering_summary: str = Field(default="")
-
-
-class Form700ReleasePackage(BaseModel):
-    """Aircraft Form 700 / AFTO Form 781 airworthiness release package (SAFE-02)."""
-
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
-
-    release_package_id: str = Field(..., min_length=1)
-    tail_number: str = Field(default="ZM151", min_length=1)
-    station_id: str = Field(default="Frame 496 — Fastener Hole #14", min_length=1)
-    appraisal_report_uri: str = Field(
-        default="https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf",
-        min_length=1,
-    )
-    mandated_jtd_task_card: str = Field(..., min_length=1)
-    disposition_status: str = Field(..., min_length=1)
-    hitl_reviewer_role: str = Field(default="Lead Stress Engineer", min_length=1)
-    hitl_review_status: Literal["PENDING_HITL_REVIEW", "CONFIRMED_BY_ENGINEER"] = Field(
-        default="PENDING_HITL_REVIEW"
-    )
-    compliance_standard: str = Field(default="MIL-STD-3001 / DEF STAN 00-970")
-    staged_turn_id: int | str | None = Field(default=None)
-    approved_turn_id: int | str | None = Field(default=None)
-    approval_notes: str | None = Field(default=None)
+    original_query: str = Field(default="")
+    normalized_query: str = Field(default="")
+    results: list[JtdCitation] = Field(default_factory=list)
+    citations: list[str] = Field(default_factory=list)
 
 
 class SpreadsheetColumnHeader(BaseModel):

@@ -1,7 +1,7 @@
 """Locust Load Test Script for F-35 Fleet Sustainment Agent (Standard Flight-Line Profile).
 
 Simulates 10 concurrent flight-line maintenance engineers submitting mixed
-UC1, UC2, UC3, and Fast-Path queries (40% UC2, 35% UC1, 20% UC3, 5% Fast-Path)
+UC0, UC1, UC2, and Fast-Path queries (45% UC2, 35% UC1, 15% UC0, 5% Fast-Path)
 against the F-35 Sustainment Agent HTTP Gateway backed by live EU BigQuery
 (`antig-dave.ukd_f35_sustainment_demo`) and EU Discovery Engine
 (`ukd-f35-jtd-ietm-ds` & `ukd-f35-narrative-logs-ds`).
@@ -29,9 +29,9 @@ class FlightLineMaintenanceUser(HttpUser):
             "X-FlightLine-Squadron": os.environ.get("F35_SQUADRON", "617-SQN-MARHAM"),
         }
 
-    @task(8)
+    @task(9)
     def query_uc2_jtd_manuals(self) -> None:
-        """UC2 (40% workload): Technician troubleshooting sticky canopy latch without BIT faults."""
+        """UC2 (45% workload): Technician troubleshooting sticky canopy latch without BIT faults."""
         payload = {
             "scenario": "UC2_JTD_SEARCH",
             "symptom_query": "Canopy latch stiff during pre-flight on ZM151 without BIT faults. Lubrication and rigging specs?",
@@ -73,27 +73,25 @@ class FlightLineMaintenanceUser(HttpUser):
             else:
                 resp.failure(f"UC1 Analytics Failed: {resp.status_code} - {resp.text[:120]}")
 
-    @task(4)
-    def query_uc3_airworthiness_exceedance(self) -> None:
-        """UC3 (20% workload): Airworthiness engineer running 4-way ASIP fan-out & Form 700 HITL."""
+    @task(3)
+    def query_uc0_maintenance_sql(self) -> None:
+        """UC0 (15% workload): Maintenance controller querying active work orders & Spreadsheet Card."""
         payload = {
-            "scenario": "UC3_AIRWORTHINESS_FANOUT",
-            "tail_number": "ZM151",
-            "pilot_debrief_text": "severe shudder at 14:22 Zulu during defensive split-S",
-            "structural_station_id": "Frame 496",
-            "c_scan_document_id": "DOC-06",
+            "scenario": "UC0_MAINTENANCE_SQL",
+            "sql_query": "SELECT * FROM maintenance_work_orders WHERE work_order_status != 'COMPLETED' ORDER BY priority ASC",
+            "sheet_title": "F35_ODIN_Maintenance_Work_Orders",
         }
         with self.client.post(
-            "/v1/sustainment/uc3/airworthiness",
+            "/v1/sustainment/uc0/sql",
             json=payload,
             headers=self.headers,
             catch_response=True,
-            name="TC-LP-04_UC3_Airworthiness_FanOut",
+            name="TC-LP-00_UC0_Maintenance_SQL",
         ) as resp:
-            if resp.status_code == 200 and "structural_appraisal_report" in resp.text:
+            if resp.status_code == 200 and "spreadsheet_card" in resp.text:
                 resp.success()
             else:
-                resp.failure(f"UC3 Airworthiness Failed: {resp.status_code} - {resp.text[:120]}")
+                resp.failure(f"UC0 Maintenance SQL Failed: {resp.status_code} - {resp.text[:120]}")
 
     @task(1)
     def fast_path_status(self) -> None:

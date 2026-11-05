@@ -1,16 +1,15 @@
-"""Tier 4 E2E Tests: Real-World UK Defence F-35 Sustainment Scenarios (10 end-to-end scenarios).
+"""Tier 4 E2E Tests: Real-World UK Defence F-35 Sustainment Scenarios.
 
 Exercises complete multi-step operational workflows across:
-1. UC1 RAF Marham Morning Sortie Readiness, Vega-Lite v5 Charting & Tail-Swap (`TC-SQ-01`, `TC-LP-02`)
-2. UC2 Cross-Service Dialect Normalization & Sticky Canopy Latch Investigation (`TC-SQ-02`, `TC-LP-03`)
-3. UC2 High-Temp RAM Cure (`220C`) & Composite Gouge (`0.06 in`) Negative Constraint Synthesis (`TC-SQ-04`)
-4. UC3 Frame 496 `9.4 G` Exceedance 4-Way Parallel Diagnostic Fan-Out (`TC-SQ-03`, `TC-LP-04`)
-5. UC3 Two-Turn Form 700 HITL Engineering Release Full Lifecycle (`TC-LP-05`, `SAFE-02`)
-6. Multi-Hop Cross-Domain Sustainment Disambiguation (`TC-SQ-05`: UC1 + UC2 in one session)
-7. Tier 1/2 Fast-Path Greeting & Health-Check Interception (`< 5 ms` SLA, `TC-LP-01`)
-8. Full Architecture & Guardrail Compliance Audit (`REG-01`, `PERF-01..07`, `SAFE-01..02`)
-9. Complete 10-Scenario V&V Golden Suite (`vv_golden_suite.json`) & Basic Dataset Grading Pipeline
-10. Cloud Deployment, Gemini Enterprise (`eu`) Publication & Optional Live Endpoint Verification (`F15`–`F17`)
+1. UC0 Conversational Maintenance SQL, PHM/BIT Triage & Spreadsheet Card (`TC-SQ-00`, `TC-LP-00`)
+2. UC1 RAF Marham Morning Sortie Readiness, Vega-Lite v5 Charting & Tail-Swap (`TC-SQ-01`, `TC-LP-02`)
+3. UC2 Cross-Service Dialect Normalization & Sticky Canopy Latch Investigation (`TC-SQ-02`, `TC-LP-03`)
+4. UC2 High-Temp RAM Cure (`220C`, `DOC-09`) Negative Constraint Synthesis
+5. Multi-Hop Cross-Domain Sustainment Disambiguation (`TC-SQ-05`: UC1 + UC2 in one session)
+6. Tier 1/2 Fast-Path Greeting & Health-Check Interception (`< 5 ms` SLA, `TC-LP-01`)
+7. Full Architecture & Guardrail Compliance Audit (`REG-01`, `PERF-01..07`)
+8. Complete 10-Scenario V&V Golden Suite (`vv_golden_suite.json`) & Basic Dataset Grading Pipeline
+9. Cloud Deployment, Gemini Enterprise (`eu`) Publication & Optional Live Endpoint Verification (`F15`–`F17`)
 """
 
 from __future__ import annotations
@@ -19,17 +18,32 @@ import json
 import os
 import time
 
-import pytest
-
 from tests.e2e import (
     E2ECallbackContext,
-    E2EDummyTool,
     E2ELlmRequest,
     E2EToolContext,
     REPO_ROOT,
-    get_field,
     invoke_contract,
 )
+
+
+def test_rw00_uc0_conversational_maintenance_sql_and_spreadsheet_card_workflow() -> None:
+    """RW-00 (UC0 / TC-SQ-00 / TC-LP-00): Complete ODIN/ALIS maintenance SQL query, Spreadsheet Card, and CSV export."""
+    from app.tools.uc0_maintenance import execute_maintenance_sql
+
+    t0 = time.perf_counter()
+    res = execute_maintenance_sql(
+        "SELECT work_order_id, tail_number, squadron, base_location, aircraft_status, "
+        "priority, logged_man_hours, estimated_mttr_hours "
+        "FROM maintenance_work_orders WHERE work_order_status != 'COMPLETED' ORDER BY priority ASC",
+        sheet_title="F35_Active_Maintenance_Work_Orders",
+    )
+    elapsed_ms = (time.perf_counter() - t0) * 1000.0
+    assert elapsed_ms < 2500.0
+    assert res["status"] == "SUCCESS"
+    assert res["row_count"] == 10
+    assert "=COUNTA(" in res["spreadsheet_card_markdown"]
+    assert "storage.cloud.google.com" in res["csv_download_url"]
 
 
 def test_rw01_uc1_raf_marham_morning_sortie_readiness_and_tail_swap_workflow() -> None:
@@ -132,151 +146,20 @@ def test_rw02_uc2_cross_service_sticky_canopy_latch_and_roller_sealant_investiga
     assert "<b>" not in res_str and "</b>" not in res_str
 
 
-def test_rw03_uc2_high_temp_ram_cure_and_composite_gouge_negative_constraint_workflow() -> None:
-    """RW-03 (UC2 / TC-SQ-04): Verify 220C High-Temp RAM Sheet 'B' cure (`DOC-09`) and 0.06-in composite gouge scarf patch (`DOC-07`)."""
+def test_rw03_uc2_high_temp_ram_cure_negative_constraint_workflow() -> None:
+    """RW-03 (UC2): Verify 220C High-Temp RAM Sheet 'B' cure (`DOC-09`) retrieval."""
     from app.tools import uc2_jtd_search
 
     ctx = E2EToolContext(state={"current_turn_id": 1}, invocation_id="rw03-turn-1")
     ram_res = invoke_contract(
         uc2_jtd_search.search_technical_manuals_and_repair_logs,
-        symptom_query="Low Observable RAM restoration near Frame 496 aft fuselage where EGT reaches 220C and 0.06 inch composite skin gouge",
+        symptom_query="Low Observable RAM restoration near aft fuselage where EGT reaches 220C",
         bit_fault_present=False,
-        subsystem_filter="51-40",
+        subsystem_filter="51-10",
         tool_context=ctx,
     )
     ram_str = json.dumps(ram_res if isinstance(ram_res, dict) else ram_res.model_dump())
     assert "DOC-09" in ram_str or "Sheet 'B'" in ram_str or "220" in ram_str
-
-
-def test_rw04_uc3_frame496_9_4g_exceedance_four_way_parallel_diagnostic_workflow() -> None:
-    """RW-04 (UC3 / TC-SQ-03 / TC-LP-04): Full 4-way parallel diagnostic fan-out on Tail ZM151 Frame 496 in <= 3,100 ms."""
-    from app.tools import uc3_airworthiness
-
-    ctx = E2EToolContext(
-        state={"current_turn_id": 1},
-        user_text=(
-            "Pilot reported severe airframe shudder at roughly 14:22 Zulu during a defensive split-S "
-            "on Tail ZM151. Run the full parallel airworthiness assessment on Frame 496 with DOC-06."
-        ),
-        invocation_id="rw04-turn-1",
-    )
-
-    t0 = time.perf_counter()
-    assessment = invoke_contract(
-        uc3_airworthiness.assess_airframe_airworthiness,
-        tail_number="ZM151",
-        pilot_debrief_text="Severe shudder at roughly 14:22 Zulu during defensive split-S",
-        structural_station_id="Frame 496 (Bulkhead 496)",
-        c_scan_document_id="DOC-06",
-        tool_context=ctx,
-    )
-    elapsed_ms = (time.perf_counter() - t0) * 1000.0
-    assert elapsed_ms <= 3100.0, f"UC3 4-way fan-out exceeded 3,100ms SLA: {elapsed_ms:.1f}ms"
-
-    dumped = json.dumps(
-        assessment if isinstance(assessment, dict) else assessment.model_dump()
-    )
-    for mandatory_fact in (
-        "9.4",
-        "1.3",
-        "220",
-        "0.0042",
-        "104.2",
-        "CLASS_A_ULTRASONIC_C_SCAN",
-        "14",
-        "0.012",
-        "0.015",
-        "8841-B",
-        "Ti-6Al-4V",
-        "53-11-00-280",
-    ):
-        assert mandatory_fact in dumped, f"Missing mandatory UC3 diagnostic fact: {mandatory_fact}"
-
-
-def test_rw05_uc3_two_turn_form700_hitl_airworthiness_release_full_lifecycle() -> None:
-    """RW-05 (UC3 / TC-LP-05 / SAFE-02): Full 2-turn Form 700 HITL workflow (stage -> block same turn -> reject tech -> approve CTO)."""
-    from app.callbacks import enforce_hitl_airworthiness_gate
-    from app.tools import uc3_airworthiness
-
-    session_state: dict = {"current_turn_id": 1}
-    ctx_turn1 = E2EToolContext(
-        state=session_state,
-        user_text="Stage the Form 700 airworthiness release package for ZM151 Frame 496 and sign it off immediately.",
-        invocation_id="rw05-turn-1",
-    )
-
-    pkg = invoke_contract(
-        uc3_airworthiness.generate_form700_airworthiness_package,
-        tail_number="ZM151",
-        station_id="Frame 496 (Bulkhead 496)",
-        tool_context=ctx_turn1,
-    )
-    pkg_str = json.dumps(pkg if isinstance(pkg, dict) else pkg.model_dump())
-    assert "AWR-700-20261102-ZM151" in pkg_str
-    assert "PENDING_HITL_REVIEW" in pkg_str
-    assert "CONFIRMED_BY_ENGINEER" not in pkg_str
-
-    approve_tool = E2EDummyTool("approve_form700_engineering_release")
-    approve_args = {
-        "release_package_id": "AWR-700-20261102-ZM151",
-        "reviewer_role": "Lead Stress Engineer",
-        "approval_notes": "Attempted same-turn auto-approval",
-    }
-
-    # Step 1: Same-turn approval attempt MUST be blocked by `enforce_hitl_airworthiness_gate`
-    gate_turn1 = enforce_hitl_airworthiness_gate(approve_tool, approve_args, ctx_turn1)
-    assert isinstance(gate_turn1, dict)
-    assert gate_turn1.get("hitl_review_status") == "PENDING_HITL_REVIEW"
-
-    # Step 2: Turn 2 unauthorized Line Technician attempt MUST be blocked
-    session_state["current_turn_id"] = 2
-    ctx_turn2_unauth = E2EToolContext(
-        state=session_state,
-        user_text="I am a Line Technician, go ahead and release ZM151.",
-        invocation_id="rw05-turn-2-unauth",
-    )
-    unauth_args = {
-        "release_package_id": "AWR-700-20261102-ZM151",
-        "reviewer_role": "Line Technician",
-        "approval_notes": "Looks fine to me",
-    }
-    gate_turn2_unauth = enforce_hitl_airworthiness_gate(
-        approve_tool, unauth_args, ctx_turn2_unauth
-    )
-    assert isinstance(gate_turn2_unauth, dict)
-    assert gate_turn2_unauth.get("hitl_review_status") == "PENDING_HITL_REVIEW"
-
-    # Step 3: Turn 2 authorized Lead Stress Engineer / CTO sign-off MUST succeed
-    ctx_turn2_auth = E2EToolContext(
-        state=session_state,
-        user_text=(
-            "I confirm as Lead Stress Engineer: approve Form 700 release package "
-            "AWR-700-20261102-ZM151 for Tail ZM151 with calibrated torque recheck per JTD Task Card 53-11-00-280."
-        ),
-        invocation_id="rw05-turn-2-auth",
-    )
-    auth_args = {
-        "release_package_id": "AWR-700-20261102-ZM151",
-        "reviewer_role": "Lead Stress Engineer",
-        "approval_notes": "Approved per MIL-STD-3001 SAR and JTD Task Card 53-11-00-280.",
-    }
-    gate_turn2_auth = enforce_hitl_airworthiness_gate(
-        approve_tool, auth_args, ctx_turn2_auth
-    )
-    assert gate_turn2_auth is None
-
-    final_release = invoke_contract(
-        uc3_airworthiness.approve_form700_engineering_release,
-        release_package_id="AWR-700-20261102-ZM151",
-        reviewer_role="Lead Stress Engineer",
-        approval_notes="Approved per MIL-STD-3001 SAR and JTD Task Card 53-11-00-280.",
-        tool_context=ctx_turn2_auth,
-    )
-    final_str = json.dumps(
-        final_release if isinstance(final_release, dict) else final_release.model_dump()
-    )
-    assert "CONFIRMED_BY_ENGINEER" in final_str
-    assert "AWR-700-20261102-ZM151" in final_str
 
 
 def test_rw06_vv_tc_sq_05_multi_hop_intent_disambiguation_across_uc1_and_uc2() -> None:
@@ -327,7 +210,7 @@ def test_rw07_vv_tc_lp_01_fast_path_greeting_and_health_check_sub_5ms_sla() -> N
 
 
 def test_rw08_guardrail_audit_eu_residency_enterprise_genai_and_zero_gcloud_subprocesses() -> None:
-    """RW-08 (REG-01, PERF-01..07, SAFE-01..02): End-to-end static & runtime audit across all Python files in `app/`."""
+    """RW-08 (REG-01, PERF-01..07): End-to-end static & runtime audit across all Python files in `app/`."""
     from app import config
 
     assert config.PROJECT_ID == "antig-dave"
@@ -355,8 +238,8 @@ def test_rw09_full_vv_golden_suite_and_basic_dataset_offline_grading_pipeline() 
 
     basic_cases = json.loads(basic_path.read_text(encoding="utf-8"))["eval_cases"]
     vv_cases = json.loads(vv_path.read_text(encoding="utf-8"))["eval_cases"]
-    assert len(basic_cases) >= 4
-    assert len(vv_cases) >= 10
+    assert len(basic_cases) == 5
+    assert len(vv_cases) == 10
 
     for case in basic_cases + vv_cases:
         ref = case.get("reference", "")

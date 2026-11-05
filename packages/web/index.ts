@@ -12,10 +12,7 @@
  * 1. UC1 Supply & Readiness Analytics Canvas (`VegaCanvas`, `validateVegaLiteSpec`,
  *    `extractVegaLiteBlocks`, `renderMarkdownFallbackTable`, `formatDualCompatibleVegaOutput`,
  *    `VEGA_LITE_V5_SCHEMA_URL`).
- * 2. UC3 MIL-STD-3001 Structural Appraisal Report & Aircraft Form 700 HITL Review Studio
- *    (`Form700ReviewStudio`, `canApproveForm700Release`, `transitionForm700State`,
- *    `normalizeAuthorizedEngineeringRole`, `AUTHORIZED_ENGINEERING_ROLES`).
- * 3. Isomorphic VNode-to-HTML serializer (`renderVNodeToHtml`) for SSR and deterministic verification.
+ * 2. Isomorphic VNode-to-HTML serializer (`renderVNodeToHtml`) for SSR and deterministic verification.
  */
 
 export {
@@ -79,30 +76,6 @@ export type {
   VegaCanvasProps,
 } from "./components/VegaCanvas";
 
-export {
-  AUTHORIZED_ENGINEERING_ROLES,
-  FORM700_REVIEW_STUDIO_STYLES,
-  normalizeAuthorizedEngineeringRole,
-  canApproveForm700Release,
-  transitionForm700State,
-  Form700ReviewStudio,
-} from "./components/Form700ReviewStudio";
-
-export type {
-  HitlReviewStatus,
-  DispositionStatus,
-  AuthorizedEngineeringRole,
-  FlightBusSyncDiagnostic,
-  MinersRuleFatigueDiagnostic,
-  UltrasonicCScanCadDiagnostic,
-  MbomFastenerLotAuditDiagnostic,
-  AsipDiagnosticBundle,
-  Form700PackageState,
-  Form700ApprovalInput,
-  Form700ApprovalValidationResult,
-  Form700ReviewStudioProps,
-} from "./components/Form700ReviewStudio";
-
 import type { VNode, VNodeChild } from "./components/VegaCanvas";
 
 const VOID_HTML_ELEMENTS = new Set([
@@ -141,7 +114,7 @@ function serializeStyleObject(styleObj: Record<string, unknown>): string {
 }
 
 /**
- * Serializes a `VNode` tree produced by `VegaCanvas`, `MaintenanceSheetCard`, or `Form700ReviewStudio` into
+ * Serializes a `VNode` tree produced by `VegaCanvas` or `MaintenanceSheetCard` into
  * deterministic HTML for SSR rendering and verification assertions.
  */
 export function renderVNodeToHtml(node: VNodeChild): string {

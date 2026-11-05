@@ -1,4 +1,4 @@
-"""Authoritative BigQuery seed records for Tables 1-9 (100 rows per table = 900 records) in antig-dave.ukd_f35_sustainment_demo (EU)."""
+"""Authoritative BigQuery seed records for the 6 active tables (100 rows per table = 600 records) in antig-dave.ukd_f35_sustainment_demo (EU)."""
 
 from __future__ import annotations
 
@@ -366,190 +366,7 @@ for _idx in range(4, 100):
     )
 
 # ---------------------------------------------------------------------------
-# Table 4: high_freq_strain_telemetry (100 rows)
-# ---------------------------------------------------------------------------
-_BASE_HIGH_FREQ_STRAIN_TELEMETRY_ROWS: list[dict[str, Any]] = [
-    {
-        "event_id": "EXC-20261102-ZM151",
-        "tail_number": "ZM151",
-        "event_window_start_utc": "2026-11-02T14:22:18.420Z",
-        "structural_station_id": "Frame 496",
-        "mach_number": 1.3,
-        "peak_nz_g": 9.4,
-        "peak_egt_celsius": 220.0,
-        "miners_rule_damage_delta": 0.0042,
-        "calculated_yield_pct": 104.2,
-        "required_ndi_class": "CLASS_A_ULTRASONIC_C_SCAN",
-    },
-    {
-        "event_id": "EXC-20261028-ZM154",
-        "tail_number": "ZM154",
-        "event_window_start_utc": "2026-10-28T11:10:05.100Z",
-        "structural_station_id": "Frame 496",
-        "mach_number": 1.05,
-        "peak_nz_g": 7.1,
-        "peak_egt_celsius": 165.0,
-        "miners_rule_damage_delta": 0.0008,
-        "calculated_yield_pct": 78.4,
-        "required_ndi_class": "NONE",
-    },
-]
-
-_STRUCTURAL_STATIONS: tuple[str, ...] = (
-    "Frame 496",
-    "Frame 460",
-    "Frame 512",
-    "Wing Root Rib 4",
-    "LiftFan Bulkhead FS 390",
-)
-
-HIGH_FREQ_STRAIN_TELEMETRY_ROWS: list[dict[str, Any]] = list(
-    _BASE_HIGH_FREQ_STRAIN_TELEMETRY_ROWS
-)
-for _idx in range(2, 100):
-    _tail = _FLEET_TAILS[_idx % len(_FLEET_TAILS)]
-    _day = 1 + (_idx % 28)
-    _hr = 8 + (_idx % 12)
-    _nz = round(4.6 + ((_idx * 3) % 30) * 0.1, 1)
-    _mach = round(0.78 + ((_idx * 5) % 42) * 0.01, 2)
-    _egt = round(142.0 + (_idx % 35) * 1.2, 1)
-    _yield = round(_nz * 10.6, 1)
-    _damage = round(0.0001 + (_idx % 8) * 0.0001, 4)
-    HIGH_FREQ_STRAIN_TELEMETRY_ROWS.append(
-        {
-            "event_id": f"EXC-202610{_day:02d}-{_tail}-{_idx:03d}",
-            "tail_number": _tail,
-            "event_window_start_utc": f"2026-10-{_day:02d}T{_hr:02d}:15:10.000Z",
-            "structural_station_id": _STRUCTURAL_STATIONS[_idx % len(_STRUCTURAL_STATIONS)],
-            "mach_number": _mach,
-            "peak_nz_g": _nz,
-            "peak_egt_celsius": _egt,
-            "miners_rule_damage_delta": _damage,
-            "calculated_yield_pct": _yield,
-            "required_ndi_class": "NONE",
-        }
-    )
-
-# ---------------------------------------------------------------------------
-# Table 5: as_maintained_mbom_fasteners (100 rows)
-# ---------------------------------------------------------------------------
-_BASE_AS_MAINTAINED_MBOM_FASTENERS_ROWS: list[dict[str, Any]] = [
-    {
-        "mbom_record_id": "MBOM-ZM151-F496-H14",
-        "tail_number": "ZM151",
-        "station_id": "Frame 496 — Fastener Hole #14",
-        "fastener_material_spec": "Ti-6Al-4V",
-        "fastener_lot_number": "Lot #8841-B",
-        "hours_since_install": 312.0,
-        "allowable_elongation_in": 0.015,
-        "measured_ndi_elongation_in": 0.012,
-        "global_fleet_affected_count": 14,
-    },
-    {
-        "mbom_record_id": "MBOM-ZM151-F496-H15",
-        "tail_number": "ZM151",
-        "station_id": "Frame 496 — Fastener Hole #15",
-        "fastener_material_spec": "Ti-6Al-4V",
-        "fastener_lot_number": "Lot #8841-B",
-        "hours_since_install": 312.0,
-        "allowable_elongation_in": 0.015,
-        "measured_ndi_elongation_in": 0.003,
-        "global_fleet_affected_count": 14,
-    },
-    {
-        "mbom_record_id": "MBOM-ZM154-F496-H14",
-        "tail_number": "ZM154",
-        "station_id": "Frame 496 — Fastener Hole #14",
-        "fastener_material_spec": "Ti-6Al-4V",
-        "fastener_lot_number": "Lot #8841-B",
-        "hours_since_install": 198.5,
-        "allowable_elongation_in": 0.015,
-        "measured_ndi_elongation_in": 0.002,
-        "global_fleet_affected_count": 14,
-    },
-]
-
-_FASTENER_LOTS: tuple[tuple[str, str, int], ...] = (
-    ("Ti-6Al-4V", "Lot #8841-B", 14),
-    ("Ti-6Al-4V", "Lot #9102-A", 8),
-    ("Inconel 718", "Lot #7410-C", 6),
-    ("A286 CRES", "Lot #6309-D", 5),
-)
-
-AS_MAINTAINED_MBOM_FASTENERS_ROWS: list[dict[str, Any]] = list(
-    _BASE_AS_MAINTAINED_MBOM_FASTENERS_ROWS
-)
-for _idx in range(3, 100):
-    _tail = _FLEET_TAILS[_idx % len(_FLEET_TAILS)]
-    _hole_num = 10 + (_idx % 24)
-    _mat, _lot, _fleet_cnt = _FASTENER_LOTS[1 + (_idx % (len(_FASTENER_LOTS) - 1))]
-    if _idx < 14:
-        _mat, _lot, _fleet_cnt = _FASTENER_LOTS[0]
-    AS_MAINTAINED_MBOM_FASTENERS_ROWS.append(
-        {
-            "mbom_record_id": f"MBOM-{_tail}-F496-H{_hole_num:02d}-{_idx:03d}",
-            "tail_number": _tail,
-            "station_id": f"Frame 496 — Fastener Hole #{_hole_num}",
-            "fastener_material_spec": _mat,
-            "fastener_lot_number": _lot,
-            "hours_since_install": round(95.0 + (_idx * 4.5), 1),
-            "allowable_elongation_in": 0.015,
-            "measured_ndi_elongation_in": round(0.001 + (_idx % 5) * 0.001, 3),
-            "global_fleet_affected_count": _fleet_cnt,
-        }
-    )
-
-# ---------------------------------------------------------------------------
-# Table 6: airworthiness_release_ledger (100 rows)
-# ---------------------------------------------------------------------------
-_BASE_AIRWORTHINESS_RELEASE_LEDGER_ROWS: list[dict[str, Any]] = [
-    {
-        "release_package_id": "AWR-700-20261102-ZM151",
-        "appraisal_report_uri": (
-            "gs://antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf"
-        ),
-        "mandated_jtd_task_card": "JTD Task Card 53-11-00-280",
-        "disposition_status": "SERVICEABLE_WITH_TORQUE_RECHECK",
-        "hitl_reviewer_role": "Lead Stress Engineer",
-        "hitl_review_status": "PENDING_HITL_REVIEW",
-        "compliance_standard": "MIL-STD-3001 / DEF STAN 00-970",
-    },
-]
-
-AIRWORTHINESS_RELEASE_LEDGER_ROWS: list[dict[str, Any]] = list(
-    _BASE_AIRWORTHINESS_RELEASE_LEDGER_ROWS
-)
-for _idx in range(1, 100):
-    _tail = _FLEET_TAILS[_idx % len(_FLEET_TAILS)]
-    _pkg_id = f"AWR-700-202610{_idx:02d}-{_tail}"
-    AIRWORTHINESS_RELEASE_LEDGER_ROWS.append(
-        {
-            "release_package_id": _pkg_id,
-            "appraisal_report_uri": (
-                f"gs://antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-202610{_idx:02d}-{_tail}.pdf"
-            ),
-            "mandated_jtd_task_card": (
-                "JTD Task Card 53-11-00-280"
-                if (_idx % 3 == 0)
-                else "JTD Task Card 53-30-01-400"
-            ),
-            "disposition_status": (
-                "SERVICEABLE_WITH_TORQUE_RECHECK"
-                if (_idx % 3 == 0)
-                else "UNRESTRICTED_SERVICEABLE"
-            ),
-            "hitl_reviewer_role": (
-                "Lead Stress Engineer"
-                if (_idx % 2 == 0)
-                else "Chief Airworthiness Engineer"
-            ),
-            "hitl_review_status": "CONFIRMED_BY_ENGINEER",
-            "compliance_standard": "MIL-STD-3001 / DEF STAN 00-970",
-        }
-    )
-
-# ---------------------------------------------------------------------------
-# Table 7: maintenance_work_orders (100 rows)
+# Table 4: maintenance_work_orders (100 rows)
 # Keep original 14 rows (10 active + 4 COMPLETED) at indices 0..13.
 # Rows 14..99 (WO-2026-88415..WO-2026-88500) are historical COMPLETED work orders
 # so active-shift filters (`work_order_status != 'COMPLETED'`) return the exact 10 active rows.
@@ -622,8 +439,8 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
             "C-scan anomaly at FS 496.0, WL 112.4."
         ),
         "corrective_action": (
-            "Ultrasonic C-scan image DOC-06 captured; awaiting ASIP Miner's Rule fatigue analysis "
-            "and Form 700 HITL disposition."
+            "Phased-array ultrasonic NDI inspection completed on Frame 496 bulkhead; awaiting "
+            "structural engineering disposition and fastener torque verification."
         ),
         "awaiting_part_nsn": None,
         "assigned_shift_lead": "FSgt A. Wallace",
@@ -1523,9 +1340,6 @@ for _idx in range(14, 100):
 AIRFRAME_COMPONENT_TELEMETRY = AIRFRAME_COMPONENT_TELEMETRY_ROWS
 GLOBAL_DEPOT_INVENTORY = GLOBAL_DEPOT_INVENTORY_ROWS
 SQUADRON_SORTIE_SCHEDULE = SQUADRON_SORTIE_SCHEDULE_ROWS
-HIGH_FREQ_STRAIN_TELEMETRY = HIGH_FREQ_STRAIN_TELEMETRY_ROWS
-AS_MAINTAINED_MBOM_FASTENERS = AS_MAINTAINED_MBOM_FASTENERS_ROWS
-AIRWORTHINESS_RELEASE_LEDGER = AIRWORTHINESS_RELEASE_LEDGER_ROWS
 MAINTENANCE_WORK_ORDERS = MAINTENANCE_WORK_ORDERS_ROWS
 PHM_BIT_FAULT_EVENTS = PHM_BIT_FAULT_EVENTS_ROWS
 WORK_CENTER_TOOLING_AND_SQEP = WORK_CENTER_TOOLING_AND_SQEP_ROWS
@@ -1534,19 +1348,17 @@ BQ_SEED_TABLES: dict[str, list[dict[str, Any]]] = {
     "airframe_component_telemetry": AIRFRAME_COMPONENT_TELEMETRY_ROWS,
     "global_depot_inventory": GLOBAL_DEPOT_INVENTORY_ROWS,
     "squadron_sortie_schedule": SQUADRON_SORTIE_SCHEDULE_ROWS,
-    "high_freq_strain_telemetry": HIGH_FREQ_STRAIN_TELEMETRY_ROWS,
-    "as_maintained_mbom_fasteners": AS_MAINTAINED_MBOM_FASTENERS_ROWS,
-    "airworthiness_release_ledger": AIRWORTHINESS_RELEASE_LEDGER_ROWS,
     "maintenance_work_orders": MAINTENANCE_WORK_ORDERS_ROWS,
     "phm_bit_fault_events": PHM_BIT_FAULT_EVENTS_ROWS,
     "work_center_tooling_and_sqep": WORK_CENTER_TOOLING_AND_SQEP_ROWS,
 }
 
-ALL_BQ_SEED_TABLES: dict[str, list[dict[str, Any]]] = BQ_SEED_TABLES
+ALL_BQ_SEED_TABLES: dict[str, list[dict[str, Any]]] = dict(BQ_SEED_TABLES)
 
 
 def get_seed_rows(table_name: str) -> list[dict[str, Any]]:
     """Return a copy of the authoritative seed rows for the specified BigQuery table."""
-    if table_name not in BQ_SEED_TABLES:
+    lookup = ALL_BQ_SEED_TABLES if table_name in ALL_BQ_SEED_TABLES else BQ_SEED_TABLES
+    if table_name not in lookup:
         raise KeyError(f"Unknown BigQuery seed table: {table_name}")
-    return [dict(row) for row in BQ_SEED_TABLES[table_name]]
+    return [dict(row) for row in lookup[table_name]]

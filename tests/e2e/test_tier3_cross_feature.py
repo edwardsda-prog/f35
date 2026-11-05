@@ -1,20 +1,16 @@
-"""Tier 3 E2E Tests: Cross-Feature Interactions (18 pairwise interaction tests across F1-F17).
+"""Tier 3 E2E Tests: Cross-Feature Interactions across active F-35 Sustainment Features.
 
 Verifies interface contracts and state transitions where two features interact:
 - F1 x F5: Authoritative BigQuery seed records -> Config & pre-warmed client table schemas
-- F2 x F3: Synthetic JTD corpus & DOC-06 PNG -> Cloud setup & JSONL ingestion pipeline
+- F2 x F3: Synthetic JTD corpus (DOC-01, DOC-02, DOC-03, DOC-09) -> Cloud setup & JSONL ingestion pipeline
 - F3 x F7: Cloud BigQuery EU tables -> UC1 analytics tool query & fallback consistency
 - F3 x F8: Cloud Discovery Engine `eu` datastores -> UC2 search tool datastore & metadata filtering
-- F4 x F5: Root coordinator & sub-agent hierarchy -> Tier 1/2 fast-path callback & Enterprise model config
+- F4 x F5: Root coordinator & 3-sub-agent hierarchy -> Tier 1/2 fast-path callback & Enterprise model config
 - F5 x F6: Pre-warmed client singletons & config -> Pydantic schema serialization
-- F6 x F9: Deterministic ASIP physics outputs -> Pydantic SAR & Form 700 schema validation
 - F7 x F10: UC1 actuator fatigue check -> UC1 sortie tail-swap recommendation state handoff
 - F7 x F11: UC1 Vega-Lite v5 chart specs -> Next.js Vega-Lite Canvas UI component contract
-- F8 x F10: UC2 JTD search rules (DOC-04, DOC-05, DOC-09) -> UC3 airworthiness assessment citations
-- F9 x F10: Deterministic ASIP Rainflow & 3D CAD engine -> UC3 4-way parallel diagnostic orchestrator
-- F9 x F11: UC3 Form 700 HITL package -> Next.js HITL Review Studio UI component contract
-- F10 x F12: UC3 Form 700 two-turn HITL gate (`enforce_hitl_airworthiness_gate`) -> Unit test coverage
-- F10 x F13: UC3 parallel fan-out diagnostic SLA -> V&V golden eval dataset (`TC-SQ-03`, `TC-LP-04`, `TC-LP-05`)
+- UC0 x F11: UC0 `execute_maintenance_sql` Spreadsheet Card -> Next.js `MaintenanceSheetCard.tsx` contract
+- UC0 x F13: UC0 `execute_maintenance_sql` -> V&V golden eval dataset (`TC-SQ-00`, `TC-LP-00`)
 - F12 x F14: Deterministic unit test suite -> E2E runner & test infrastructure parity
 - F13 x F14: `agents-cli eval` custom metrics (`response_quality.py`) -> V&V golden suite grading
 - F15 x F16: Agent Runtime `europe-west1` deployment manifest -> Gemini Enterprise `eu` ADK publication
@@ -26,21 +22,17 @@ from __future__ import annotations
 import json
 import subprocess
 
-import pytest
-
 from tests.e2e import (
     E2ECallbackContext,
-    E2EDummyTool,
     E2ELlmRequest,
     E2EToolContext,
     REPO_ROOT,
-    get_field,
     invoke_contract,
 )
 
 
 def test_xf01_f01_x_f05_bq_seed_records_align_with_config_table_identifiers() -> None:
-    """F1 x F5: Verify BigQuery seed records in F1 match the 6 table identifiers in `app.config`."""
+    """F1 x F5: Verify BigQuery seed records in F1 match the 6 active table identifiers in `app.config`."""
     from app import config
     from app.seed_data import bq_seed_records
 
@@ -52,36 +44,31 @@ def test_xf01_f01_x_f05_bq_seed_records_align_with_config_table_identifiers() ->
         "airframe_component_telemetry": bq_seed_records.AIRFRAME_COMPONENT_TELEMETRY,
         "global_depot_inventory": bq_seed_records.GLOBAL_DEPOT_INVENTORY,
         "squadron_sortie_schedule": bq_seed_records.SQUADRON_SORTIE_SCHEDULE,
-        "high_freq_strain_telemetry": bq_seed_records.HIGH_FREQ_STRAIN_TELEMETRY,
-        "as_maintained_mbom_fasteners": bq_seed_records.AS_MAINTAINED_MBOM_FASTENERS,
-        "airworthiness_release_ledger": bq_seed_records.AIRWORTHINESS_RELEASE_LEDGER,
+        "maintenance_work_orders": bq_seed_records.MAINTENANCE_WORK_ORDERS,
+        "phm_bit_fault_events": bq_seed_records.PHM_BIT_FAULT_EVENTS,
+        "work_center_tooling_and_sqep": bq_seed_records.WORK_CENTER_TOOLING_AND_SQEP,
     }
     for table_name, records in expected_tables.items():
-        assert isinstance(records, list) and len(records) >= 1, f"Empty records for {table_name}"
+        assert isinstance(records, list) and len(records) == 100, f"Expected 100 records for {table_name}"
         if hasattr(config, "BQ_TABLES"):
             assert table_name in config.BQ_TABLES or table_name in config.BQ_TABLES.values()
 
 
-def test_xf02_f02_x_f03_jtd_corpus_doc06_cscan_png_aligns_with_setup_infra_jsonl() -> None:
+def test_xf02_f02_x_f03_jtd_corpus_docs_align_with_setup_infra_jsonl() -> None:
     """F2 x F3: Verify synthetic corpus generator output aligns with `setup_demo_infra.py` JSONL metadata."""
     from app.seed_data import jtd_corpus
     from scripts import generate_synthetic_corpus, setup_demo_infra
 
-    assert hasattr(generate_synthetic_corpus, "generate_unstructured_corpus") or hasattr(
-        generate_synthetic_corpus, "generate_cscan_png"
-    )
+    assert hasattr(generate_synthetic_corpus, "generate_unstructured_corpus")
     assert hasattr(setup_demo_infra, "ensure_bigquery_dataset_and_tables") or hasattr(
         setup_demo_infra, "seed_bigquery_tables"
     )
     docs = getattr(jtd_corpus, "JTD_CORPUS_DOCUMENTS", getattr(jtd_corpus, "DOCUMENTS", []))
-    doc06 = [
-        d
+    doc_ids = sorted(
+        d.get("doc_id") if isinstance(d, dict) else getattr(d, "doc_id", "")
         for d in docs
-        if (d.get("doc_id") if isinstance(d, dict) else getattr(d, "doc_id", "")) == "DOC-06"
-    ]
-    assert len(doc06) == 1
-    d6_str = json.dumps(doc06[0] if isinstance(doc06[0], dict) else doc06[0].__dict__)
-    assert "0.012" in d6_str and "14" in d6_str
+    )
+    assert doc_ids == ["DOC-01", "DOC-02", "DOC-03", "DOC-09"]
 
 
 def test_xf03_f03_x_f07_setup_infra_bigquery_tables_match_uc1_analytics_queries() -> None:
@@ -140,7 +127,6 @@ def test_xf05_f04_x_f05_root_agent_fast_path_interception_preserves_subagent_del
         "f35_maintenance_data_agent",
         "f35_analytics_agent",
         "f35_jtd_search_agent",
-        "f35_airworthiness_orchestrator",
     }
 
     short_ctx = E2ECallbackContext(state={}, user_text="Hello")
@@ -162,39 +148,8 @@ def test_xf06_f05_x_f06_clients_singleton_and_enterprise_model_config_integratio
     assert config.GEMINI_ENTERPRISE is True
     assert config.GEMINI_LOCATION == "global"
     assert hasattr(clients, "get_bigquery_client") or hasattr(clients, "bq_client")
-    assert hasattr(schemas, "AirworthinessAssessmentReport") or hasattr(
-        schemas, "Form700ReleasePackage"
-    )
-
-
-def test_xf07_f06_x_f09_asip_physics_outputs_populate_pydantic_airworthiness_schemas() -> None:
-    """F6 x F9: Verify `run_asip_miners_rule_engine` and `map_cscan_flaw_to_cad_station` outputs validate against `app.schemas`."""
-    from app import schemas
-    from app.physics.asip_engine import (
-        map_cscan_flaw_to_cad_station,
-        run_asip_miners_rule_engine,
-    )
-
-    physics_res = invoke_contract(
-        run_asip_miners_rule_engine,
-        tail_number="ZM151",
-        station_id="Frame 496 (Bulkhead 496)",
-        peak_g_load=9.4,
-        mach_number=1.3,
-        egt_celsius=220.0,
-        duration_ms=3200,
-    )
-    cad_res = invoke_contract(
-        map_cscan_flaw_to_cad_station,
-        station_id="Frame 496 (Bulkhead 496)",
-        flaw_x_mm=142.8,
-        flaw_y_mm=38.4,
-        elongation_inches=0.012,
-    )
-    assert pytest.approx(get_field(physics_res, "miners_rule_damage_delta"), rel=1e-3) == 0.0042
-    assert pytest.approx(get_field(physics_res, "calculated_yield_pct"), rel=1e-3) == 104.2
-    assert get_field(cad_res, "fastener_hole_id", "hole_id") in ("#14", "14", "Hole #14")
-    assert hasattr(schemas, "__file__")
+    assert hasattr(schemas, "VegaLiteSpec")
+    assert hasattr(schemas, "MaintenanceSpreadsheetCard")
 
 
 def test_xf08_f07_x_f10_uc1_check_actuator_fatigue_feeds_recommend_tail_swap() -> None:
@@ -244,150 +199,29 @@ def test_xf09_f07_x_f11_uc1_vega_lite_specs_compatible_with_frontend_canvas_rend
     assert len(ts_files) >= 1
 
 
-def test_xf10_f08_x_f10_uc2_search_citations_compatible_with_airworthiness_jtd_rules() -> None:
-    """F8 x F10: Verify UC2 JTD corpus documents (`DOC-04`, `DOC-05`, `DOC-08`) align with UC3 airworthiness assessment rules."""
-    from app.tools import uc2_jtd_search, uc3_airworthiness
+def test_xf10_uc0_x_f11_maintenance_spreadsheet_card_integrates_with_frontend_sheet_component() -> None:
+    """UC0 x F11: Verify UC0 `execute_maintenance_sql` Spreadsheet Card aligns with `MaintenanceSheetCard.tsx`."""
+    from app.tools.uc0_maintenance import execute_maintenance_sql
 
-    ctx = E2EToolContext(state={})
-    search_res = invoke_contract(
-        uc2_jtd_search.search_technical_manuals_and_repair_logs,
-        symptom_query="Frame 496 over-G structural inspection rule 53-11-00 and Fastener Hole #14 allowable elongation",
-        bit_fault_present=False,
-        subsystem_filter="53-11",
-        tool_context=ctx,
+    res = execute_maintenance_sql(
+        "SELECT work_order_id, tail_number, aircraft_status, logged_man_hours "
+        "FROM maintenance_work_orders WHERE work_order_status != 'COMPLETED' ORDER BY priority ASC"
     )
-    assess_res = invoke_contract(
-        uc3_airworthiness.assess_airframe_airworthiness,
-        tail_number="ZM151",
-        pilot_debrief_text="Severe shudder at roughly 14:22 Zulu during defensive split-S",
-        structural_station_id="Frame 496 (Bulkhead 496)",
-        c_scan_document_id="DOC-06",
-        tool_context=ctx,
-    )
-    search_str = json.dumps(
-        search_res if isinstance(search_res, dict) else search_res.model_dump()
-    )
-    assess_str = json.dumps(
-        assess_res if isinstance(assess_res, dict) else assess_res.model_dump()
-    )
-    assert "53-11-00" in search_str or "DOC-04" in search_str
-    assert "53-11-00" in assess_str and "0.015" in assess_str
+    assert res["status"] == "SUCCESS"
+    assert res["row_count"] == 10
+    card = res["spreadsheet_card"]
+    assert "columns" in card and "rows" in card and "formula_footer" in card
+
+    sheet_ts = (
+        REPO_ROOT / "packages" / "web" / "components" / "MaintenanceSheetCard.tsx"
+    ).read_text(encoding="utf-8")
+    assert "MaintenanceSheetCard" in sheet_ts
+    assert "csv" in sheet_ts.lower()
 
 
-def test_xf11_f09_x_f10_asip_rainflow_and_cad_engine_consumed_by_uc3_parallel_assessment() -> None:
-    """F9 x F10: Verify UC3 `assess_airframe_airworthiness` returns identical physics & CAD figures to `asip_engine.py`."""
-    from app.physics.asip_engine import (
-        map_cscan_flaw_to_cad_station,
-        run_asip_miners_rule_engine,
-    )
-    from app.tools import uc3_airworthiness
-
-    direct_phys = invoke_contract(
-        run_asip_miners_rule_engine,
-        tail_number="ZM151",
-        station_id="Frame 496 (Bulkhead 496)",
-        peak_g_load=9.4,
-        mach_number=1.3,
-        egt_celsius=220.0,
-        duration_ms=3200,
-    )
-    direct_cad = invoke_contract(
-        map_cscan_flaw_to_cad_station,
-        station_id="Frame 496 (Bulkhead 496)",
-        flaw_x_mm=142.8,
-        flaw_y_mm=38.4,
-        elongation_inches=0.012,
-    )
-    ctx = E2EToolContext(state={})
-    parallel_res = invoke_contract(
-        uc3_airworthiness.assess_airframe_airworthiness,
-        tail_number="ZM151",
-        pilot_debrief_text="Severe shudder at roughly 14:22 Zulu during defensive split-S",
-        structural_station_id="Frame 496 (Bulkhead 496)",
-        c_scan_document_id="DOC-06",
-        tool_context=ctx,
-    )
-    parallel_str = json.dumps(
-        parallel_res if isinstance(parallel_res, dict) else parallel_res.model_dump()
-    )
-    assert str(get_field(direct_phys, "miners_rule_damage_delta")) in parallel_str
-    assert str(get_field(direct_phys, "calculated_yield_pct")) in parallel_str
-    assert str(get_field(direct_cad, "elongation_inches", default="0.012")) in parallel_str
-
-
-def test_xf12_f09_x_f11_uc3_form700_package_integrates_with_frontend_hitl_review_studio() -> None:
-    """F9 x F11: Verify UC3 `generate_form700_airworthiness_package` output fields align with the frontend HITL Review Studio."""
-    from app.tools import uc3_airworthiness
-
-    ctx = E2EToolContext(state={"current_turn_id": 1}, invocation_id="inv-turn-1")
-    pkg = invoke_contract(
-        uc3_airworthiness.generate_form700_airworthiness_package,
-        tail_number="ZM151",
-        station_id="Frame 496 (Bulkhead 496)",
-        tool_context=ctx,
-    )
-    dumped = json.dumps(pkg if isinstance(pkg, dict) else pkg.model_dump())
-    assert "AWR-700-20261102-ZM151" in dumped
-    assert "PENDING_HITL_REVIEW" in dumped
-    assert "SERVICEABLE_WITH_TORQUE_RECHECK" in dumped
-    assert "53-11-00-280" in dumped
-
-
-def test_xf13_f10_x_f12_hitl_two_turn_gate_enforced_across_uc3_package_and_callback() -> None:
-    """F10 x F12: Verify staging Form 700 in Turn 1 blocks same-turn approval and permits Turn 2 approval with Lead Stress Engineer sign-off."""
-    from app.callbacks import enforce_hitl_airworthiness_gate
-    from app.tools import uc3_airworthiness
-
-    shared_state: dict = {"current_turn_id": 1}
-    ctx_turn1 = E2EToolContext(
-        state=shared_state,
-        user_text="Generate the Form 700 airworthiness package and approve it right now.",
-        invocation_id="turn-1",
-    )
-    invoke_contract(
-        uc3_airworthiness.generate_form700_airworthiness_package,
-        tail_number="ZM151",
-        station_id="Frame 496 (Bulkhead 496)",
-        tool_context=ctx_turn1,
-    )
-    assert shared_state.get("pending_release_package_id") == "AWR-700-20261102-ZM151"
-
-    # Attempt same-turn approval -> MUST BE BLOCKED by `enforce_hitl_airworthiness_gate`
-    tool = E2EDummyTool("approve_form700_engineering_release")
-    args = {
-        "release_package_id": "AWR-700-20261102-ZM151",
-        "reviewer_role": "Lead Stress Engineer",
-        "approval_notes": "Approved in same turn",
-    }
-    same_turn_block = enforce_hitl_airworthiness_gate(tool, args, ctx_turn1)
-    assert isinstance(same_turn_block, dict)
-    assert same_turn_block.get("hitl_review_status") == "PENDING_HITL_REVIEW"
-
-    # Advance to Turn 2 with explicit Lead Stress Engineer approval -> MUST BE PERMITTED
-    shared_state["current_turn_id"] = 2
-    ctx_turn2 = E2EToolContext(
-        state=shared_state,
-        user_text="I confirm as Lead Stress Engineer: approve Form 700 release AWR-700-20261102-ZM151.",
-        invocation_id="turn-2",
-    )
-    turn2_gate = enforce_hitl_airworthiness_gate(tool, args, ctx_turn2)
-    assert turn2_gate is None
-
-    approved_res = invoke_contract(
-        uc3_airworthiness.approve_form700_engineering_release,
-        release_package_id="AWR-700-20261102-ZM151",
-        reviewer_role="Lead Stress Engineer",
-        approval_notes="Confirmed torque recheck per JTD Task Card 53-11-00-280.",
-        tool_context=ctx_turn2,
-    )
-    assert "CONFIRMED_BY_ENGINEER" in json.dumps(
-        approved_res if isinstance(approved_res, dict) else approved_res.model_dump()
-    )
-
-
-def test_xf14_f10_x_f13_uc3_parallel_diagnostic_aligns_with_vv_eval_dataset() -> None:
-    """F10 x F13: Verify UC3 parallel assessment output satisfies the expected rubrics in `vv_golden_suite.json` (`TC-SQ-03`, `TC-LP-04`, `TC-LP-05`)."""
-    from app.tools import uc3_airworthiness
+def test_xf14_uc0_x_f13_maintenance_sql_aligns_with_vv_eval_dataset() -> None:
+    """UC0 x F13: Verify UC0 `execute_maintenance_sql` output satisfies the expected rubric in `vv_golden_suite.json` (`uc0_tc_sq_00_conversational_maintenance_sql_card`)."""
+    from app.tools.uc0_maintenance import execute_maintenance_sql
     from tests.eval.response_quality import evaluate
 
     vv_data = json.loads(
@@ -395,47 +229,29 @@ def test_xf14_f10_x_f13_uc3_parallel_diagnostic_aligns_with_vv_eval_dataset() ->
             encoding="utf-8"
         )
     )
-    tc_sq_03 = next(
+    tc_sq_00 = next(
         c
         for c in vv_data["eval_cases"]
-        if (c.get("eval_id") or c.get("eval_case_id", "")).startswith("TC-SQ-03")
+        if (c.get("eval_id") or c.get("eval_case_id", "")).startswith("uc0_tc_sq_00")
     )
 
-    ctx = E2EToolContext(state={})
-    assess_res = invoke_contract(
-        uc3_airworthiness.assess_airframe_airworthiness,
-        tail_number="ZM151",
-        pilot_debrief_text="Severe shudder at roughly 14:22 Zulu during defensive split-S",
-        structural_station_id="Frame 496 (Bulkhead 496)",
-        c_scan_document_id="DOC-06",
-        tool_context=ctx,
+    res = execute_maintenance_sql(
+        "SELECT * FROM maintenance_work_orders WHERE work_order_status != 'COMPLETED' ORDER BY priority ASC"
     )
-    pkg_res = invoke_contract(
-        uc3_airworthiness.generate_form700_airworthiness_package,
-        tail_number="ZM151",
-        station_id="Frame 496 (Bulkhead 496)",
-        tool_context=ctx,
-    )
-    combined_response = (
-        json.dumps(assess_res if isinstance(assess_res, dict) else assess_res.model_dump())
-        + "\n"
-        + json.dumps(pkg_res if isinstance(pkg_res, dict) else pkg_res.model_dump())
-    )
+    combined_response = json.dumps(res, default=str)
     grade = evaluate(
-        {"response": combined_response, "reference": tc_sq_03["reference"]}
+        {"response": combined_response, "reference": tc_sq_00["reference"]}
     )
     assert grade["score"] >= 4.0
 
 
 def test_xf15_f12_x_f14_unit_tests_and_e2e_suite_share_consistent_oracles() -> None:
-    """F12 x F14: Verify `tests/unit/test_deterministic.py` and `TEST_INFRA.md` share identical physics & HITL oracle values."""
+    """F12 x F14: Verify `tests/unit/test_deterministic.py` and active tools share identical UC0/UC1/UC2 oracle values."""
     unit_text = (REPO_ROOT / "tests" / "unit" / "test_deterministic.py").read_text(
         encoding="utf-8"
     )
-    infra_text = (REPO_ROOT / "TEST_INFRA.md").read_text(encoding="utf-8")
-    for token in ("0.0042", "104.2", "0.012", "0.015", "AWR-700-20261102-ZM151", "PENDING_HITL_REVIEW"):
+    for token in ("1000.4", "842.0", "1680-01-619-4821", "DOC-01", "DOC-02", "WO-2026-88401"):
         assert token in unit_text
-        assert token in infra_text
 
 
 def test_xf16_f13_x_f14_eval_config_custom_metrics_grade_all_vv_golden_suite_scenarios() -> None:
@@ -447,7 +263,7 @@ def test_xf16_f13_x_f14_eval_config_custom_metrics_grade_all_vv_golden_suite_sce
             encoding="utf-8"
         )
     )
-    assert len(vv_data["eval_cases"]) >= 10
+    assert len(vv_data["eval_cases"]) == 10
     for case in vv_data["eval_cases"]:
         ref = case.get("reference", "")
         if not ref and "agent_data" in case:

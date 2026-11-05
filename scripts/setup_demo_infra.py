@@ -55,12 +55,15 @@ EXPECTED_BQ_TABLES = (
     "airframe_component_telemetry",
     "global_depot_inventory",
     "squadron_sortie_schedule",
-    "high_freq_strain_telemetry",
-    "as_maintained_mbom_fasteners",
-    "airworthiness_release_ledger",
     "maintenance_work_orders",
     "phm_bit_fault_events",
     "work_center_tooling_and_sqep",
+)
+
+DEPRECATED_UC3_BQ_TABLES = (
+    "high_freq_strain_telemetry",
+    "as_maintained_mbom_fasteners",
+    "airworthiness_release_ledger",
 )
 
 
@@ -180,7 +183,7 @@ def ensure_bigquery_dataset_and_tables(
     bq_location: str,
     dataset_id: str,
 ) -> dict[str, int]:
-    """Create BigQuery EU dataset and populate all 7 tables using declarative schemas."""
+    """Create BigQuery EU dataset, remove deprecated UC3 tables, and populate the 6 active tables."""
     print(f"[4/6] Provisioning BigQuery dataset '{project_id}.{dataset_id}' (location='{bq_location}')...")
     bq_client = bigquery.Client(
         project=project_id,
@@ -191,11 +194,16 @@ def ensure_bigquery_dataset_and_tables(
     dataset_ref.location = bq_location
     dataset_ref.description = (
         "UK Defence F-35 Lightning II Fleet Sustainment Demo Dataset (EU Multi-Region). "
-        "Contains UC0 ODIN maintenance work orders, UC1 telemetry/depot/sortie tables, "
-        "and UC3 strain exceedance/mBOM/airworthiness release tables."
+        "Contains UC0/UC0.1/UC0.5 ODIN maintenance work orders, PHM/BIT fault events, "
+        "SQEP/tooling bay readiness, and UC1 telemetry/depot/sortie tables."
     )
     dataset = bq_client.create_dataset(dataset_ref, exists_ok=True)
     print(f"  -> BigQuery dataset ready: {dataset.full_dataset_id} (location={dataset.location})")
+
+    for deprecated_tbl in DEPRECATED_UC3_BQ_TABLES:
+        deprecated_id = f"{project_id}.{dataset_id}.{deprecated_tbl}"
+        bq_client.delete_table(deprecated_id, not_found_ok=True)
+        print(f"  -> Ensured deprecated UC3 table is removed: {deprecated_tbl}")
 
     table_row_counts: dict[str, int] = {}
 
@@ -376,6 +384,14 @@ def ensure_discovery_engine_datastores(
             )
             existing_ids = {d.get("id") for d in existing_docs}
             expected_ids = {d["chunk_id"] for d in docs_to_index}
+            stale_ids = sorted(
+                doc_id for doc_id in existing_ids if doc_id and doc_id not in expected_ids
+            )
+            for stale_id in stale_ids:
+                del_resp = client.delete(f"{list_docs_url}/{stale_id}", headers=headers)
+                if del_resp.status_code in (200, 204, 404):
+                    print(f"  -> Deleted deprecated document '{stale_id}' from {ds_id}")
+            existing_ids -= set(stale_ids)
             missing_docs = [d for d in docs_to_index if d["chunk_id"] not in existing_ids]
 
             # Check whether the latest gcsSource operation had failures
@@ -464,8 +480,8 @@ def ensure_discovery_engine_datastores(
 
         # Verify live REST search + document listing on both datastores
         search_queries = {
-            jtd_datastore_id: "canopy forward latch catch rigging Frame 496 Task Card 53-11-00-280",
-            narrative_datastore_id: "silicon sealant debris roller path Flt Lt Henderson 14:22 Zulu",
+            jtd_datastore_id: "canopy forward latch catch rigging JTD 53-30-01",
+            narrative_datastore_id: "silicon sealant debris roller path USMC VMFA-211",
         }
         for ds_id, query_text in search_queries.items():
             search_url = f"{base_url}/dataStores/{ds_id}/servingConfigs/default_search:search"

@@ -134,22 +134,19 @@ class TestFastPathRegexAdversarial:
         [
             # Explicit domain entities requested by user prompt
             "What is the capability of tail ZM151",
-            "Form 700 release status",
-            "Fastener hole 14 capability",
-            # Domain entity queries with capability words that MUST fall through to LLM
             "What are the capabilities of tail ZM151?",
             "Describe your capabilities for ZM151",
             "Explain operational capabilities for tail ZM 154",
-            "Show operational features for Lot #8841-B",
+            "Show operational features for WO-2026-88405",
             "Explain operational functions of ACT-99812-F",
             "What are your capabilities regarding NSN 1680-01-619-4821",
-            "Describe operational capabilities for Frame 496",
+            "Describe operational capabilities for HRC-5330-000-NONE",
             "Show operational features for SRT-MAR-20261103-01",
             "What are your capabilities regarding DOC-01?",
-            "Describe capabilities for DOC-06 ultrasonic scan",
-            "Form 700 airworthiness release package status",
-            "Check Form 700 capabilities for engineering sign-off",
-            "Form 700 release package AWR-700-20261102-ZM151 capability",
+            "Describe capabilities for DOC-09 RAM cure procedure",
+            "Show operational features for PHM-2026-99102",
+            "Check MICAP work orders capabilities for squadron dispatch",
+            "Explain SQEP tooling capability for RES-2026-00007",
         ],
     )
     def test_fast_path_false_positive_domain_fallthrough(self, domain_query: str) -> None:
@@ -165,10 +162,10 @@ class TestFastPathRegexAdversarial:
             "Describe your operational capabilities",
             "What are your capabilities?",
             "What is the capability of tail ZM151",
-            "Form 700 release status",
-            "Fastener hole 14 capability",
+            "What are our open MICAP work orders?",
+            "Show operational features for WO-2026-88405",
             "Show operational features",
-            "Check RAF Marham F-35A horizontal tail actuator hours",
+            "Check RAF Marham F-35B flaperon actuator hours",
             "hello",
             "ping",
         ]
@@ -363,8 +360,8 @@ class TestToAuthenticatedGcsUrlAdversarial:
                 "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/docs/DOC-01.pdf",
             ),
             (
-                "gs://antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf",
-                "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf",
+                "gs://antig-dave-f35-staging-europe-west1/unstructured/docs/DOC-09.pdf",
+                "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/docs/DOC-09.pdf",
             ),
             # Deeply nested paths
             (
@@ -373,8 +370,8 @@ class TestToAuthenticatedGcsUrlAdversarial:
             ),
             # Special characters: spaces, underscores, dashes, parens, brackets
             (
-                "gs://antig-dave-f35-staging-europe-west1/docs/DOC-06 (Frame 496) [v2.1]+final_rev.png",
-                "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/docs/DOC-06 (Frame 496) [v2.1]+final_rev.png",
+                "gs://antig-dave-f35-staging-europe-west1/docs/DOC-09 (MAM Section 9-1) [v2.1]+final_rev.pdf",
+                "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/docs/DOC-09 (MAM Section 9-1) [v2.1]+final_rev.pdf",
             ),
             (
                 "gs://bucket-with.dots.and-dashes/path_with_underscores/file@v1.xml",

@@ -7,7 +7,7 @@ Covers:
 2. `TestGeneralizedSemanticSQLCanonicalizer`:
    - 20+ unseen natural-language and SQL semantic variations across `base_location`, `squadron`, `work_order_status`, `aircraft_status`, `priority`, `fault_severity`, `bit_trigger_type`, `bay_dispatch_status`, `tool_calibration_status`, `shift_code`, and zero-row fuzzy substring auto-recovery.
 3. `TestCrossTableWarehouseConsistency`:
-   - 9-table, 900-row F-35 Data Warehouse completeness (`100` rows per table).
+   - 6-table, 600-row F-35 Data Warehouse completeness (`100` rows per table).
    - `ZM159` (`HMS Queen Elizabeth`) location consistency across telemetry, work orders (`WO-2026-88411`), PHM/BIT fault events (`PHM-2026-99111`, `PHM-2026-99113`), and SQEP/tooling (`RES-2026-00011`).
    - Full foreign-key referential integrity across `maintenance_work_orders`, `phm_bit_fault_events`, and `work_center_tooling_and_sqep`.
 """
@@ -615,25 +615,44 @@ class TestGeneralizedSemanticSQLCanonicalizer:
 
 
 # ===========================================================================
-# 3. Cross-Table Warehouse Consistency (900 Records Across 9 Tables)
+# 3. Cross-Table Warehouse Consistency (600 Records Across 6 Tables)
 # ===========================================================================
 
 
 class TestCrossTableWarehouseConsistency:
-    """Verify 9-table seed counts, `ZM159` carrier consistency, and foreign-key referential integrity."""
+    """Verify 6-table seed counts, `ZM159` carrier consistency, and foreign-key referential integrity."""
 
-    def test_all_9_tables_have_100_rows_900_total(self) -> None:
-        """Verify all 9 tables in `app/seed_data/bq_seed_records.py` have 100 rows each (900 total)."""
+    def test_all_6_tables_have_100_rows_600_total(self) -> None:
+        """Verify all 6 active tables in `app/seed_data/bq_seed_records.py` have 100 rows each (600 total) and valid `base_location` values."""
         from app.seed_data.bq_seed_records import BQ_SEED_TABLES
 
-        assert len(BQ_SEED_TABLES) == 9
+        expected_tables = {
+            "airframe_component_telemetry",
+            "global_depot_inventory",
+            "squadron_sortie_schedule",
+            "maintenance_work_orders",
+            "phm_bit_fault_events",
+            "work_center_tooling_and_sqep",
+        }
+        assert set(BQ_SEED_TABLES.keys()) == expected_tables
+        assert len(BQ_SEED_TABLES) == 6
+        valid_locations = {
+            "RAF Marham",
+            "HMS Queen Elizabeth",
+            "HMS Prince of Wales",
+        }
         total_records = 0
         for table_name, rows in BQ_SEED_TABLES.items():
             assert len(rows) == 100, (
                 f"Expected 100 rows in {table_name}, found {len(rows)}"
             )
+            for row in rows:
+                if "base_location" in row:
+                    assert row["base_location"] in valid_locations, (
+                        f"Invalid base_location {row['base_location']!r} in {table_name}"
+                    )
             total_records += len(rows)
-        assert total_records == 900
+        assert total_records == 600
 
     def test_zm159_hms_queen_elizabeth_consistency_across_all_tables(self) -> None:
         """Verify `ZM159` has `base_location == 'HMS Queen Elizabeth'` across Tables 1, 7, 8, and 9."""
@@ -720,3 +739,30 @@ class TestCrossTableWarehouseConsistency:
                     f"Location mismatch on {phm_row['fault_event_id']} -> {wo_id}: "
                     f"{phm_row['base_location']} != {parent_wo['base_location']}"
                 )
+
+    def test_lizzy_fit_to_fly_semantic_canonicalization(self) -> None:
+        """Verify executive ask: 'Tell me what tails on Lizzy are fit to fly' canonicalizes 'Lizzy' -> 'HMS Queen Elizabeth' and 'fit to fly' -> 'FMC'."""
+        from app.tools.uc0_maintenance import canonicalize_maintenance_sql
+        from app.seed_data.bq_seed_records import BQ_SEED_TABLES
+
+        raw_sql = (
+            "SELECT tail_number, aircraft_status "
+            "FROM `antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders` "
+            "WHERE base_location = 'Lizzy' AND aircraft_status = 'fit to fly'"
+        )
+        canonical_sql, rules = canonicalize_maintenance_sql(
+            raw_sql, user_prompt="Tell me what tails on Lizzy are fit to fly"
+        )
+        assert "base_location = 'HMS Queen Elizabeth'" in canonical_sql
+        assert "aircraft_status = 'FMC'" in canonical_sql
+        assert "LOCATION_CATEGORY_AND_ALIAS_CANONICALIZATION" in rules
+        assert "ENUM_SYNONYM_CANONICALIZATION" in rules
+
+        # Verify against seed data
+        wo_rows = BQ_SEED_TABLES["maintenance_work_orders"]
+        fmc_qnlz_tails = sorted({
+            r["tail_number"]
+            for r in wo_rows
+            if r.get("base_location") == "HMS Queen Elizabeth" and r.get("aircraft_status") == "FMC"
+        })
+        assert fmc_qnlz_tails == ["ZM136", "ZM142", "ZM148", "ZM166", "ZM172"]

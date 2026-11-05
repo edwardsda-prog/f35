@@ -1,4 +1,4 @@
-"""Authoritative unstructured technical publications and maintenance log corpus (DOC-01..DOC-09)."""
+"""Authoritative unstructured technical publications and maintenance log corpus (DOC-01, DOC-02, DOC-03, DOC-09)."""
 
 from __future__ import annotations
 
@@ -97,7 +97,7 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
         "mime_type": "application/pdf",
         "publication_code": "MOD-FORM-707A-ZM151-20261102",
         "s1000d_dmc": "MOD-707A-ZM151-20261102",
-        "system_subsystem_code": "53-11",
+        "system_subsystem_code": "53-30",
         "aircraft_variant_applicability": ["F-35A", "F-35B"],
         "service_branch_origin": "RAF",
         "bit_fault_associated": False,
@@ -108,182 +108,14 @@ JTD_CORPUS_DOCUMENTS: list[dict[str, Any]] = [
             "UK MOD FORM 707A — AIRCRAFT POST-FLIGHT DEBRIEF & MAINTENANCE WORK ORDER LOGBOOK. "
             "STATION: RAF Marham (617 Squadron 'Dambusters'). DATE: 2026-11-02. "
             "AIRCRAFT TAIL NUMBER: ZM151. PILOT: Flt Lt Henderson (Callsign: VIPER-1). "
-            "PILOT DEBRIEF NARRATIVE: 'Experienced severe airframe shudder at roughly 14:22 Zulu during "
-            "defensive split-S maneuver in North Sea ACMI Area 3. Entry was transonic at Mach 1.3 with "
-            "an asymmetric rolling pull peaking at 9.4 G and concurrent Exhaust Gas Temperature (EGT) "
-            "thermal spike to 220.0 C across the aft/port fuselage boundary layer. Acoustic thump felt "
-            "through port wing root (Frame 496 Wing Carry-Through Bulkhead). Aircraft recovered uneventfully "
-            "to RAF Marham at 14:58Z; requesting immediate ASIP structural integrity assessment prior to "
-            "scheduled 06:30Z morning sortie SRT-MAR-20261103-01.'"
-        ),
-    },
-    {
-        "doc_id": "DOC-04",
-        "chunk_id": "DOC-JTD-53-11-00-TASK-280",
-        "title": "JTD Rule 53-11-00 & Task Card 53-11-00-280 — Wing Carry-Through Bulkhead Over-G Inspection & Fastener Torque-Recheck",
-        "filename": "DOC-04_JTD_Rule_53-11-00_Task_Card_280.pdf",
-        "mime_type": "application/pdf",
-        "publication_code": "JTD-F35-53-11-00",
-        "s1000d_dmc": "DMC-F35-53-11-00-280A-A",
-        "system_subsystem_code": "53-11",
-        "aircraft_variant_applicability": ["F-35A", "F-35B", "F-35C"],
-        "service_branch_origin": "RAF",
-        "bit_fault_associated": False,
-        "document_version_date": "2026-10-01",
-        "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-04_JTD_Rule_53-11-00_Task_Card_280.pdf",
-        "content": (
-            "JOINT TECHNICAL DATA (JTD) RULE 53-11-00 & MANDATORY TASK CARD 53-11-00-280 | "
-            "S1000D DMC-F35-53-11-00-280A-A. "
-            "SUBSYSTEM 53-11: PRIMARY WING CARRY-THROUGH BULKHEAD (FRAME 496) STRUCTURAL EXCEEDANCE PROTOCOL. "
-            "RULE 53-11-00 MANDATORY NDI TRIGGER: Whenever deterministic Rainflow cycle counting and "
-            "Palmgren-Miner cumulative damage analysis on 200 Hz MIL-STD-1553 / ARINC 429 strain telemetry "
-            "indicates structural stress exceeds 100.0% of Design Yield Strength (e.g., 104.2% at Frame 496), "
-            "a mandatory Class-A Phased-Array Ultrasonic C-Scan Non-Destructive Inspection "
-            "(CLASS_A_ULTRASONIC_C_SCAN) MUST be performed before flight release. "
-            "JTD TASK CARD 53-11-00-280 (CALIBRATED FASTENER TORQUE-RECHECK PROCEDURE): "
-            "If Class-A Ultrasonic C-Scan inspection of Frame 496 Titanium Ti-6Al-4V close-tolerance shear "
-            "fasteners (including Fastener Hole #14) measures hole shear elongation between 0.005 in and "
-            "the 0.015 in SRM Chapter 51-40 discard limit (e.g., 0.012 in measured elongation), depot "
-            "teardown is NOT required. Perform JTD Task Card 53-11-00-280: execute calibrated fastener "
-            "torque-recheck to 38.0 N*m +/- 1.5 N*m (336 in-lbs), verify zero collar rotation, and record "
-            "disposition SERVICEABLE_WITH_TORQUE_RECHECK on Aircraft Form 700 / AFTO Form 781 subject to "
-            "Lead Stress Engineer Human-in-the-Loop (HITL) release sign-off."
-        ),
-    },
-    {
-        "doc_id": "DOC-05",
-        "chunk_id": "DOC-SRM-51-40-FRAME496-CAD",
-        "title": "Structural Repair Manual (SRM) Chapter 51-40 — Frame 496 Fastener Hole Elongation Limits & 3D CAD Datum Coordinates",
-        "filename": "DOC-05_SRM_Chapter_51-40_Fastener_Hole_Limits.pdf",
-        "mime_type": "application/pdf",
-        "publication_code": "SRM-F35-51-40",
-        "s1000d_dmc": "DMC-F35-51-40-00-00A-040A-A",
-        "system_subsystem_code": "51-40",
-        "aircraft_variant_applicability": ["F-35A", "F-35B", "F-35C"],
-        "service_branch_origin": "USAF",
-        "bit_fault_associated": False,
-        "document_version_date": "2026-08-12",
-        "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-05_SRM_Chapter_51-40_Fastener_Hole_Limits.pdf",
-        "content": (
-            "STRUCTURAL REPAIR MANUAL (SRM) CHAPTER 51-40 | PRIMARY BULKHEAD FASTENER HOLE ELONGATION "
-            "ALLOWABLE LIMITS & 3D CAD SPATIAL DATUM MAPPING. "
-            "CAD DATUM REFERENCE (FRAME 496 — PORT WING CARRY-THROUGH BULKHEAD): "
-            "Fastener Hole #14 3D CAD Coordinates: Fuselage Station FS 496.00, Buttock Line BL -42.50 (Port), "
-            "Waterline WL 118.25 (Local Flange Coordinate: X=142.4 mm, Y=-38.2 mm, Z=12.0 mm; "
-            "Ultrasonic C-Scan ROI Pixel Bounding Box: [x_min=412, y_min=288, x_max=468, y_max=344]). "
-            "METALLURGY SPECIFICATION: Titanium Alloy Ti-6Al-4V (AMS 4928 / AMS 4967) close-tolerance "
-            "shear bolt (Manufacturing Batch Lot #8841-B). "
-            "ALLOWABLE SHEAR ELONGATION THRESHOLDS (SRM CHAPTER 51-40 TABLE 51-40-2): "
-            "- Measured Elongation <= 0.005 in (0.127 mm): UNRESTRICTED_SERVICEABLE. "
-            "- Measured Elongation > 0.005 in and < 0.015 in (e.g., 0.012 in / 0.305 mm): "
-            "SERVICEABLE_WITH_TORQUE_RECHECK (Requires JTD Task Card 53-11-00-280 calibrated torque-recheck; "
-            "no structural teardown required). "
-            "- Measured Elongation >= 0.015 in (0.381 mm): GROUNDED_DEPOT_TEARDOWN (Exceeds maximum "
-            "allowable elongation limit of 0.015 inches; requires oversize ream and interference bushing)."
-        ),
-    },
-    {
-        "doc_id": "DOC-06",
-        "chunk_id": "DOC-NDI-CSCAN-ZM151-F496-H14",
-        "title": "Phased-Array Ultrasonic C-Scan NDI Image & Report — Tail ZM151, Frame 496, Fastener Hole #14",
-        "filename": "DOC-06_Ultrasonic_CScan_Frame496_Hole14.png",
-        "pdf_filename": "DOC-06_Ultrasonic_CScan_Frame496_Hole14.pdf",
-        "mime_type": "image/png",
-        "publication_code": "NDI-CSCAN-20261102-ZM151",
-        "s1000d_dmc": "NDI-F35B-ZM151-F496-H14",
-        "system_subsystem_code": "53-11",
-        "aircraft_variant_applicability": ["F-35A", "F-35B"],
-        "service_branch_origin": "RAF",
-        "bit_fault_associated": False,
-        "document_version_date": "2026-11-02",
-        "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-06_Ultrasonic_CScan_Frame496_Hole14.png",
-        "content": (
-            "PHASED-ARRAY ULTRASONIC C-SCAN NON-DESTRUCTIVE INSPECTION (NDI) RECORD | DOC-06. "
-            "INSPECTION ID: NDI-CSCAN-20261102-ZM151 | AIRCRAFT TAIL: ZM151 | STATION: Frame 496 "
-            "(Port-Side Wing Carry-Through Bulkhead Upper Shear Web). "
-            "PROBE CONFIG: 10 MHz 64-Element Linear Phased Array, 0-deg/45-deg Shear Wave Gate. "
-            "MULTIMODAL VISION & CAD REGISTRATION FINDINGS: "
-            "- Target Feature: Frame 496 — Fastener Hole #14 (CAD Datum FS 496.00, BL -42.50, WL 118.25; "
-            "C-Scan Pixel Bounding Box [412, 288, 468, 344]). "
-            "- Measured Shear Elongation: 0.012 inches (0.305 mm) bearing deformation along 315-deg load axis. "
-            "- SRM Chapter 51-40 Allowable Elongation Limit: 0.015 inches (0.381 mm). "
-            "- Margin to Condemnation Limit: +0.003 inches (Within allowable service limits: 0.012 in < 0.015 in). "
-            "- Subsurface Cracking / Delamination: NONE DETECTED (0.000 in). "
-            "- Installed Fastener Metadata: MBOM-ZM151-F496-H14, Titanium Ti-6Al-4V, Lot #8841-B "
-            "(312.0 hours since install; 14 allied F-35 tails globally share Lot #8841-B)."
-        ),
-    },
-    {
-        "doc_id": "DOC-07",
-        "chunk_id": "DOC-AWD-MIL-HDBK-516C-DEFSTAN-00-970",
-        "title": "Airworthiness Directives & Structural Integrity Basis — MIL-HDBK-516C, DEF STAN 00-970 & MIL-STD-3001",
-        "filename": "DOC-07_Airworthiness_Directives_MIL-HDBK-516C.pdf",
-        "mime_type": "application/pdf",
-        "publication_code": "AWD-MIL-HDBK-516C-00970",
-        "s1000d_dmc": "AWD-UKMAA-DEFSTAN-00-970",
-        "system_subsystem_code": "00-00",
-        "aircraft_variant_applicability": ["F-35A", "F-35B", "F-35C"],
-        "service_branch_origin": "RAF",
-        "bit_fault_associated": False,
-        "document_version_date": "2026-07-01",
-        "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-07_Airworthiness_Directives_MIL-HDBK-516C.pdf",
-        "content": (
-            "MILITARY AIRWORTHINESS CERTIFICATION DIRECTIVE | MIL-HDBK-516C SECTION 5 (STRUCTURES), "
-            "UK MAA DEF STAN 00-970 PART 1 SECTION 3, AND MIL-STD-3001. "
-            "MANDATORY ENGINEERING INVARIANTS FOR AI-ASSISTED SUSTAINMENT PLATFORMS: "
-            "(1) DETERMINISTIC STRUCTURAL MATH ONLY (SAFE-01): Under MIL-HDBK-516C para 5.3 and DEF STAN 00-970, "
-            "probabilistic language models MUST NEVER estimate or interpolate Rainflow cycle counts, "
-            "Palmgren-Miner cumulative fatigue damage (D = sum(n_i / N_i)), or structural yield percentages. "
-            "All fatigue and yield values MUST be computed by a verified deterministic ASIP physics engine "
-            "(e.g., EXC-20261102-ZM151: Peak 9.4 G at Mach 1.3, 220.0 C EGT -> Miner's Rule damage delta "
-            "D_i = 0.0042, Calculated Yield = 104.2%). "
-            "(2) FLEET-WIDE LOT CONTAINMENT: Any fastener lot exhibiting measurable shear elongation > 0.010 in "
-            "after an over-G event (such as Titanium Ti-6Al-4V Lot #8841-B at 0.012 in) requires flagging all "
-            "affected airframes across the global fleet (14 other F-35 tails globally) for proactive 30-day "
-            "NDI inspection. "
-            "(3) TWO-STAGE HUMAN-IN-THE-LOOP (HITL) RELEASE GATE (SAFE-02): Automated generation of an "
-            "Aircraft Form 700 / AFTO Form 781 release package MUST stage the record in PENDING_HITL_REVIEW. "
-            "Transition to CONFIRMED_BY_ENGINEER requires explicit subsequent-turn authorization by a "
-            "designated Lead Stress Engineer or Chief Technical Officer (CTO)."
-        ),
-    },
-    {
-        "doc_id": "DOC-08",
-        "chunk_id": "DOC-FORM700-SAR-TEMPLATE-ZM151",
-        "title": "UK MOD Form 700 / AFTO Form 781 & MIL-STD-3001 Structural Appraisal Report (SAR) Template",
-        "filename": "DOC-08_Form_700_Structural_Appraisal_Template.pdf",
-        "mime_type": "application/pdf",
-        "publication_code": "MOD-FORM-700-AFTO-781",
-        "s1000d_dmc": "FORM700-SAR-MIL-STD-3001",
-        "system_subsystem_code": "00-00",
-        "aircraft_variant_applicability": ["F-35A", "F-35B", "F-35C"],
-        "service_branch_origin": "RAF",
-        "bit_fault_associated": False,
-        "document_version_date": "2026-10-10",
-        "datastore_target": "jtd",
-        "uri": f"{GCS_DOCS_HTTP_PREFIX}/DOC-08_Form_700_Structural_Appraisal_Template.pdf",
-        "content": (
-            "UK MOD FORM 700 (MOD FORMS 703 / 704 / 705 / 707A) & US AFTO FORM 781 AIRWORTHINESS RELEASE "
-            "PACKAGE SPECIFICATION | MIL-STD-3001 STRUCTURAL APPRAISAL REPORT (SAR) TEMPLATE. "
-            "REFERENCE PACKAGE ID: AWR-700-20261102-ZM151. "
-            "REPORT ARTIFACT URI: https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/sar/SAR-20261102-ZM151.pdf. "
-            "REQUIRED APPRAISAL FIELDS: "
-            "- Aircraft Tail & Unit: ZM151 (RAF Marham, 617 Squadron). "
-            "- Exceedance Telemetry Sync: Event EXC-20261102-ZM151 at 2026-11-02T14:22:18.420Z (3.2s window), "
-            "Peak Load 9.4 G at Mach 1.3, Peak EGT 220.0 C on Frame 496. "
-            "- Deterministic ASIP Physics Result: Palmgren-Miner Damage Delta = 0.0042; "
-            "Calculated Yield Strength = 104.2% (> 100.0% threshold -> CLASS_A_ULTRASONIC_C_SCAN). "
-            "- NDI & 3D CAD Join Result: DOC-06 Phased-Array Ultrasonic C-Scan mapped to SRM Chapter 51-40 "
-            "Frame 496 — Fastener Hole #14; Measured Shear Elongation = 0.012 in vs Allowable Limit = 0.015 in. "
-            "- mBOM Fastener Audit: Record MBOM-ZM151-F496-H14, Titanium Ti-6Al-4V, Lot #8841-B, 312.0 hrs "
-            "since install; 14 other global F-35 tails flagged for 30-day containment inspection. "
-            "- Mandated Maintenance Action: JTD Task Card 53-11-00-280 (Calibrated Fastener Torque-Recheck). "
-            "- Engineering Disposition: SERVICEABLE_WITH_TORQUE_RECHECK. "
-            "- HITL Governance Gate: Staged as PENDING_HITL_REVIEW for Lead Stress Engineer / CTO approval."
+            "PILOT DEBRIEF NARRATIVE: 'During pre-flight canopy lock-down and post-recovery manual release "
+            "handle check on Tail ZM151, forward canopy locking catch (US: forward latch) exhibited "
+            "noticeable mechanical stiffness during the final 2.0 inches of closure stroke. Zero Built-In-Test "
+            "(BIT) fault codes were active on cockpit ICAW display (ruled out electrical limit-switch fault "
+            "code 53-30-9914). Aft canopy fairing and port-side boundary-layer seal interface also experienced "
+            "220.0 C Exhaust Gas Temperature (EGT) thermal exposure during vertical recovery; flight-line "
+            "engineering requested JTD Section 53-30-01 mechanical rigging check and MAM Section 9-1 "
+            "High-Temp RAM Sheet B restoration prior to morning sortie SRT-MAR-20261103-01.'"
         ),
     },
     {

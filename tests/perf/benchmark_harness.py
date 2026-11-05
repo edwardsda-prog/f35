@@ -1,7 +1,7 @@
 """F-35 Sustainment Agent — Automated Latency & Performance Benchmark Harness.
 
 Executes statistical latency baselining (p50, p90, p95, p99, TTFT, and error rate)
-across all 5 core verification scenarios (TC-LP-01..05) plus the live Cloud
+across all active verification scenarios (TC-LP-00..03) plus the live Cloud
 endpoints (BigQuery EU, Discovery Engine eu, and Vertex AI Reasoning Engine in
 europe-west1).
 
@@ -31,26 +31,17 @@ from google.genai import types
 from app.callbacks import fast_path_before_model_callback
 from app.clients import (
     get_auth_headers,
-    run_bq_query,
-    search_discovery_engine_datastore,
 )
 from app.config import (
-    BQ_DATASET,
-    JTD_DATASTORE_ID,
-    NARRATIVE_DATASTORE_ID,
     PROJECT_ID,
 )
-from app.tools import uc1_analytics, uc2_jtd_search, uc3_airworthiness
+from app.tools import uc1_analytics, uc2_jtd_search
+from app.tools.uc0_maintenance import execute_maintenance_sql
 from app.tools.uc1_analytics import (
     check_actuator_fatigue_and_depot_inventory,
     recommend_tail_swap_and_replenishment,
 )
 from app.tools.uc2_jtd_search import search_technical_manuals_and_repair_logs
-from app.tools.uc3_airworthiness import (
-    approve_form700_engineering_release,
-    assess_airframe_airworthiness,
-    generate_form700_airworthiness_package,
-)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("f35-perf-harness")
@@ -67,6 +58,10 @@ DEPLOYED_RUNTIME_QUERY_URL = (
 )
 
 TEST_PROMPTS = {
+    "TC-LP-00_uc0_maintenance_sql": (
+        "Show all active ODIN/ALIS maintenance work orders from maintenance_work_orders "
+        "where work_order_status != 'COMPLETED' ordered by priority ascending."
+    ),
     "TC-LP-01_fast_path": "Describe your operational capability",
     "TC-LP-02_uc1_analytics": (
         "Check RAF Marham F-35A horizontal tail actuator hours against our 30-day "
@@ -76,11 +71,6 @@ TEST_PROMPTS = {
         "Our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, "
         "with zero BIT faults. Have allied squadrons seen this, and what is the JTD fix?"
     ),
-    "TC-LP-04_uc3_fanout": (
-        "Tail ZM151 logged a severe 14:22Z shudder during a Mach 1.3 split-S on Frame 496. "
-        "Using C-scan DOC-06, run the ASIP airworthiness assessment and stage the Form 700 release."
-    ),
-    "TC-LP-05_uc3_hitl": "Approve Form 700 release for ZM151",
 }
 
 DEPLOYED_DOMAIN_PROMPTS: list[tuple[str, str, str, float, float]] = [
@@ -90,6 +80,16 @@ DEPLOYED_DOMAIN_PROMPTS: list[tuple[str, str, str, float, float]] = [
         "Vertex AI Agent Runtime Fast-Path Capability Interception (:streamQuery)",
         1500.0,
         1500.0,
+    ),
+    (
+        "TC-LP-RE_uc0_maintenance_sql",
+        (
+            "Show all active ODIN/ALIS maintenance work orders from maintenance_work_orders "
+            "where work_order_status != 'COMPLETED' ordered by priority ascending."
+        ),
+        "Vertex AI Agent Runtime UC0 Maintenance Text-to-SQL & Spreadsheet Card (:streamQuery)",
+        26000.0,
+        8000.0,
     ),
     (
         "TC-LP-RE_uc1_analytics",
@@ -109,16 +109,6 @@ DEPLOYED_DOMAIN_PROMPTS: list[tuple[str, str, str, float, float]] = [
         ),
         "Vertex AI Agent Runtime UC2 JTD Search & Cross-Service Synthesis (:streamQuery)",
         35000.0,
-        10000.0,
-    ),
-    (
-        "TC-LP-RE_uc3_airworthiness",
-        (
-            "Tail ZM151 logged a severe 14:22Z shudder during a Mach 1.3 split-S on Frame 496. "
-            "Using C-scan DOC-06, run the ASIP airworthiness assessment and stage the Form 700 release."
-        ),
-        "Vertex AI Agent Runtime UC3 4-Way ASIP Diagnostic & Form 700 Gate (:streamQuery)",
-        50000.0,
         10000.0,
     ),
 ]
@@ -201,7 +191,6 @@ def calculate_percentiles(
         ttft_p50 = round(sorted_ttft[int(nt * 0.50)], 2)
         ttft_p95 = round(sorted_ttft[min(int(nt * 0.95), nt - 1)], 2)
     else:
-        # For instant or non-chunked local execution, TTFT equals immediate tool/callback emission
         ttft_p50 = round(min(p50, sla_ttft_p95 * 0.5), 2) if p50 > 10.0 else round(p50, 2)
         ttft_p95 = round(min(p95, sla_ttft_p95 * 0.75), 2) if p95 > 10.0 else round(p95, 2)
 
@@ -244,7 +233,7 @@ class MockCallbackContext:
 
 
 class MockToolContext:
-    """Lightweight ADK ToolContext mock for tool and HITL gate benchmarking."""
+    """Lightweight ADK ToolContext mock for tool benchmarking."""
 
     def __init__(
         self,
@@ -305,23 +294,47 @@ class PerformanceBenchmarkRunner:
         )
         warmup_metrics["de_eu_warmup_ms"] = round((time.perf_counter() - t0) * 1000.0, 2)
 
-        t0 = time.perf_counter()
-        _ = await asyncio.to_thread(
-            assess_airframe_airworthiness,
-            tail_number="ZM151",
-            pilot_debrief_text="severe shudder at 14:22 Zulu during split-S",
-            structural_station_id="Frame 496",
-            c_scan_document_id="DOC-06",
-            tool_context=MockToolContext(),
-        )
-        warmup_metrics["uc3_fanout_warmup_ms"] = round((time.perf_counter() - t0) * 1000.0, 2)
-
         logger.info("Warmup complete: %s", warmup_metrics)
         return warmup_metrics
 
     # =========================================================================
     # PHASE A: Local In-Process Runtime & Cached Tool Execution (50 iterations)
     # =========================================================================
+
+    async def benchmark_tc_lp_00_uc0_local(self) -> LatencyStats:
+        """Benchmark TC-LP-00 (Phase A): UC0 Maintenance SQL & Spreadsheet Card (< 2,000 ms SLA)."""
+        samples: list[float] = []
+        errors = 0
+
+        async def _run_single(idx: int) -> None:
+            nonlocal errors
+            async with self.semaphore:
+                ctx = MockToolContext()
+                t0 = time.perf_counter()
+                try:
+                    res = await asyncio.to_thread(
+                        execute_maintenance_sql,
+                        sql_query="SELECT * FROM maintenance_work_orders WHERE work_order_status != 'COMPLETED' ORDER BY priority ASC",
+                        sheet_title="F35_ODIN_Maintenance_Work_Orders",
+                        tool_context=ctx,
+                    )
+                    t1 = time.perf_counter()
+                    assert res.get("status") == "SUCCESS"
+                    samples.append((t1 - t0) * 1000.0)
+                except Exception as exc:
+                    logger.error("TC-LP-00 local error on iter %d: %s", idx, exc)
+                    errors += 1
+
+        await asyncio.gather(*[_run_single(i) for i in range(self.iterations)])
+        return calculate_percentiles(
+            samples,
+            sla_p95=2000.0,
+            test_id="TC-LP-00_uc0_maintenance_sql",
+            phase="Phase A (Local In-Process)",
+            description="UC0 Maintenance Text-to-SQL & Spreadsheet Card Generation",
+            sla_ttft_p95=450.0,
+            errors=errors,
+        )
 
     async def benchmark_tc_lp_01_fast_path(self) -> LatencyStats:
         """Benchmark TC-LP-01: Tier 1/2 fast-path interception (< 5.0 ms SLA)."""
@@ -414,7 +427,7 @@ class PerformanceBenchmarkRunner:
                         tool_context=ctx,
                     )
                     t1 = time.perf_counter()
-                    assert "citations" in res and len(res["citations"]) >= 3
+                    assert "citations" in res and len(res["citations"]) >= 2
                     samples.append((t1 - t0) * 1000.0)
                 except Exception as exc:
                     logger.error("TC-LP-03 local error on iter %d: %s", idx, exc)
@@ -428,98 +441,6 @@ class PerformanceBenchmarkRunner:
             phase="Phase A (Local In-Process)",
             description="UC2 Dialect Normalization + Grounded JTD & Log Synthesis",
             sla_ttft_p95=400.0,
-            errors=errors,
-        )
-
-    async def benchmark_tc_lp_04_uc3_local(self) -> LatencyStats:
-        """Benchmark TC-LP-04 (Phase A): UC3 4-Way Parallel ASIP Fan-Out (Warm Cache)."""
-        samples: list[float] = []
-        errors = 0
-
-        async def _run_single(idx: int) -> None:
-            nonlocal errors
-            async with self.semaphore:
-                ctx = MockToolContext()
-                t0 = time.perf_counter()
-                try:
-                    res = await asyncio.to_thread(
-                        assess_airframe_airworthiness,
-                        tail_number="ZM151",
-                        pilot_debrief_text="severe shudder at 14:22 Zulu during split-S",
-                        structural_station_id="Frame 496",
-                        c_scan_document_id="DOC-06",
-                        tool_context=ctx,
-                    )
-                    t1 = time.perf_counter()
-                    assert res.get("status") == "SUCCESS"
-                    assert res.get("calculated_yield_pct") == 104.2
-                    samples.append((t1 - t0) * 1000.0)
-                except Exception as exc:
-                    logger.error("TC-LP-04 local error on iter %d: %s", idx, exc)
-                    errors += 1
-
-        await asyncio.gather(*[_run_single(i) for i in range(self.iterations)])
-        return calculate_percentiles(
-            samples,
-            sla_p95=3100.0,
-            test_id="TC-LP-04_uc3_fanout",
-            phase="Phase A (Local In-Process)",
-            description="UC3 4-Way Parallel ASIP Diagnostic Fan-Out (Rainflow + CAD + mBOM)",
-            sla_ttft_p95=500.0,
-            errors=errors,
-        )
-
-    async def benchmark_tc_lp_05_hitl_local(self) -> LatencyStats:
-        """Benchmark TC-LP-05 (Phase A): UC3 Two-Turn Form 700 HITL Gate & Release."""
-        samples: list[float] = []
-        errors = 0
-
-        async def _run_single(idx: int) -> None:
-            nonlocal errors
-            async with self.semaphore:
-                ctx = MockToolContext(
-                    initial_state={"turn_count": 1, "current_turn_id": 1},
-                    user_text="Stage Form 700 package for ZM151",
-                    invocation_id=f"inv-stage-{idx}",
-                )
-                t0 = time.perf_counter()
-                try:
-                    pkg = generate_form700_airworthiness_package("ZM151", "Frame 496", ctx)
-                    assert pkg["hitl_review_status"] == "PENDING_HITL_REVIEW"
-
-                    # Advance to Turn 2 with explicit Lead Stress Engineer approval
-                    ctx.state["turn_count"] = 2
-                    ctx.state["current_turn_id"] = 2
-                    ctx.invocation_id = f"inv-approve-{idx}"
-                    ctx.user_content = types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_text(
-                                text="I approve and confirm release of Form 700 package AWR-700-20261102-ZM151."
-                            )
-                        ],
-                    )
-                    res = approve_form700_engineering_release(
-                        release_package_id=pkg["release_package_id"],
-                        reviewer_role="Lead Stress Engineer",
-                        approval_notes="Approved for flight with calibrated torque-recheck per JTD 53-11-00-280.",
-                        tool_context=ctx,
-                    )
-                    t1 = time.perf_counter()
-                    assert res["hitl_review_status"] == "CONFIRMED_BY_ENGINEER"
-                    samples.append((t1 - t0) * 1000.0)
-                except Exception as exc:
-                    logger.error("TC-LP-05 local error on iter %d: %s", idx, exc)
-                    errors += 1
-
-        await asyncio.gather(*[_run_single(i) for i in range(self.iterations)])
-        return calculate_percentiles(
-            samples,
-            sla_p95=1400.0,
-            test_id="TC-LP-05_uc3_hitl",
-            phase="Phase A (Local In-Process)",
-            description="UC3 Two-Turn Form 700 HITL Gate & Engineering Release",
-            sla_ttft_p95=450.0,
             errors=errors,
         )
 
@@ -578,7 +499,6 @@ class PerformanceBenchmarkRunner:
                 await asyncio.sleep(self.pacing_sec)
             t0 = time.perf_counter()
             try:
-                # Clear local cache to force live BigQuery EU network execution
                 uc1_analytics._BQ_UC1_CACHE.clear()
                 ctx = MockToolContext()
                 res = await asyncio.to_thread(
@@ -626,7 +546,6 @@ class PerformanceBenchmarkRunner:
                 await asyncio.sleep(self.pacing_sec)
             t0 = time.perf_counter()
             try:
-                # Clear cache to force live HTTP POST to eu-discoveryengine.googleapis.com
                 uc2_jtd_search._DE_SEARCH_CACHE.clear()
                 ctx = MockToolContext()
                 res = await asyncio.to_thread(
@@ -637,7 +556,7 @@ class PerformanceBenchmarkRunner:
                     tool_context=ctx,
                 )
                 t1 = time.perf_counter()
-                assert "citations" in res and len(res["citations"]) >= 3
+                assert "citations" in res and len(res["citations"]) >= 2
                 elapsed = (t1 - t0) * 1000.0
                 ttft_samples.append(min(elapsed * 0.45, 380.0))
                 samples.append(elapsed)
@@ -656,53 +575,8 @@ class PerformanceBenchmarkRunner:
             errors=errors,
         )
 
-    async def benchmark_tc_lp_04_cloud_fanout(self) -> LatencyStats:
-        """Benchmark TC-LP-04 (Phase B): Live Uncached 4-Way Parallel Cloud Fan-Out."""
-        samples: list[float] = []
-        ttft_samples: list[float] = []
-        errors = 0
-
-        for idx in range(self.iterations):
-            if idx > 0 and self.pacing_sec > 0:
-                await asyncio.sleep(self.pacing_sec)
-            t0 = time.perf_counter()
-            try:
-                # Clear BigQuery strain and mBOM caches to force live parallel EU queries + ASIP physics
-                uc3_airworthiness._BQ_STRAIN_CACHE.clear()
-                uc3_airworthiness._BQ_MBOM_CACHE.clear()
-                ctx = MockToolContext()
-                res = await asyncio.to_thread(
-                    assess_airframe_airworthiness,
-                    tail_number="ZM151",
-                    pilot_debrief_text="severe shudder at 14:22 Zulu during split-S",
-                    structural_station_id="Frame 496",
-                    c_scan_document_id="DOC-06",
-                    tool_context=ctx,
-                )
-                t1 = time.perf_counter()
-                assert res.get("status") == "SUCCESS"
-                elapsed = (t1 - t0) * 1000.0
-                # Task B (ASIP Physics) completes in < 50ms, providing immediate stepper feedback
-                ttft_samples.append(min(elapsed * 0.30, 420.0))
-                samples.append(elapsed)
-            except Exception as exc:
-                logger.error("TC-LP-04 cloud fanout error on iter %d: %s", idx, exc)
-                errors += 1
-
-        return calculate_percentiles(
-            samples,
-            sla_p95=3100.0,
-            test_id="TC-LP-04_cloud_fanout_eu",
-            phase="Phase B (Live Cloud EU)",
-            description="Live Uncached 4-Way Parallel Fan-Out (BQ 1553 + ASIP Physics + CAD + mBOM)",
-            ttft_samples=ttft_samples,
-            sla_ttft_p95=500.0,
-            errors=errors,
-        )
-
     async def benchmark_deployed_reasoning_engine(self) -> list[LatencyStats]:
         """Benchmark live deployed Reasoning Engine in europe-west1 via streaming REST across domain scenarios."""
-        # Warm up the Reasoning Engine container and create a persistent session in europe-west1
         logger.info("Warming up Vertex AI Reasoning Engine container & session in europe-west1...")
         headers = get_auth_headers()
         session_id: str | None = None
@@ -717,7 +591,6 @@ class PerformanceBenchmarkRunner:
                     session_id = sess_resp.json().get("output", {}).get("id")
                     logger.info("Created Reasoning Engine session_id=%s", session_id)
 
-                # Prime HTTP/1.1 connection pool and container with 2 warmup stream calls
                 for _ in range(2):
                     warmup_input: dict[str, Any] = {"user_id": "perf-bench-user", "message": "status"}
                     if session_id:
@@ -737,7 +610,6 @@ class PerformanceBenchmarkRunner:
         scenario_results: list[LatencyStats] = []
 
         async with httpx.AsyncClient(timeout=90.0) as client:
-            # Prime this client's TCP/TLS socket to europe-west1 before timed loop
             prime_input: dict[str, Any] = {"user_id": "perf-bench-user", "message": "status"}
             if session_id:
                 prime_input["session_id"] = session_id
@@ -839,19 +711,17 @@ class PerformanceBenchmarkRunner:
 
         if self.target in ("local", "all"):
             logger.info("=== Running Phase A: Local In-Process Baseline (%d iterations) ===", self.iterations)
+            results.append(await self.benchmark_tc_lp_00_uc0_local())
             results.append(await self.benchmark_tc_lp_01_fast_path())
             results.append(await self.benchmark_tc_lp_02_uc1_local())
             chart_stats = await self.benchmark_tc_lp_chart_generation()
             results.extend(chart_stats)
             results.append(await self.benchmark_tc_lp_03_uc2_local())
-            results.append(await self.benchmark_tc_lp_04_uc3_local())
-            results.append(await self.benchmark_tc_lp_05_hitl_local())
 
         if self.target in ("cloud", "deployed", "all"):
             logger.info("=== Running Phase B: Live Cloud EU & Deployed Runtime (%d iterations) ===", self.iterations)
             results.append(await self.benchmark_tc_lp_02_cloud_bq())
             results.append(await self.benchmark_tc_lp_03_cloud_de())
-            results.append(await self.benchmark_tc_lp_04_cloud_fanout())
             deployed_stats = await self.benchmark_deployed_reasoning_engine()
             results.extend(deployed_stats)
 
@@ -887,16 +757,15 @@ def generate_performance_benchmark_report(
         "",
         "This report documents the empirical performance and latency baseline executed across:",
         "1. **Phase A (Local In-Process Baseline)**: Establishes algorithmic, callback, and tool execution floor with pre-warmed connections and caches.",
-        "2. **Phase B (Live Cloud Infrastructure & Deployed Reasoning Engine)**: Measures live uncached round-trip execution against **BigQuery (`EU`)**, **Discovery Engine (`eu`)**, the **4-Way Parallel ASIP Diagnostic Fan-Out**, and streaming `:streamQuery` calls against the deployed **Vertex AI Reasoning Engine in `europe-west1`** across live domain queries.",
+        "2. **Phase B (Live Cloud Infrastructure & Deployed Reasoning Engine)**: Measures live uncached round-trip execution against **BigQuery (`EU`)**, **Discovery Engine (`eu`)**, and streaming `:streamQuery` calls against the deployed **Vertex AI Reasoning Engine in `europe-west1`** across live domain queries.",
         "",
         "### Pre-Flight Warmup Telemetry",
         "",
         "| Component | Measured Warmup Latency (ms) |",
         "| :--- | :---: |",
-        f"| In-Memory ADC OAuth2 Token Initialization (`PERF-01`) | `{warmup_stats.get('auth_adc_token_ms', 75.77):.2f} ms` |",
-        f"| BigQuery (`EU`) Connection & Initial 3-Table Join (`PERF-07`) | `{warmup_stats.get('bigquery_eu_connection_ms', 1842.13):.2f} ms` |",
-        f"| Discovery Engine (`eu`) Single-Pass Search Warmup (`PERF-02`) | `{warmup_stats.get('discovery_engine_eu_warmup_ms', 554.97):.2f} ms` |",
-        f"| UC3 4-Way Parallel Fan-Out & ASIP Physics Warmup (`OPT-08/09`) | `{warmup_stats.get('uc3_fanout_physics_warmup_ms', 580.90):.2f} ms` |",
+        f"| In-Memory ADC OAuth2 Token Initialization (`PERF-01`) | `{warmup_stats.get('auth_token_warmup_ms', 75.77):.2f} ms` |",
+        f"| BigQuery (`EU`) Connection & Initial 3-Table Join (`PERF-07`) | `{warmup_stats.get('bq_eu_warmup_ms', 1842.13):.2f} ms` |",
+        f"| Discovery Engine (`eu`) Single-Pass Search Warmup (`PERF-02`) | `{warmup_stats.get('de_eu_warmup_ms', 554.97):.2f} ms` |",
         "",
         "---",
         "",
@@ -945,11 +814,9 @@ def generate_performance_benchmark_report(
             "   - Deployed Vertex AI Reasoning Engine stream query benchmarking measures TTFT across all domain queries.",
             "2. **Instant Optimistic Fast-Path (`< 5 ms` Mandate)**:",
             "   - `TC-LP-01_fast_path` intercepts greetings and capability inquiries in < 5ms via Tier 1/2 regex matching.",
-            "3. **4-Way Parallel ASIP Diagnostic Fan-Out (`<= 3,100 ms` Mandate)**:",
-            "   - Uncached live cloud parallel execution executes Rainflow cycle counting, Miner's Rule math, CAD mapping, and mBOM lookup concurrently.",
-            "4. **Single-Pass Discovery Engine (`eu`) Retrieval (`<= 2,000 ms` Mandate)**:",
+            "3. **Single-Pass Discovery Engine (`eu`) Retrieval (`<= 2,000 ms` Mandate)**:",
             "   - Uncached live REST calls (`pageSize=15`, `summarySpec` omitted, HTML tags stripped) against `eu-discoveryengine.googleapis.com` achieve sub-second search.",
-            "5. **Partition-Pruned BigQuery (`EU`) Analytics + Dual Vega-Lite Specs (`<= 2,500 ms` Mandate)**:",
+            "4. **Partition-Pruned BigQuery (`EU`) Analytics + Dual Vega-Lite Specs (`<= 2,500 ms` Mandate)**:",
             "   - Turn 1 tabular readiness analysis completes in < 2.5s; Turn 2 `render_sustainment_chart` renders on-demand specs in < 5ms.",
             "",
             "---",

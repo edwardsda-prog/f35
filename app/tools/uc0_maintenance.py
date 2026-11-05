@@ -373,7 +373,7 @@ def canonicalize_maintenance_sql(
             r"\1 = 'PMC-M'",
         ),
         (
-            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\baircraft_status)\s*=\s*'(?:MC|SERVICEABLE|FLYABLE|FULLY_MISSION_CAPABLE)'",
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\baircraft_status)\s*=\s*'(?:MC|SERVICEABLE|FLYABLE|FULLY_MISSION_CAPABLE|FIT_TO_FLY|FIT TO FLY|FIT)'",
             r"\1 = 'FMC'",
         ),
         # fault_severity
@@ -481,7 +481,7 @@ def canonicalize_maintenance_sql(
             r"\1 = 'RAF Marham'",
         ),
         (
-            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbase_location)\s*=\s*'(?:QNLZ|HMS QE|HMS_QE|QUEEN ELIZABETH|HMS_QUEEN_ELIZABETH)'",
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\bbase_location)\s*=\s*'(?:QNLZ|HMS QE|HMS_QE|QUEEN ELIZABETH|HMS_QUEEN_ELIZABETH|LIZZY|HMS LIZZY|HMS_LIZZY)'",
             r"\1 = 'HMS Queen Elizabeth'",
         ),
         (
@@ -526,6 +526,7 @@ def canonicalize_maintenance_sql(
         for phrase in (
             "queen elizabeth",
             "qnlz",
+            "lizzy",
             "prince of wales",
             "pwls",
             "marham",

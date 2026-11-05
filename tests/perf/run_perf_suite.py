@@ -2,7 +2,7 @@
 
 Executes the full 6-step Performance Test Execution Plan:
 1. Pre-flight Warmup & Credential Verification (Zero subprocess calls)
-2. Phase A: Local In-Process Baseline (50 iterations per scenario TC-LP-01..05)
+2. Phase A: Local In-Process Baseline (50 iterations per scenario TC-LP-00..03)
 3. Phase B: Live Cloud Infrastructure (BigQuery EU, Discovery Engine eu) &
    Deployed Vertex AI Reasoning Engine (europe-west1 :streamQuery, 50 iterations)
 4. TC-LP-FL: 10-User Flight-Line Concurrency Load Test via Locust
@@ -31,15 +31,12 @@ from pydantic import BaseModel
 
 from app.callbacks import fast_path_before_model_callback
 from app.config import COMPUTE_REGION, DE_LOCATION, GEMINI_APP_ID, PROJECT_ID
+from app.tools.uc0_maintenance import execute_maintenance_sql
 from app.tools.uc1_analytics import (
     check_actuator_fatigue_and_depot_inventory,
     recommend_tail_swap_and_replenishment,
 )
 from app.tools.uc2_jtd_search import search_technical_manuals_and_repair_logs
-from app.tools.uc3_airworthiness import (
-    assess_airframe_airworthiness,
-    generate_form700_airworthiness_package,
-)
 from tests.perf.benchmark_harness import (
     RESULTS_DIR,
     LatencyStats,
@@ -62,6 +59,11 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 gateway_app = FastAPI(title="F-35 Flight-Line Sustainment Benchmark Gateway")
 
 
+class UC0Request(BaseModel):
+    sql_query: str = "SELECT * FROM maintenance_work_orders WHERE work_order_status != 'COMPLETED' ORDER BY priority ASC"
+    sheet_title: str = "F35_ODIN_Maintenance_Work_Orders"
+
+
 class UC1Request(BaseModel):
     base_location: str = "RAF Marham"
     hours_to_limit_window: float = 50.0
@@ -76,18 +78,22 @@ class UC2Request(BaseModel):
     subsystem_filter: str = "53-30"
 
 
-class UC3Request(BaseModel):
-    tail_number: str = "ZM151"
-    pilot_debrief_text: str = "severe shudder at 14:22 Zulu during defensive split-S"
-    structural_station_id: str = "Frame 496"
-    c_scan_document_id: str = "DOC-06"
-
-
 class FastPathRequest(BaseModel):
     message: str = "status"
 
 
 _gateway_req_counter = 0
+
+
+@gateway_app.post("/v1/sustainment/uc0/sql")
+async def handle_uc0(req: UC0Request) -> dict[str, Any]:
+    ctx = MockToolContext()
+    return await asyncio.to_thread(
+        execute_maintenance_sql,
+        sql_query=req.sql_query,
+        sheet_title=req.sheet_title,
+        tool_context=ctx,
+    )
 
 
 @gateway_app.post("/v1/sustainment/uc1/analytics")
@@ -129,32 +135,6 @@ async def handle_uc2(req: UC2Request) -> dict[str, Any]:
         subsystem_filter=req.subsystem_filter,
         tool_context=ctx,
     )
-
-
-@gateway_app.post("/v1/sustainment/uc3/airworthiness")
-async def handle_uc3(req: UC3Request) -> dict[str, Any]:
-    global _gateway_req_counter
-    _gateway_req_counter += 1
-    if _gateway_req_counter % 5 == 0:
-        from app.tools import uc3_airworthiness
-        uc3_airworthiness._BQ_STRAIN_CACHE.clear()
-        uc3_airworthiness._BQ_MBOM_CACHE.clear()
-    ctx = MockToolContext()
-    diag = await asyncio.to_thread(
-        assess_airframe_airworthiness,
-        tail_number=req.tail_number,
-        pilot_debrief_text=req.pilot_debrief_text,
-        structural_station_id=req.structural_station_id,
-        c_scan_document_id=req.c_scan_document_id,
-        tool_context=ctx,
-    )
-    pkg = generate_form700_airworthiness_package(
-        tail_number=req.tail_number,
-        station_id=req.structural_station_id,
-        tool_context=ctx,
-    )
-    diag["form700_package"] = pkg
-    return diag
 
 
 @gateway_app.post("/v1/sustainment/fastpath")
@@ -285,8 +265,8 @@ def generate_markdown_benchmark_report(
         "",
         "This report documents the empirical performance and latency baseline executed in accordance with [`PERFORMANCE_TEST_SPEC.md`](./PERFORMANCE_TEST_SPEC.md) across:",
         "1. **Phase A (Local In-Process Baseline — 50 Iterations/Scenario)**: Establishes the algorithmic, callback, and tool execution floor with pre-warmed connections and caches.",
-        "2. **Phase B (Live Cloud Infrastructure & Deployed Reasoning Engine — 50 Iterations/Scenario)**: Measures live uncached round-trip execution against **BigQuery (`EU`)**, **Discovery Engine (`eu`)**, the **4-Way Parallel ASIP Diagnostic Fan-Out**, and streaming `:streamQuery` calls against the deployed **Vertex AI Reasoning Engine in `europe-west1`**.",
-        "3. **Flight-Line Concurrency Load Profile (`TC-LP-FL` — 10 Virtual Engineers)**: Headless Locust load test simulating 10 simultaneous flight-line engineers (40% UC2 JTD Search, 35% UC1 Supply Analytics, 20% UC3 Airworthiness Fan-Out, 5% Fast-Path).",
+        "2. **Phase B (Live Cloud Infrastructure & Deployed Reasoning Engine — 50 Iterations/Scenario)**: Measures live uncached round-trip execution against **BigQuery (`EU`)**, **Discovery Engine (`eu`)**, and streaming `:streamQuery` calls against the deployed **Vertex AI Reasoning Engine in `europe-west1`**.",
+        "3. **Flight-Line Concurrency Load Profile (`TC-LP-FL` — 10 Virtual Engineers)**: Headless Locust load test simulating 10 simultaneous flight-line engineers (45% UC2 JTD Search, 35% UC1 Supply Analytics, 15% UC0 Maintenance SQL, 5% Fast-Path).",
         "",
         "### Pre-Flight Warmup Telemetry",
         "",
@@ -295,7 +275,6 @@ def generate_markdown_benchmark_report(
         f"| In-Memory ADC OAuth2 Token Initialization (`PERF-01`) | `{warmup_stats.get('auth_token_warmup_ms', 0.0):.2f} ms` |",
         f"| BigQuery (`EU`) Connection & Initial 3-Table Join (`PERF-07`) | `{warmup_stats.get('bq_eu_warmup_ms', 0.0):.2f} ms` |",
         f"| Discovery Engine (`eu`) Single-Pass Search Warmup (`PERF-02`) | `{warmup_stats.get('de_eu_warmup_ms', 0.0):.2f} ms` |",
-        f"| UC3 4-Way Parallel Fan-Out & ASIP Physics Warmup (`OPT-08/09`) | `{warmup_stats.get('uc3_fanout_warmup_ms', 0.0):.2f} ms` |",
         "",
         "---",
         "",
@@ -346,9 +325,9 @@ def generate_markdown_benchmark_report(
     )
 
     weights = {
-        "TC-LP-03_UC2_JTD_Search": "40%",
+        "TC-LP-03_UC2_JTD_Search": "45%",
         "TC-LP-02_UC1_Supply_Analytics": "35%",
-        "TC-LP-04_UC3_Airworthiness_FanOut": "20%",
+        "TC-LP-00_UC0_Maintenance_SQL": "15%",
         "TC-LP-01_FastPath_Status": "5%",
         "Aggregated": "100%",
     }
@@ -373,12 +352,10 @@ def generate_markdown_benchmark_report(
             "   - Against the live deployed Vertex AI Reasoning Engine (`europe-west1`), connection-pooled `:streamQuery` calls achieved a warm TTFT $p50$ of **`"
             + f"{cloud_results[-1].ttft_p50_ms:.2f} ms`** and TTFT $p95$ of **`{cloud_results[-1].ttft_p95_ms:.2f} ms`** (`<= 500 ms` target).",
             "2. **Instant Optimistic Fast-Path (`< 5 ms` Mandate)**:",
-            f"   - `TC-LP-01_fast_path` executed 50 iterations with $p50 = {local_results[0].p50_ms:.2f}\\text{{ ms}}$ and $p95 = {local_results[0].p95_ms:.2f}\\text{{ ms}}$ (`< 5.0 ms` SLA), completely bypassing LLM inference for health/status checks and short greetings.",
-            "3. **4-Way Parallel ASIP Diagnostic Fan-Out (`<= 3,100 ms` Mandate)**:",
-            f"   - Uncached live cloud parallel execution (`TC-LP-04_cloud_fanout_eu`) completed in $p50 = {cloud_results[2].p50_ms:.2f}\\text{{ ms}}$ and $p95 = {cloud_results[2].p95_ms:.2f}\\text{{ ms}}$ (`<= 3,100 ms` SLA), with deterministic Rainflow & Palmgren-Miner math (`D = 0.0042`, `104.2%` yield) executing in-process in `< 5.0 ms`.",
-            "4. **Single-Pass Discovery Engine (`eu`) Retrieval (`<= 2,000 ms` Mandate)**:",
+            f"   - `TC-LP-01_fast_path` executed 50 iterations with $p50 = {local_results[1].p50_ms:.2f}\\text{{ ms}}$ and $p95 = {local_results[1].p95_ms:.2f}\\text{{ ms}}$ (`< 5.0 ms` SLA), completely bypassing LLM inference for health/status checks and short greetings.",
+            "3. **Single-Pass Discovery Engine (`eu`) Retrieval (`<= 2,000 ms` Mandate)**:",
             f"   - Uncached live REST calls (`pageSize=15`, `summarySpec` omitted, HTML tags stripped) against `eu-discoveryengine.googleapis.com` (`TC-LP-03_cloud_de_eu`) achieved $p50 = {cloud_results[1].p50_ms:.2f}\\text{{ ms}}$ and $p95 = {cloud_results[1].p95_ms:.2f}\\text{{ ms}}$ (`<= 2,000 ms` SLA).",
-            "5. **Partition-Pruned BigQuery (`EU`) Analytics + Dual Vega-Lite Specs (`<= 2,500 ms` Mandate)**:",
+            "4. **Partition-Pruned BigQuery (`EU`) Analytics + Dual Vega-Lite Specs (`<= 2,500 ms` Mandate)**:",
             f"   - Uncached live BigQuery `EU` 3-table queries + Vega-Lite v5 chart generation (`TC-LP-02_cloud_bq_eu`) achieved $p50 = {cloud_results[0].p50_ms:.2f}\\text{{ ms}}$ and $p95 = {cloud_results[0].p95_ms:.2f}\\text{{ ms}}$ (`<= 2,500 ms` SLA).",
             "",
             "---",
@@ -424,11 +401,10 @@ async def main() -> None:
     # Step 3: Phase A Local Baseline (50 iterations per scenario)
     logger.info("Executing Phase A: Local In-Process Baseline (%d iterations/scenario)...", args.iterations)
     local_results = [
+        await runner.benchmark_tc_lp_00_uc0_local(),
         await runner.benchmark_tc_lp_01_fast_path(),
         await runner.benchmark_tc_lp_02_uc1_local(),
         await runner.benchmark_tc_lp_03_uc2_local(),
-        await runner.benchmark_tc_lp_04_uc3_local(),
-        await runner.benchmark_tc_lp_05_hitl_local(),
     ]
     (RESULTS_DIR / "perf_results_local.json").write_text(
         json.dumps(
@@ -445,11 +421,11 @@ async def main() -> None:
 
     # Step 4a: Phase B Live Cloud Infrastructure & Deployed Reasoning Engine (50 iterations)
     logger.info("Executing Phase B: Live Cloud EU & Deployed Reasoning Engine (%d iterations/scenario)...", args.iterations)
+    deployed_stats = await runner.benchmark_deployed_reasoning_engine()
     cloud_results = [
         await runner.benchmark_tc_lp_02_cloud_bq(),
         await runner.benchmark_tc_lp_03_cloud_de(),
-        await runner.benchmark_tc_lp_04_cloud_fanout(),
-        await runner.benchmark_deployed_reasoning_engine(num_requests=args.iterations),
+        *deployed_stats,
     ]
     (RESULTS_DIR / "perf_results_cloud.json").write_text(
         json.dumps(

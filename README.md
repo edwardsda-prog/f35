@@ -4,7 +4,7 @@
 [![Gemini Enterprise](https://img.shields.io/badge/Gemini%20Enterprise-eu-orange.svg)](https://cloud.google.com/gemini)
 [![Region](https://img.shields.io/badge/GCP%20Region-europe--west1%20%28Belgium%29-green.svg)](https://cloud.google.com/compute/docs/regions-zones)
 
-> **Specification Reference:** [SA_F35.md](./SA_F35.md) (`SDD-GE-F35-001`, v1.3)  
+> **Specification Reference:** [SA_F35.md](./SA_F35.md) (`SDD-GE-F35-001`, v1.4)  
 > **Multi-Agent Orchestration & Operational Invariants:** [AGENTS.md](./AGENTS.md)  
 > **Phase 0 Engineering Specification:** [.agents-cli-spec.md](./.agents-cli-spec.md)
 
@@ -14,16 +14,14 @@
 
 The **F-35 Lightning II Fleet Sustainment Agent Platform** is an enterprise-grade autonomous reasoning engine deployed to **Google Cloud Agent Platform** and published to **Gemini Enterprise Search & Conversation** (App: **`F35 Support`** in `eu`).
 
-Built on **ADK 2.0 (`google-adk >= 2.0.0`)** and managed via `agents-cli`, the platform unifies four primary sustainment operational use cases:
+Built on **ADK 2.0 (`google-adk >= 2.0.0`)** and managed via `agents-cli`, the platform unifies three primary sustainment operational pillars:
 
 0. **UC0 / UC0.1 / UC0.5: Conversational Maintenance Data Warehouse (Text-to-SQL, Multi-Table JOINs, 3-Layer Semantic Canonicalizer & Spreadsheet Card)**  
-   Translates natural-language maintenance queries into pure dynamic read-only BigQuery Standard SQL (`SELECT` and multi-table `JOIN`s) against Lockheed Martin ODIN / UK MOD Form 707A work orders (`maintenance_work_orders`), post-sortie PHM / BIT fault events (`phm_bit_fault_events` — UC 0.1), and SQEP / calibrated tooling readiness (`work_center_tooling_and_sqep` — UC 0.5) across the 9-table, 900-record (`100` records per table) F-35 Data Warehouse in `EU`. Protected by a generalized **3-Layer Operational Semantic Ontology & Deterministic SQL Canonicalizer (`ISS-013`)** that resolves Carrier Strike Group (`RAF Marham` MOB + `HMS Queen Elizabeth` & `HMS Prince of Wales` afloat platforms), squadron shorthand, active work-order lifecycles (`work_order_status != 'COMPLETED'`), and readiness/priority synonyms with automatic zero-row recovery. Renders screen-fitted Excel / Google Sheets-like Spreadsheet Cards with Column Letters (`A`..`Z`), Status/Severity/Calibration Badges, and Formula Summary Footers (`=COUNTA()`, `=SUM()`, `=AVERAGE()`).
+   Translates natural-language maintenance queries into pure dynamic read-only BigQuery Standard SQL (`SELECT` and multi-table `JOIN`s) against Lockheed Martin ODIN / UK MOD Form 707A work orders (`maintenance_work_orders`), post-sortie PHM / BIT fault events (`phm_bit_fault_events` — UC 0.1), and SQEP / calibrated tooling readiness (`work_center_tooling_and_sqep` — UC 0.5) across the 6-table, 600-record (`100` records per table) F-35 Data Warehouse in `EU`. Protected by a generalized **3-Layer Operational Semantic Ontology & Deterministic SQL Canonicalizer (`ISS-013`)** that resolves Carrier Strike Group (`RAF Marham` MOB + `HMS Queen Elizabeth` & `HMS Prince of Wales` afloat platforms), squadron shorthand, active work-order lifecycles (`work_order_status != 'COMPLETED'`), and readiness/priority synonyms with automatic zero-row recovery. Renders screen-fitted Excel / Google Sheets-like Spreadsheet Cards with Column Letters (`A`..`Z`), Status/Severity/Calibration Badges, and Formula Summary Footers (`=COUNTA()`, `=SUM()`, `=AVERAGE()`).
 1. **UC1: Predictive Component Health, Depot Replenishment & Presentation Graphics**  
-   Cross-analyzes BigQuery 200 Hz strain telemetry (`airframe_component_telemetry`), global inventory (`global_depot_inventory`), and sortie schedules (`squadron_sortie_schedule`) to trigger automated supply alerts, recommend sortie tail swaps, generate inline Vega-Lite visualizations, and dynamically render publication-ready 16:9 widescreen presentation slide graphics on the fly in memory (< 790 ms) with direct GCS download links.
+   Cross-analyzes BigQuery airframe component telemetry (`airframe_component_telemetry`), global inventory (`global_depot_inventory`), and sortie schedules (`squadron_sortie_schedule`) to trigger automated supply alerts, recommend sortie tail swaps, generate inline Vega-Lite visualizations, and dynamically render publication-ready 16:9 widescreen presentation slide graphics on the fly in memory (< 790 ms) with direct GCS download links.
 2. **UC2: Discrepancy Diagnostics & S1000D Maintenance Grounding**  
-   Performs grounded single-pass semantic searches across S1000D Joint Technical Data (`ukd-f35-jtd-ietm-ds`) and 5-year cross-service maintenance narratives (`ukd-f35-narrative-logs-ds`), normalizing RAF/RN/USAF/USMC technical dialect variations and eliminating phantom BIT discrepancies.
-3. **UC3: Dynamic Flight Envelope Exceedance & HITL Airworthiness Release**  
-   Executes a sub-3.1s parallel 4-way fan-out diagnosing high-G flight exceedances: 1553 bus sensor alignment, deterministic Palmgren-Miner's Rule structural fatigue calculation, multimodal ultrasonic NDI C-scan analysis (`DOC-06`) with 3D CAD fastener mapping, and maintenance BOM lot auditing, culminating in an airworthiness Form 700 / AFTO Form 781 Human-in-the-Loop engineering release gate.
+   Performs grounded single-pass semantic searches across S1000D Joint Technical Data (`ukd-f35-jtd-ietm-ds`) and 5-year cross-service maintenance narratives (`ukd-f35-narrative-logs-ds`), normalizing RAF/RN/USAF/USMC technical dialect variations (`DOC-01`, `DOC-02`, `DOC-03`, `DOC-09`) and resolving unexplained zero-BIT discrepancies.
 
 ---
 
@@ -31,7 +29,7 @@ Built on **ADK 2.0 (`google-adk >= 2.0.0`)** and managed via `agents-cli`, the p
 
 - **Target GCP Project:** `antig-dave` (Project Number: `284046449012`)
 - **Compute & Agent Runtime:** Strictly deployed to **`europe-west1` (Belgium)**.
-- **BigQuery:** Provisioned in **`EU`** multi-region (`ukd_f35_sustainment_demo`).
+- **BigQuery:** Provisioned in **`EU`** multi-region (`ukd_f35_sustainment_demo` — 6 tables × 100 records = 600 records).
 - **Discovery Engine & Gemini Enterprise:** Provisioned in **`eu`** (`locations/eu/collections/default_collection/engines/f35-support`).
 - **Authentication:** Dedicated Service Account `f35-sustainment-runtime-sa@antig-dave.iam.gserviceaccount.com` (Zero Agent Gateway for Demo Track).
 - **LLM Configuration:** `gemini-3.8-flash` initialized with Enterprise SDK requirements (`enterprise=True`, `location="global"`, `thinking_level="LOW"`, `temperature=0.0`).
@@ -45,24 +43,25 @@ Built on **ADK 2.0 (`google-adk >= 2.0.0`)** and managed via `agents-cli`, the p
 ├── AGENTS.md                        # Master multi-agent orchestration & architectural specification
 ├── .agents-cli-spec.md              # Phase 0 engineering specification
 ├── SA_F35.md                        # Source solution architecture design
+├── DEMO_STORYBOARD.md               # Executive demonstration storyboard (6-Prompt Golden Thread)
 ├── README.md                        # Project documentation
 ├── .gitignore                       # Git ignore rules
 ├── app/                             # ADK 2.0 Agent Runtime package (App(name="app"))
-│   ├── sub_agents/                  # Specialist ADK sub-agents (Maintenance Data, Analytics, Search, Airworthiness)
-│   ├── physics/                     # Deterministic Rainflow & Palmgren-Miner ASIP engine
+│   ├── sub_agents/                  # Specialist ADK sub-agents (Maintenance Data, Analytics, Search)
 │   ├── seed_data/                   # Authoritative seed records & schemas for BigQuery / DE
-│   │   └── schemas/                 # Declarative BigQuery JSON table schemas
+│   │   └── schemas/                 # 6 Declarative BigQuery JSON table schemas
 │   └── tools/                       # Human-friendly tool implementations & on-the-fly chart painter
 ├── packages/                        # Monorepo specialization boundaries
-│   ├── api/                         # Backend Implementer boundary (API, data layer, physics)
+│   ├── api/                         # Backend Implementer boundary (API, data layer, SQL canonicalizer)
 │   │   └── AGENTS.md
-│   └── web/                         # Frontend Implementer boundary (Spreadsheet Card, Vega-Lite Canvas & HITL Studio)
+│   └── web/                         # Frontend Implementer boundary (Spreadsheet Card & Vega-Lite Canvas)
 │       └── AGENTS.md
 ├── scripts/                         # Synthetic corpus generation & infra bootstrapping
 └── tests/                           # QA / Test Agent boundary
     ├── AGENTS.md
-    ├── unit/                        # Deterministic physics & HITL unit tests
-    └── eval/                        # agents-cli eval test suites (TC-SQ-01..05 & TC-LP-01..05)
+    ├── unit/                        # Deterministic unit & semantic SQL guardrail tests
+    ├── e2e/                         # 5-tier end-to-end verification suite
+    └── eval/                        # agents-cli eval test suites (TC-SQ-00..05 & TC-LP-00..05)
         └── datasets/
 ```
 
@@ -73,4 +72,4 @@ Built on **ADK 2.0 (`google-adk >= 2.0.0`)** and managed via `agents-cli`, the p
 Following strict platform governance, development proceeds across three phases:
 1. **Phase 1: Plan** — Orchestrator creates design, verifies invariants, and secures sign-off.
 2. **Phase 2: Build** — Autonomous specialized subagents work in parallel across `/packages/api`, `/packages/web`, and `/tests` in isolated workspaces.
-3. **Phase 3: Integration** — Orchestrator integrates branches, executes verification suite (`TC-SQ-01..05`, `TC-LP-01..05`), and triggers deployment/publication via `agents-cli`.
+3. **Phase 3: Integration** — Orchestrator integrates branches, executes verification suite (`TC-SQ-00..05`, `TC-LP-00..05`), and triggers deployment/publication via `agents-cli`.

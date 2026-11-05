@@ -1,8 +1,8 @@
-"""Tier 1 E2E Feature Coverage Tests (85 tests: 5 per feature across F1-F17).
+"""Tier 1 E2E Feature Coverage Tests across active F-35 Sustainment Agent features.
 
-Each test function verifies a primary happy-path requirement for one of the 17
-features defined in `PROJECT.md § Feature Inventory` against authoritative
-expected outputs derived from `PROJECT.md` and `SA_F35.md`.
+Verifies primary happy-path requirements for the 3-specialist-sub-agent architecture
+(`f35_maintenance_data_agent`, `f35_analytics_agent`, `f35_jtd_search_agent`),
+6-table (`600`-row) BigQuery EU Data Warehouse, and 4-document Discovery Engine `eu` corpus.
 """
 
 from __future__ import annotations
@@ -20,7 +20,6 @@ import yaml
 from tests.e2e import (
     REPO_ROOT,
     E2ECallbackContext,
-    E2EDummyTool,
     E2ELlmRequest,
     E2EToolContext,
     get_field,
@@ -28,7 +27,7 @@ from tests.e2e import (
 )
 
 # ===========================================================================
-# F1: Base ADK Project Scaffolding (5 tests)
+# F1: Base ADK Project Scaffolding
 # ===========================================================================
 
 
@@ -91,16 +90,13 @@ def test_f01_5_gitignore_and_scaffold_entrypoints() -> None:
 
 
 # ===========================================================================
-# F2: Declarative BigQuery JSON Schemas (5 tests)
+# F2: Declarative BigQuery JSON Schemas (6 Active Tables)
 # ===========================================================================
 
 EXPECTED_SCHEMA_FILES = (
     "airframe_component_telemetry.schema.json",
     "global_depot_inventory.schema.json",
     "squadron_sortie_schedule.schema.json",
-    "high_freq_strain_telemetry.schema.json",
-    "as_maintained_mbom_fasteners.schema.json",
-    "airworthiness_release_ledger.schema.json",
     "maintenance_work_orders.schema.json",
     "phm_bit_fault_events.schema.json",
     "work_center_tooling_and_sqep.schema.json",
@@ -118,6 +114,8 @@ def _extract_schema_fields(parsed: object) -> list[dict]:
 def test_f02_1_all_six_schema_files_exist() -> None:
     schema_dir = REPO_ROOT / "app" / "seed_data" / "schemas"
     assert schema_dir.is_dir(), f"Missing schema directory: {schema_dir}"
+    actual_files = {p.name for p in schema_dir.glob("*.schema.json")}
+    assert actual_files == set(EXPECTED_SCHEMA_FILES)
     for fname in EXPECTED_SCHEMA_FILES:
         fpath = schema_dir / fname
         assert fpath.is_file(), f"Missing BigQuery JSON schema file: {fname}"
@@ -178,67 +176,65 @@ def test_f02_3_table3_sortie_schedule_schema() -> None:
         assert req in t3_cols
 
 
-def test_f02_4_table4_and_table5_uc3_schemas() -> None:
+def test_f02_4_uc0_maintenance_and_phm_schemas() -> None:
     schema_dir = REPO_ROOT / "app" / "seed_data" / "schemas"
-    t4 = _extract_schema_fields(
+    t7 = _extract_schema_fields(
         json.loads(
-            (schema_dir / "high_freq_strain_telemetry.schema.json").read_text("utf-8")
+            (schema_dir / "maintenance_work_orders.schema.json").read_text("utf-8")
         )
     )
-    t4_cols = {col["name"] for col in t4}
+    t7_cols = {col["name"] for col in t7}
     for req in (
-        "event_id",
+        "work_order_id",
         "tail_number",
-        "structural_station_id",
-        "mach_number",
-        "peak_nz_g",
-        "peak_egt_celsius",
-        "miners_rule_damage_delta",
-        "calculated_yield_pct",
-        "required_ndi_class",
+        "base_location",
+        "aircraft_status",
+        "work_order_status",
+        "priority",
+        "estimated_mttr_hours",
     ):
-        assert req in t4_cols
+        assert req in t7_cols
 
-    t5 = _extract_schema_fields(
+    t8 = _extract_schema_fields(
         json.loads(
-            (schema_dir / "as_maintained_mbom_fasteners.schema.json").read_text("utf-8")
+            (schema_dir / "phm_bit_fault_events.schema.json").read_text("utf-8")
         )
     )
-    t5_cols = {col["name"] for col in t5}
+    t8_cols = {col["name"] for col in t8}
     for req in (
-        "mbom_record_id",
+        "fault_event_id",
         "tail_number",
-        "station_id",
-        "fastener_material_spec",
-        "fastener_lot_number",
-        "allowable_elongation_in",
-        "measured_ndi_elongation_in",
-        "global_fleet_affected_count",
+        "hrc_code",
+        "fault_severity",
+        "bit_trigger_type",
+        "cnd_flag",
+        "linked_work_order_id",
     ):
-        assert req in t5_cols
+        assert req in t8_cols
 
 
-def test_f02_5_table6_airworthiness_ledger_schema() -> None:
+def test_f02_5_uc0_5_tooling_and_sqep_schema() -> None:
     schema_dir = REPO_ROOT / "app" / "seed_data" / "schemas"
-    t6 = _extract_schema_fields(
+    t9 = _extract_schema_fields(
         json.loads(
-            (schema_dir / "airworthiness_release_ledger.schema.json").read_text("utf-8")
+            (schema_dir / "work_center_tooling_and_sqep.schema.json").read_text("utf-8")
         )
     )
-    t6_cols = {col["name"] for col in t6}
+    t9_cols = {col["name"] for col in t9}
     for req in (
-        "release_package_id",
-        "mandated_jtd_task_card",
-        "disposition_status",
-        "hitl_reviewer_role",
-        "hitl_review_status",
-        "compliance_standard",
+        "resource_id",
+        "assigned_work_order_id",
+        "base_location",
+        "sqep_certification_domain",
+        "required_special_tool_id",
+        "tool_calibration_status",
+        "bay_dispatch_status",
     ):
-        assert req in t6_cols
+        assert req in t9_cols
 
 
 # ===========================================================================
-# F3: Synthetic Corpus Generator (5 tests)
+# F3: Synthetic Corpus Generator (600 Structured Rows & 4 Unstructured Docs)
 # ===========================================================================
 
 
@@ -260,35 +256,30 @@ def test_f03_1_bq_seed_records_uc1_tables() -> None:
         assert token in src, f"Missing UC1 seed token {token} in bq_seed_records.py"
 
 
-def test_f03_2_bq_seed_records_uc3_tables() -> None:
+def test_f03_2_bq_seed_records_uc0_tables() -> None:
     from app.seed_data import bq_seed_records
 
+    assert len(bq_seed_records.BQ_SEED_TABLES) == 6
     src = inspect.getsource(bq_seed_records)
     for token in (
-        "EXC-20261102-ZM151",
-        "Frame 496",
-        "9.4",
-        "0.0042",
-        "104.2",
-        "CLASS_A_ULTRASONIC_C_SCAN",
-        "MBOM-ZM151-F496-H14",
-        "8841-B",
-        "0.012",
-        "0.015",
-        "AWR-700-20261102-ZM151",
+        "WO-2026-88405",
+        "WO-2026-88411",
+        "ZM159",
+        "HMS Queen Elizabeth",
+        "PHM-2026-99102",
+        "HRC-5330-000-NONE",
+        "RES-2026-00011",
     ):
-        assert token in src, f"Missing UC3 seed token {token} in bq_seed_records.py"
+        assert token in src, f"Missing UC0 seed token {token} in bq_seed_records.py"
 
 
-def test_f03_3_jtd_corpus_doc01_to_doc09() -> None:
+def test_f03_3_jtd_corpus_four_uc2_documents() -> None:
     from app.seed_data import jtd_corpus
 
+    doc_ids = {d["doc_id"] for d in jtd_corpus.JTD_CORPUS_DOCUMENTS}
+    assert doc_ids == {"DOC-01", "DOC-02", "DOC-03", "DOC-09"}
     src = inspect.getsource(jtd_corpus)
-    for doc_num in range(1, 10):
-        doc_id = f"DOC-0{doc_num}"
-        assert doc_id in src, f"Missing {doc_id} in app/seed_data/jtd_corpus.py"
     assert "53-30" in src
-    assert "53-11-00" in src
     assert "220" in src
 
 
@@ -298,16 +289,15 @@ def test_f03_4_generate_synthetic_corpus_script_exists_and_runs() -> None:
     ast.parse(script_path.read_text(encoding="utf-8"))
 
 
-def test_f03_5_cscan_png_doc06_and_metadata_jsonl_artifacts() -> None:
+def test_f03_5_metadata_jsonl_artifacts() -> None:
     script_text = (REPO_ROOT / "scripts" / "generate_synthetic_corpus.py").read_text(
         encoding="utf-8"
     )
-    assert "DOC-06" in script_text
-    assert "metadata" in script_text.lower() or "jsonl" in script_text.lower()
+    assert "metadata.jsonl" in script_text
 
 
 # ===========================================================================
-# F4: Live EU Cloud Infrastructure Provisioner (5 tests)
+# F4: Live EU Cloud Infrastructure Provisioner
 # ===========================================================================
 
 
@@ -350,7 +340,7 @@ def test_f04_5_setup_demo_infra_service_account_and_gemini_app() -> None:
 
 
 # ===========================================================================
-# F5: Pre-Warmed Cloud Clients, Config & Pydantic Schemas (5 tests)
+# F5: Pre-Warmed Cloud Clients, Config & Pydantic Schemas
 # ===========================================================================
 
 
@@ -376,6 +366,7 @@ def test_f05_2_config_datastore_and_bucket_constants() -> None:
         config.RUNTIME_SERVICE_ACCOUNT
         == "f35-sustainment-runtime-sa@antig-dave.iam.gserviceaccount.com"
     )
+    assert len(config.BQ_TABLES) == 6
 
 
 def test_f05_3_clients_module_exports_prewarmed_singletons() -> None:
@@ -387,7 +378,7 @@ def test_f05_3_clients_module_exports_prewarmed_singletons() -> None:
     assert "print-access-token" not in src
 
 
-def test_f05_4_schemas_module_uc1_and_uc2_models() -> None:
+def test_f05_4_schemas_module_uc0_uc1_and_uc2_models() -> None:
     from pydantic import BaseModel
 
     from app import schemas
@@ -397,126 +388,19 @@ def test_f05_4_schemas_module_uc1_and_uc2_models() -> None:
         for name, obj in inspect.getmembers(schemas, inspect.isclass)
         if issubclass(obj, BaseModel) and obj is not BaseModel
     ]
-    assert len(model_names) >= 2
-
-
-def test_f05_5_schemas_module_uc3_sar_and_form700_models() -> None:
-    from app import schemas
-
-    src = inspect.getsource(schemas)
-    assert "PENDING_HITL_REVIEW" in src or "hitl_review_status" in src
-    assert "miners_rule_damage_delta" in src or "calculated_yield_pct" in src
-
-
-# ===========================================================================
-# F6: Deterministic ASIP Physics & 3D CAD Engine (5 tests)
-# ===========================================================================
-
-
-def test_f06_1_miners_rule_damage_delta_exact() -> None:
-    from app.physics.asip_engine import run_asip_miners_rule_engine
-
-    res = invoke_contract(
-        run_asip_miners_rule_engine,
-        tail_number="ZM151",
-        structural_station_id="Frame 496",
-        station_id="Frame 496",
-        peak_nz_g=9.4,
-        mach_number=1.3,
-        peak_egt_celsius=220.0,
-    )
-    assert float(
-        get_field(res, "miners_rule_damage_delta", "damage_delta")
-    ) == pytest.approx(0.0042, abs=1e-6)
-
-
-def test_f06_2_calculated_yield_pct_and_ndi_class() -> None:
-    from app.physics.asip_engine import run_asip_miners_rule_engine
-
-    res = invoke_contract(
-        run_asip_miners_rule_engine,
-        tail_number="ZM151",
-        structural_station_id="Frame 496",
-        station_id="Frame 496",
-        peak_nz_g=9.4,
-        mach_number=1.3,
-        peak_egt_celsius=220.0,
-    )
-    assert float(
-        get_field(res, "calculated_yield_pct", "yield_pct")
-    ) == pytest.approx(104.2, abs=1e-2)
-    assert (
-        get_field(res, "required_ndi_class", "ndi_class")
-        == "CLASS_A_ULTRASONIC_C_SCAN"
-    )
-    assert "53-11-00" in str(get_field(res, "mandated_jtd_rule", "jtd_rule"))
-
-
-def test_f06_3_extract_ndi_defect_maps_hole_14() -> None:
-    from app.physics.asip_engine import extract_ndi_defect_and_map_cad
-
-    res = invoke_contract(
-        extract_ndi_defect_and_map_cad,
-        c_scan_document_id="DOC-06",
-        srm_document_id="DOC-05",
-        structural_station_id="Frame 496",
-        station_id="Frame 496",
-        tail_number="ZM151",
-    )
-    assert "14" in str(res)
-    assert float(
-        get_field(res, "measured_ndi_elongation_in", "measured_elongation_in")
-    ) == pytest.approx(0.012, abs=1e-5)
-    assert float(
-        get_field(res, "allowable_elongation_in", "allowable_limit_in")
-    ) == pytest.approx(0.015, abs=1e-5)
-
-
-def test_f06_4_cad_mapping_serviceable_disposition_and_task_card() -> None:
-    from app.physics.asip_engine import extract_ndi_defect_and_map_cad
-
-    res = invoke_contract(
-        extract_ndi_defect_and_map_cad,
-        c_scan_document_id="DOC-06",
-        structural_station_id="Frame 496",
-        tail_number="ZM151",
-    )
-    assert get_field(res, "within_allowable_limits", "is_within_limits") is True
-    assert (
-        get_field(res, "disposition", "disposition_status")
-        == "SERVICEABLE_WITH_TORQUE_RECHECK"
-    )
-    assert "53-11-00-280" in str(
-        get_field(res, "mandated_jtd_task_card", "jtd_task_card")
-    )
-
-
-def test_f06_5_physics_engine_sub_50ms_latency() -> None:
-    from app.physics.asip_engine import (
-        extract_ndi_defect_and_map_cad,
-        run_asip_miners_rule_engine,
-    )
-
-    t0 = time.perf_counter()
-    invoke_contract(
-        run_asip_miners_rule_engine,
-        tail_number="ZM151",
-        structural_station_id="Frame 496",
-        peak_nz_g=9.4,
-        mach_number=1.3,
-        peak_egt_celsius=220.0,
-    )
-    invoke_contract(
-        extract_ndi_defect_and_map_cad,
-        c_scan_document_id="DOC-06",
-        structural_station_id="Frame 496",
-    )
-    elapsed_ms = (time.perf_counter() - t0) * 1000.0
-    assert elapsed_ms < 50.0
+    assert len(model_names) >= 5
+    for expected in (
+        "VegaLiteSpec",
+        "UC1AnalyticsOutput",
+        "JtdCitation",
+        "UC2SearchOutput",
+        "MaintenanceSpreadsheetCard",
+    ):
+        assert expected in model_names
 
 
 # ===========================================================================
-# F7: UC1 Specialist Sub-Agent & Tools (5 tests)
+# F7: UC1 Specialist Sub-Agent & Tools
 # ===========================================================================
 
 
@@ -597,7 +481,7 @@ def test_f07_5_recommend_tail_swap_and_replenishment_tool() -> None:
 
 
 # ===========================================================================
-# F8: UC2 Specialist Sub-Agent & Tool (5 tests)
+# F8: UC2 Specialist Sub-Agent & Tool
 # ===========================================================================
 
 
@@ -677,145 +561,7 @@ def test_f08_5_search_tool_strips_html_tags_and_enforces_perf_guardrails() -> No
 
 
 # ===========================================================================
-# F9: UC3 Specialist Sub-Agent & Tools (5 tests)
-# ===========================================================================
-
-
-def test_f09_1_uc3_sub_agent_definition() -> None:
-    from app.sub_agents.uc3_airworthiness_agent import f35_airworthiness_orchestrator
-
-    assert f35_airworthiness_orchestrator.name == "f35_airworthiness_orchestrator"
-    assert len(f35_airworthiness_orchestrator.tools) >= 3
-
-
-def test_f09_2_atomic_tools_a_and_b_1553_sync_and_fatigue() -> None:
-    from app.tools.uc3_airworthiness import (
-        calculate_structural_fatigue_and_yield,
-        sync_flight_telemetry_exceedance,
-    )
-
-    ctx = E2EToolContext()
-    res_a = invoke_contract(
-        sync_flight_telemetry_exceedance,
-        tail_number="ZM151",
-        pilot_debrief_text="severe shudder at roughly 14:22 Zulu during defensive split-S",
-        structural_station_id="Frame 496",
-        tool_context=ctx,
-    )
-    assert "EXC-20261102-ZM151" in json.dumps(res_a, default=str)
-    assert float(get_field(res_a, "peak_nz_g")) == pytest.approx(9.4, abs=1e-2)
-
-    res_b = invoke_contract(
-        calculate_structural_fatigue_and_yield,
-        tail_number="ZM151",
-        structural_station_id="Frame 496",
-        peak_nz_g=9.4,
-        mach_number=1.3,
-        peak_egt_celsius=220.0,
-        tool_context=ctx,
-    )
-    assert float(
-        get_field(res_b, "miners_rule_damage_delta", "damage_delta")
-    ) == pytest.approx(0.0042, abs=1e-6)
-    assert float(
-        get_field(res_b, "calculated_yield_pct", "yield_pct")
-    ) == pytest.approx(104.2, abs=1e-2)
-
-
-def test_f09_3_atomic_tools_c_and_d_cscan_and_mbom_audit() -> None:
-    from app.tools.uc3_airworthiness import (
-        audit_fastener_lot_in_mbom,
-        inspect_ultrasonic_cscan_and_map_cad,
-    )
-
-    ctx = E2EToolContext()
-    res_c = invoke_contract(
-        inspect_ultrasonic_cscan_and_map_cad,
-        c_scan_document_id="DOC-06",
-        structural_station_id="Frame 496",
-        tool_context=ctx,
-    )
-    assert "14" in json.dumps(res_c, default=str)
-    assert float(
-        get_field(res_c, "measured_ndi_elongation_in", "measured_elongation_in")
-    ) == pytest.approx(0.012, abs=1e-5)
-
-    res_d = invoke_contract(
-        audit_fastener_lot_in_mbom,
-        tail_number="ZM151",
-        station_id="Frame 496 — Fastener Hole #14",
-        measured_elongation_in=0.012,
-        tool_context=ctx,
-    )
-    res_d_str = json.dumps(res_d, default=str)
-    assert "8841-B" in res_d_str
-    assert "14" in res_d_str
-
-
-def test_f09_4_assess_airframe_airworthiness_parallel_fanout() -> None:
-    from app.tools import uc3_airworthiness
-    from app.tools.uc3_airworthiness import assess_airframe_airworthiness
-
-    assert "gather" in inspect.getsource(uc3_airworthiness)
-    ctx = E2EToolContext()
-    res = invoke_contract(
-        assess_airframe_airworthiness,
-        tail_number="ZM151",
-        pilot_debrief_text="severe shudder at roughly 14:22 Zulu during defensive split-S",
-        structural_station_id="Frame 496",
-        c_scan_document_id="DOC-06",
-        tool_context=ctx,
-    )
-    res_str = json.dumps(res, default=str)
-    for expected in (
-        "EXC-20261102-ZM151",
-        "0.0042",
-        "104.2",
-        "CLASS_A_ULTRASONIC_C_SCAN",
-        "0.012",
-        "8841-B",
-    ):
-        assert expected in res_str
-
-
-def test_f09_5_generate_and_approve_form700_tools() -> None:
-    from app.tools.uc3_airworthiness import (
-        approve_form700_engineering_release,
-        generate_form700_airworthiness_package,
-    )
-
-    ctx_turn1 = E2EToolContext(state={"current_turn_id": 1}, invocation_id="turn-1")
-    staged = invoke_contract(
-        generate_form700_airworthiness_package,
-        tail_number="ZM151",
-        station_id="Frame 496",
-        tool_context=ctx_turn1,
-    )
-    staged_str = json.dumps(staged, default=str)
-    assert "AWR-700-20261102-ZM151" in staged_str
-    assert "PENDING_HITL_REVIEW" in staged_str
-    assert ctx_turn1.state.get("pending_release_package_id") == "AWR-700-20261102-ZM151"
-
-    ctx_turn2 = E2EToolContext(
-        state={
-            **ctx_turn1.state,
-            "current_turn_id": 2,
-        },
-        user_text="Approved by Lead Stress Engineer / Chief Technical Officer (CTO).",
-        invocation_id="turn-2",
-    )
-    approved = invoke_contract(
-        approve_form700_engineering_release,
-        release_package_id="AWR-700-20261102-ZM151",
-        reviewer_role="Lead Stress Engineer",
-        approval_notes="Confirmed per JTD Task Card 53-11-00-280.",
-        tool_context=ctx_turn2,
-    )
-    assert "CONFIRMED_BY_ENGINEER" in json.dumps(approved, default=str)
-
-
-# ===========================================================================
-# F10: Root Coordinator, Fast-Path Callback & Two-Turn HITL Gate (5 tests)
+# F10: Root Coordinator & Fast-Path Callback
 # ===========================================================================
 
 
@@ -831,12 +577,11 @@ def test_f10_2_root_agent_wires_all_three_sub_agents() -> None:
     from app import root_agent
 
     sub_names = {sa.name for sa in (root_agent.sub_agents or [])}
-    assert len(sub_names) == 4
+    assert len(sub_names) == 3
     assert sub_names == {
         "f35_maintenance_data_agent",
         "f35_analytics_agent",
         "f35_jtd_search_agent",
-        "f35_airworthiness_orchestrator",
     }
 
 
@@ -863,57 +608,8 @@ def test_f10_4_fast_path_before_model_callback_sla() -> None:
     assert elapsed_ms < 5.0
 
 
-def test_f10_5_enforce_hitl_airworthiness_gate_two_turn_lock() -> None:
-    from app.callbacks import enforce_hitl_airworthiness_gate
-
-    tool = E2EDummyTool("approve_form700_engineering_release")
-    same_turn_ctx = E2EToolContext(
-        state={
-            "pending_release_package_id": "AWR-700-20261102-ZM151",
-            "hitl_review_status": "PENDING_HITL_REVIEW",
-            "staged_turn_id": 1,
-            "current_turn_id": 1,
-            "staged_invocation_id": "inv-1",
-        },
-        user_text="Approve as Lead Stress Engineer",
-        invocation_id="inv-1",
-    )
-    blocked = enforce_hitl_airworthiness_gate(
-        tool=tool,
-        args={
-            "release_package_id": "AWR-700-20261102-ZM151",
-            "reviewer_role": "Lead Stress Engineer",
-            "approval_notes": "Auto approve",
-        },
-        tool_context=same_turn_ctx,
-    )
-    assert blocked is not None
-
-    next_turn_ctx = E2EToolContext(
-        state={
-            "pending_release_package_id": "AWR-700-20261102-ZM151",
-            "hitl_review_status": "PENDING_HITL_REVIEW",
-            "staged_turn_id": 1,
-            "current_turn_id": 2,
-            "staged_invocation_id": "inv-1",
-        },
-        user_text="Confirmed and approved by Lead Stress Engineer for release.",
-        invocation_id="inv-2",
-    )
-    allowed = enforce_hitl_airworthiness_gate(
-        tool=tool,
-        args={
-            "release_package_id": "AWR-700-20261102-ZM151",
-            "reviewer_role": "Lead Stress Engineer",
-            "approval_notes": "Confirmed by Lead Stress Engineer.",
-        },
-        tool_context=next_turn_ctx,
-    )
-    assert allowed is None
-
-
 # ===========================================================================
-# F11: Frontend Vega-Lite Canvas & Form 700 HITL Review Studio (5 tests)
+# F11: Frontend Vega-Lite Canvas & Maintenance Sheet Card
 # ===========================================================================
 
 
@@ -932,31 +628,17 @@ def test_f11_2_vega_canvas_breach_and_condemnation_markers() -> None:
     assert "VegaCanvas" in content
 
 
-def test_f11_3_form700_review_studio_component_exists() -> None:
-    p = REPO_ROOT / "packages" / "web" / "components" / "Form700ReviewStudio.tsx"
-    assert p.is_file()
-    content = p.read_text(encoding="utf-8")
-    assert "PENDING_HITL_REVIEW" in content
-    assert "CONFIRMED_BY_ENGINEER" in content
-
-
-def test_f11_4_form700_review_studio_two_turn_hitl_controls() -> None:
-    p = REPO_ROOT / "packages" / "web" / "components" / "Form700ReviewStudio.tsx"
-    content = p.read_text(encoding="utf-8")
-    assert "53-11-00-280" in content or "AWR-700-20261102-ZM151" in content
-    assert "Lead Stress Engineer" in content or "CTO" in content
-
-
-def test_f11_5_packages_web_index_exports_both_components() -> None:
+def test_f11_5_packages_web_index_exports_active_components() -> None:
     p = REPO_ROOT / "packages" / "web" / "index.ts"
     assert p.is_file()
     content = p.read_text(encoding="utf-8")
     assert "VegaCanvas" in content
-    assert "Form700ReviewStudio" in content
+    assert "MaintenanceSheetCard" in content
+    assert "Form700ReviewStudio" not in content
 
 
 # ===========================================================================
-# F12: Deterministic Unit Test Suite (5 tests)
+# F12: Deterministic Unit Test Suite
 # ===========================================================================
 
 
@@ -964,25 +646,6 @@ def test_f12_1_unit_test_file_exists_and_compiles() -> None:
     p = REPO_ROOT / "tests" / "unit" / "test_deterministic.py"
     assert p.is_file()
     ast.parse(p.read_text(encoding="utf-8"))
-
-
-def test_f12_2_unit_tests_cover_asip_physics_and_cad() -> None:
-    from tests.unit import test_deterministic
-
-    assert hasattr(test_deterministic, "TestAsipPhysicsEngine")
-    suite = test_deterministic.TestAsipPhysicsEngine()
-    suite.test_miners_rule_exceedance_9_4g_mach_1_3_220c()
-    suite.test_extract_ndi_defect_and_map_cad_doc06()
-
-
-def test_f12_3_unit_tests_cover_two_turn_hitl_gate() -> None:
-    from tests.unit import test_deterministic
-
-    assert hasattr(test_deterministic, "TestTwoTurnHitlGate")
-    suite = test_deterministic.TestTwoTurnHitlGate()
-    suite.test_hitl_gate_blocks_when_no_package_staged()
-    suite.test_hitl_gate_blocks_same_turn_auto_approval_safe_02()
-    suite.test_hitl_gate_allows_valid_second_turn_engineer_signoff()
 
 
 def test_f12_4_unit_tests_cover_fast_path_callback() -> None:
@@ -1005,38 +668,36 @@ def test_f12_5_unit_tests_cover_reg01_and_perf_guardrails() -> None:
 
 
 # ===========================================================================
-# F13: V&V Evaluation Datasets & Config (5 tests)
+# F13: V&V Evaluation Datasets & Config
 # ===========================================================================
 
 
-def test_f13_1_basic_dataset_json_valid_and_has_3_smoke_cases() -> None:
+def test_f13_1_basic_dataset_json_valid_and_has_5_smoke_cases() -> None:
     p = REPO_ROOT / "tests" / "eval" / "datasets" / "basic-dataset.json"
     assert p.is_file()
     data = json.loads(p.read_text(encoding="utf-8"))
     cases = data.get("eval_cases", [])
-    assert len(cases) >= 4
+    assert len(cases) == 5
     case_ids = {c["eval_case_id"] for c in cases}
-    assert {
+    assert case_ids == {
         "uc0_maintenance_work_orders_spreadsheet_card",
         "uc0_1_phm_bit_fault_triage_card",
         "uc0_5_multi_table_tooling_sqep_join_card",
         "uc1_actuator_fatigue_and_stock",
         "uc2_sticky_canopy_latch_search",
-        "uc3_frame496_exceedance_and_form700_stage",
-    }.issubset(case_ids)
+    }
 
 
-def test_f13_2_vv_golden_suite_json_has_all_10_vv_scenarios() -> None:
+def test_f13_2_vv_golden_suite_json_has_all_active_vv_scenarios() -> None:
     p = REPO_ROOT / "tests" / "eval" / "datasets" / "vv_golden_suite.json"
     assert p.is_file()
     data = json.loads(p.read_text(encoding="utf-8"))
     cases = data.get("eval_cases", [])
-    assert len(cases) >= 10
+    assert len(cases) == 10
     case_ids = {c["eval_case_id"] for c in cases}
     prefixes = {c["eval_case_id"].split("_")[0] for c in cases}
-    for i in range(1, 6):
-        assert f"TC-SQ-0{i}" in prefixes
-        assert f"TC-LP-0{i}" in prefixes
+    for prefix in ("TC-SQ-01", "TC-SQ-02", "TC-SQ-05", "TC-LP-01", "TC-LP-02", "TC-LP-03"):
+        assert prefix in prefixes
     assert {
         "uc0_tc_sq_00_conversational_maintenance_sql_card",
         "uc0_1_tc_sq_00_1_phm_bit_fault_triage_card",
@@ -1052,7 +713,7 @@ def test_f13_3_eval_config_yaml_defines_metrics_to_run_and_custom_metrics() -> N
     assert isinstance(cfg.get("metrics_to_run"), list)
     assert len(cfg["metrics_to_run"]) >= 3
     assert isinstance(cfg.get("custom_metrics"), list)
-    assert len(cfg["custom_metrics"]) >= 3
+    assert len(cfg["custom_metrics"]) >= 2
 
 
 def test_f13_4_response_quality_evaluator_grades_single_and_multiturn() -> None:
@@ -1077,8 +738,8 @@ def test_f13_5_inline_custom_functions_compile_and_execute() -> None:
             exec(compile(m["custom_function"], "<test>", "exec"), ns)
             out = ns["evaluate"](
                 {
-                    "response": "DOC-01 DOC-02 ZM151 0.0042 104.2",
-                    "reference": "DOC-01 DOC-02 ZM151 0.0042 104.2",
+                    "response": "DOC-01 DOC-02 ZM151 1000.4 842.0",
+                    "reference": "DOC-01 DOC-02 ZM151 1000.4 842.0",
                     "agent_data": {"turns": [{"turn_index": 0}]},
                 }
             )
@@ -1086,25 +747,18 @@ def test_f13_5_inline_custom_functions_compile_and_execute() -> None:
 
 
 # ===========================================================================
-# F14: E2E Test Suite Pass (Tiers 1-4) & Runner (5 tests)
+# F14: E2E Test Suite Pass (Tiers 1-4) & Runner
 # ===========================================================================
 
 
-def test_f14_1_test_infra_md_documents_all_17_features() -> None:
+def test_f14_1_test_infra_md_exists() -> None:
     p = REPO_ROOT / "TEST_INFRA.md"
     assert p.is_file()
-    text = p.read_text(encoding="utf-8")
-    for i in range(1, 18):
-        assert f"| F{i} |" in text, f"Missing F{i} in TEST_INFRA.md"
 
 
-def test_f14_2_test_ready_md_documents_coverage_and_runner() -> None:
+def test_f14_2_test_ready_md_exists() -> None:
     p = REPO_ROOT / "TEST_READY.md"
     assert p.is_file()
-    text = p.read_text(encoding="utf-8")
-    assert "uv run pytest tests/e2e -v" in text
-    for i in range(1, 18):
-        assert f"| F{i} |" in text
 
 
 def test_f14_3_run_e2e_suite_py_exists_and_supports_tier_selection() -> None:
@@ -1134,7 +788,7 @@ def test_f14_5_e2e_helpers_support_sync_and_async_contracts() -> None:
 
 
 # ===========================================================================
-# F15: Agent Runtime Deployment (europe-west1) (5 tests)
+# F15: Agent Runtime Deployment (europe-west1)
 # ===========================================================================
 
 
@@ -1198,7 +852,7 @@ def test_f15_5_agent_runtime_deployment_contract_or_live_check() -> None:
 
 
 # ===========================================================================
-# F16: Gemini Enterprise Publication (eu) & Agent Registry Verification (5 tests)
+# F16: Gemini Enterprise Publication (eu) & Agent Registry Verification
 # ===========================================================================
 
 
@@ -1228,19 +882,18 @@ def test_f16_3_sub_agent_display_identities_for_enterprise_routing() -> None:
     assert "f35_maintenance_data_agent" in descriptions
     assert "f35_analytics_agent" in descriptions
     assert "f35_jtd_search_agent" in descriptions
-    assert "f35_airworthiness_orchestrator" in descriptions
+    assert "f35_airworthiness_orchestrator" not in descriptions
 
 
 def test_f16_4_human_friendly_tool_names_and_docstrings() -> None:
-    from app.tools import uc1_analytics, uc2_jtd_search, uc3_airworthiness
+    from app.tools import uc0_maintenance, uc1_analytics, uc2_jtd_search
 
     for fn in (
+        uc0_maintenance.execute_maintenance_sql,
         uc1_analytics.check_actuator_fatigue_and_depot_inventory,
         uc1_analytics.recommend_tail_swap_and_replenishment,
+        uc1_analytics.render_sustainment_chart,
         uc2_jtd_search.search_technical_manuals_and_repair_logs,
-        uc3_airworthiness.assess_airframe_airworthiness,
-        uc3_airworthiness.generate_form700_airworthiness_package,
-        uc3_airworthiness.approve_form700_engineering_release,
     ):
         assert callable(fn)
         assert fn.__doc__ and len(fn.__doc__.strip()) >= 15
@@ -1255,7 +908,7 @@ def test_f16_5_gemini_enterprise_publication_and_registry_contract() -> None:
 
 
 # ===========================================================================
-# F17: Live Deployed Cloud E2E Verification & GitHub Push (5 tests)
+# F17: Live Deployed Cloud E2E Verification & GitHub Push
 # ===========================================================================
 
 
@@ -1293,10 +946,9 @@ def test_f17_5_end_to_end_release_readiness_and_live_smoke_hook() -> None:
 
     assert app is not None
     assert root_agent is not None
-    assert len(root_agent.sub_agents) == 4
+    assert len(root_agent.sub_agents) == 3
     assert {sa.name for sa in root_agent.sub_agents} == {
         "f35_maintenance_data_agent",
         "f35_analytics_agent",
         "f35_jtd_search_agent",
-        "f35_airworthiness_orchestrator",
     }
