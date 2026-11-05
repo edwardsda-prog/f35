@@ -355,8 +355,8 @@ def test_rw09_full_vv_golden_suite_and_basic_dataset_offline_grading_pipeline() 
 
     basic_cases = json.loads(basic_path.read_text(encoding="utf-8"))["eval_cases"]
     vv_cases = json.loads(vv_path.read_text(encoding="utf-8"))["eval_cases"]
-    assert len(basic_cases) >= 3
-    assert len(vv_cases) == 10
+    assert len(basic_cases) >= 4
+    assert len(vv_cases) >= 10
 
     for case in basic_cases + vv_cases:
         ref = case.get("reference", "")

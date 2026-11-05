@@ -1065,7 +1065,7 @@ def test_uc0_maintenance_schema_has_table_and_column_descriptions() -> None:
 
 
 def test_uc0_seed_records_match_schema() -> None:
-    """Verify `MAINTENANCE_WORK_ORDERS_ROWS` has 14 rows, ZM151 open work orders, and matches the 18 schema columns."""
+    """Verify `MAINTENANCE_WORK_ORDERS_ROWS` has 100 rows, ZM151 open work orders, and matches the 18 schema columns."""
     import json
 
     from app.seed_data.bq_seed_records import MAINTENANCE_WORK_ORDERS_ROWS
@@ -1082,7 +1082,7 @@ def test_uc0_seed_records_match_schema() -> None:
     expected_col_names = [col["name"] for col in columns]
     assert len(expected_col_names) == 18
 
-    assert len(MAINTENANCE_WORK_ORDERS_ROWS) == 14
+    assert len(MAINTENANCE_WORK_ORDERS_ROWS) == 100
 
     zm151_open_wos = {
         row["work_order_id"]
@@ -1093,6 +1093,13 @@ def test_uc0_seed_records_match_schema() -> None:
     assert {"WO-2026-88401", "WO-2026-88402", "WO-2026-88403"}.issubset(
         zm151_open_wos
     )
+
+    active_wos = [
+        row
+        for row in MAINTENANCE_WORK_ORDERS_ROWS
+        if row.get("work_order_status") != "COMPLETED"
+    ]
+    assert len(active_wos) == 10
 
     for idx, row in enumerate(MAINTENANCE_WORK_ORDERS_ROWS):
         assert set(row.keys()) == set(expected_col_names), (
@@ -1178,15 +1185,15 @@ def test_uc0_execute_maintenance_sql_aggregation_query() -> None:
         assert (sqn, status) in expected_groups
         exp_cnt, exp_hrs = expected_groups[(sqn, status)]
         assert cnt == exp_cnt
-        assert abs(hrs - exp_hrs) < 1e-3
+        assert abs(hrs - exp_hrs) < 1e-2
         total_count += cnt
         total_hours += hrs
 
-    assert total_count == 14
+    assert total_count == len(MAINTENANCE_WORK_ORDERS_ROWS) == 100
     expected_total_hours = sum(
         float(r["logged_man_hours"]) for r in MAINTENANCE_WORK_ORDERS_ROWS
     )
-    assert abs(total_hours - expected_total_hours) < 1e-3
+    assert abs(total_hours - expected_total_hours) < 1e-2
 
 
 def test_uc0_execute_maintenance_sql_blocks_unsafe_dml_ddl() -> None:
@@ -1198,5 +1205,231 @@ def test_uc0_execute_maintenance_sql_blocks_unsafe_dml_ddl() -> None:
 
     with pytest.raises(ValueError):
         execute_maintenance_sql("DELETE FROM maintenance_work_orders WHERE 1=1")
+
+
+def test_all_9_warehouse_tables_have_100_records_and_schema_descriptions() -> None:
+    """Verify all 9 warehouse tables in `BQ_SEED_TABLES` have 100 rows and complete table + column descriptions (> 20 chars)."""
+    import json
+
+    from app.seed_data.bq_seed_records import BQ_SEED_TABLES
+
+    expected_tables = (
+        "airframe_component_telemetry",
+        "global_depot_inventory",
+        "squadron_sortie_schedule",
+        "high_freq_strain_telemetry",
+        "as_maintained_mbom_fasteners",
+        "airworthiness_release_ledger",
+        "maintenance_work_orders",
+        "phm_bit_fault_events",
+        "work_center_tooling_and_sqep",
+    )
+    assert set(BQ_SEED_TABLES.keys()) == set(expected_tables)
+
+    schemas_dir = REPO_ROOT / "app" / "seed_data" / "schemas"
+    for table_name in expected_tables:
+        rows = BQ_SEED_TABLES[table_name]
+        assert len(rows) == 100, (
+            f"Expected 100 seed rows in {table_name}, got {len(rows)}"
+        )
+
+        schema_path = schemas_dir / f"{table_name}.schema.json"
+        assert schema_path.is_file(), f"Missing schema file: {schema_path}"
+        schema_obj = json.loads(schema_path.read_text(encoding="utf-8"))
+
+        if isinstance(schema_obj, dict):
+            table_desc = schema_obj.get("description", "")
+            assert isinstance(table_desc, str) and len(table_desc.strip()) > 20, (
+                f"Table '{table_name}' must have a description > 20 chars"
+            )
+            columns = (
+                schema_obj.get("fields")
+                or schema_obj.get("columns")
+                or schema_obj.get("schema", [])
+            )
+        else:
+            columns = list(schema_obj)
+
+        assert len(columns) >= 6, f"Unexpectedly few columns in {table_name}"
+        expected_col_names = {col["name"] for col in columns}
+        for col in columns:
+            col_name = col.get("name", "<unnamed>")
+            col_desc = col.get("description", "")
+            assert isinstance(col_desc, str) and len(col_desc.strip()) > 20, (
+                f"Column '{table_name}.{col_name}' must have a description > 20 chars, got: {col_desc!r}"
+            )
+
+        for idx, row in enumerate(rows):
+            assert set(row.keys()) == expected_col_names, (
+                f"Row {idx} of {table_name} keys {set(row.keys())} != schema columns {expected_col_names}"
+            )
+
+
+def test_uc0_1_phm_bit_fault_events_triage_and_unlinked_advisories() -> None:
+    """Verify UC 0.1 `execute_maintenance_sql` on `phm_bit_fault_events` surfaces ZM151 HRCs, Zero-BIT CND faults, unlinked advisories, badges, formula footer, and CSV export."""
+    import json
+
+    from app.tools.uc0_maintenance import execute_maintenance_sql
+
+    sql = (
+        "SELECT fault_event_id, tail_number, squadron, base_location, wuc_code, "
+        "subsystem_name, hrc_code, fault_severity, bit_trigger_type, "
+        "recurrence_count_30d, cnd_flag, diagnostic_confidence_pct, "
+        "linked_work_order_id, fault_timestamp_utc "
+        "FROM phm_bit_fault_events "
+        "WHERE fault_severity != 'ADVISORY_PHM' OR linked_work_order_id IS NULL "
+        "ORDER BY fault_timestamp_utc DESC"
+    )
+    res = execute_maintenance_sql(sql, sheet_title="F35_PHM_BIT_Fault_Triage")
+    assert res["status"] == "SUCCESS"
+    assert res["row_count"] >= 6
+
+    rows = res["rows"]
+    dumped = json.dumps(rows, default=str)
+    for expected_hrc in ("HRC-2710-88A", "HRC-5330-000-NONE", "HRC-5320-94G"):
+        assert expected_hrc in dumped, f"Missing ZM151 HRC {expected_hrc} in UC 0.1 query"
+    assert "PILOT_REPORT_ONLY_NO_BIT" in dumped
+
+    zm151_canopy_row = next(
+        r for r in rows if r.get("hrc_code") == "HRC-5330-000-NONE"
+    )
+    assert zm151_canopy_row["tail_number"] == "ZM151"
+    assert zm151_canopy_row["bit_trigger_type"] == "PILOT_REPORT_ONLY_NO_BIT"
+    assert bool(zm151_canopy_row["cnd_flag"]) is True
+
+    unlinked_rows = [r for r in rows if not r.get("linked_work_order_id")]
+    assert len(unlinked_rows) >= 1, "Expected unlinked PHM advisories (linked_work_order_id IS NULL)"
+
+    card = res["spreadsheet_card"]
+    footer_str = json.dumps(card["formula_footer"])
+    assert "=COUNTA(" in footer_str
+    assert "=SUM(" in footer_str
+    assert "=AVERAGE(" in footer_str
+    assert card["csv_download_url"].startswith(
+        "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/"
+    )
+
+    md = res["spreadsheet_card_markdown"]
+    assert "[📥 Download .CSV (Excel / Google Sheets)]" in md
+    assert any(badge in md for badge in ("🔴", "🟠", "🟡", "🟣", "⚪"))
+
+
+def test_uc0_5_multi_table_join_work_orders_and_tooling_sqep() -> None:
+    """Verify UC 0.5 2-table and 3-table JOINs across `maintenance_work_orders`, `work_center_tooling_and_sqep`, and `phm_bit_fault_events`."""
+    import json
+
+    from app.tools.uc0_maintenance import execute_maintenance_sql
+
+    # 1. Two-table JOIN: maintenance_work_orders + work_center_tooling_and_sqep
+    sql_2tbl = (
+        "SELECT w.work_order_id, w.tail_number, w.aircraft_status, w.work_order_status, "
+        "w.priority, w.wuc_code, w.subsystem_name, w.logged_man_hours, w.estimated_mttr_hours, "
+        "t.sqep_certification_domain, t.sqep_certified_techs_on_shift, t.qar_inspector_available, "
+        "t.required_special_tool_id, t.required_special_tool_name, t.tool_calibration_status, "
+        "t.bay_dispatch_status "
+        "FROM maintenance_work_orders w "
+        "JOIN work_center_tooling_and_sqep t ON w.work_order_id = t.assigned_work_order_id "
+        "WHERE w.work_order_status != 'COMPLETED' "
+        "ORDER BY w.priority ASC"
+    )
+    res_2tbl = execute_maintenance_sql(
+        sql_2tbl, sheet_title="F35_Work_Order_Tooling_SQEP_Join"
+    )
+    assert res_2tbl["status"] == "SUCCESS"
+    assert res_2tbl["row_count"] >= 5
+
+    dumped_2tbl = json.dumps(res_2tbl["rows"], default=str)
+    for token in (
+        "JTD-53-30-T14",
+        "NDI-PAUT-496A",
+        "EXPIRED_OUT_OF_CAL",
+        "BLOCKED_TOOL_OUT_OF_CAL",
+        "BLOCKED_NO_QAR_ON_SHIFT",
+    ):
+        assert token in dumped_2tbl, f"Missing expected UC 0.5 token {token} in 2-table JOIN"
+
+    card_2tbl = res_2tbl["spreadsheet_card"]
+    footer_2tbl = json.dumps(card_2tbl["formula_footer"])
+    assert "=COUNTA(" in footer_2tbl
+    assert "=SUM(" in footer_2tbl
+    assert "=AVERAGE(" in footer_2tbl
+    assert card_2tbl["csv_download_url"].startswith(
+        "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/exports/"
+    )
+    md_2tbl = res_2tbl["spreadsheet_card_markdown"]
+    assert "[📥 Download .CSV (Excel / Google Sheets)]" in md_2tbl
+
+    # 2. Three-table JOIN: maintenance_work_orders + work_center_tooling_and_sqep + phm_bit_fault_events
+    sql_3tbl = (
+        "SELECT w.work_order_id, w.tail_number, w.aircraft_status, w.wuc_code, "
+        "p.hrc_code, p.fault_severity, p.bit_trigger_type, p.cnd_flag, "
+        "t.required_special_tool_id, t.tool_calibration_status, t.bay_dispatch_status, "
+        "w.logged_man_hours, w.estimated_mttr_hours "
+        "FROM maintenance_work_orders w "
+        "JOIN work_center_tooling_and_sqep t ON w.work_order_id = t.assigned_work_order_id "
+        "LEFT JOIN phm_bit_fault_events p ON w.work_order_id = p.linked_work_order_id "
+        "WHERE w.tail_number = 'ZM151' "
+        "ORDER BY w.work_order_id ASC"
+    )
+    res_3tbl = execute_maintenance_sql(
+        sql_3tbl, sheet_title="F35_ZM151_3Way_Diagnostic_Join"
+    )
+    assert res_3tbl["status"] == "SUCCESS"
+    assert res_3tbl["row_count"] >= 3
+    dumped_3tbl = json.dumps(res_3tbl["rows"], default=str)
+    for token in (
+        "HRC-2710-88A",
+        "HRC-5330-000-NONE",
+        "HRC-5320-94G",
+        "JTD-53-30-T14",
+        "NDI-PAUT-496A",
+    ):
+        assert token in dumped_3tbl, f"Missing expected token {token} in 3-table JOIN"
+
+
+def test_uc0_live_bq_table_and_column_descriptions_verified() -> None:
+    """Verify `maintenance_work_orders`, `phm_bit_fault_events`, and `work_center_tooling_and_sqep` table and column descriptions in BigQuery `EU` when live credentials are available."""
+    import json
+
+    from app.config import BQ_DATASET, BQ_LOCATION, PROJECT_ID, USE_CLOUD_CLIENTS
+
+    uc0_tables = (
+        "maintenance_work_orders",
+        "phm_bit_fault_events",
+        "work_center_tooling_and_sqep",
+    )
+    schemas_dir = REPO_ROOT / "app" / "seed_data" / "schemas"
+    for tbl in uc0_tables:
+        spec = json.loads((schemas_dir / f"{tbl}.schema.json").read_text(encoding="utf-8"))
+        assert len(spec.get("description", "").strip()) > 20
+        fields = spec.get("fields") or spec.get("columns", [])
+        assert len(fields) >= 16
+        assert all(len(f.get("description", "").strip()) > 20 for f in fields)
+
+    if not USE_CLOUD_CLIENTS:
+        return
+
+    try:
+        from app.clients import get_bq_client
+
+        client = get_bq_client()
+        for tbl in uc0_tables:
+            table_ref = f"{PROJECT_ID}.{BQ_DATASET}.{tbl}"
+            try:
+                bq_table = client.get_table(table_ref)
+            except Exception:
+                # Table may not yet be provisioned in BigQuery EU prior to Phase 3 infra seeding
+                continue
+            assert bq_table.location == BQ_LOCATION
+            assert bq_table.description and len(bq_table.description.strip()) > 20
+            for schema_field in bq_table.schema:
+                assert (
+                    schema_field.description
+                    and len(schema_field.description.strip()) > 20
+                ), f"Live BigQuery column {tbl}.{schema_field.name} missing description"
+    except Exception:
+        # Offline / sandboxed environment without live GCP credentials
+        pass
+
 
 

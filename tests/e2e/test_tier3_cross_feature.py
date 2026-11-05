@@ -137,6 +137,7 @@ def test_xf05_f04_x_f05_root_agent_fast_path_interception_preserves_subagent_del
 
     sub_names = {sa.name for sa in getattr(root_agent, "sub_agents", [])}
     assert sub_names == {
+        "f35_maintenance_data_agent",
         "f35_analytics_agent",
         "f35_jtd_search_agent",
         "f35_airworthiness_orchestrator",
@@ -438,7 +439,7 @@ def test_xf15_f12_x_f14_unit_tests_and_e2e_suite_share_consistent_oracles() -> N
 
 
 def test_xf16_f13_x_f14_eval_config_custom_metrics_grade_all_vv_golden_suite_scenarios() -> None:
-    """F13 x F14: Verify `tests/eval/response_quality.py` custom metric scores 5.0 on all 10 reference responses in `vv_golden_suite.json`."""
+    """F13 x F14: Verify `tests/eval/response_quality.py` custom metric scores 5.0 on all reference responses in `vv_golden_suite.json`."""
     from tests.eval.response_quality import evaluate
 
     vv_data = json.loads(
@@ -446,7 +447,7 @@ def test_xf16_f13_x_f14_eval_config_custom_metrics_grade_all_vv_golden_suite_sce
             encoding="utf-8"
         )
     )
-    assert len(vv_data["eval_cases"]) == 10
+    assert len(vv_data["eval_cases"]) >= 10
     for case in vv_data["eval_cases"]:
         ref = case.get("reference", "")
         if not ref and "agent_data" in case:

@@ -22,6 +22,48 @@
       }
     },
     {
+      "eval_case_id": "uc0_1_tc_sq_00_1_phm_bit_fault_triage_card",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Query the phm_bit_fault_events table using execute_maintenance_sql to triage F-35B Health Reporting Codes (HRCs), Can-Not-Duplicate (cnd_flag = TRUE) pilot-report-only anomalies, and unlinked PHM advisories where linked_work_order_id IS NULL, and render the Excel / Google Sheets Spreadsheet Card with CSV export."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Executed execute_maintenance_sql against antig-dave.ukd_f35_sustainment_demo.phm_bit_fault_events returning ZM151 Health Reporting Codes HRC-2710-88A (CRITICAL_GROUNDING on WUC 27-10, linked to WO-2026-88401), HRC-5330-000-NONE (PILOT_REPORT_ONLY_NO_BIT with cnd_flag=True on subsystem 53-30 canopy latch, linked to WO-2026-88402), and HRC-5320-94G (CRITICAL_GROUNDING 9.4 G structural exceedance on Frame 496, linked to WO-2026-88403), plus unlinked PHM advisories with NULL linked_work_order_id, formatted as an Excel / Google Sheets Spreadsheet Card with formula footer (=COUNTA, =SUM, =AVERAGE) and authenticated GCS CSV download link."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "uc0_5_tc_sq_00_5_multi_table_tooling_sqep_join_card",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Execute a multi-table SQL JOIN across maintenance_work_orders and work_center_tooling_and_sqep using execute_maintenance_sql to cross-reference open F-35B work orders against SQEP technician shift coverage, QAR inspector availability, and special tool calibration expiry, and render the Spreadsheet Card with CSV export."
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Executed multi-table SQL JOIN via execute_maintenance_sql between antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders and work_center_tooling_and_sqep, auditing ZM151 work orders WO-2026-88401 (READY_TO_DISPATCH), WO-2026-88402 (assigned special tool JTD-53-30-T14 Canopy Rigging Pin & Feeler Gauge Kit), and WO-2026-88403 (assigned special tool NDI-PAUT-496A Phased-Array Ultrasonic C-Scan Probe Kit with CAL_DUE_WITHIN_7D), while identifying dispatch blocks where tool_calibration_status is EXPIRED_OUT_OF_CAL (BLOCKED_TOOL_OUT_OF_CAL) or QAR inspector coverage is unavailable (BLOCKED_NO_QAR_ON_SHIFT), formatted as an Excel / Google Sheets Spreadsheet Card with GCS CSV export link."
+            }
+          ]
+        }
+      }
+    },
+    {
       "eval_case_id": "TC-SQ-01_multi_source_retrieval_recall",
       "prompt": {
         "role": "user",

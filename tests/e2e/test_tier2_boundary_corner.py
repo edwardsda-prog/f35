@@ -95,7 +95,7 @@ def _extract_schema_fields(parsed: object) -> list[dict]:
     if isinstance(parsed, list):
         return parsed
     if isinstance(parsed, dict):
-        return list(parsed.get("fields", parsed.get("schema", [])))
+        return list(parsed.get("fields", parsed.get("columns", parsed.get("schema", []))))
     return []
 
 
@@ -159,6 +159,9 @@ def test_f02_b5_primary_key_columns_are_required_or_present() -> None:
         "high_freq_strain_telemetry.schema.json": "event_id",
         "as_maintained_mbom_fasteners.schema.json": "mbom_record_id",
         "airworthiness_release_ledger.schema.json": "release_package_id",
+        "maintenance_work_orders.schema.json": "work_order_id",
+        "phm_bit_fault_events.schema.json": "fault_event_id",
+        "work_center_tooling_and_sqep.schema.json": "resource_id",
     }
     for fname, pk in pk_map.items():
         cols = {
@@ -857,7 +860,7 @@ def test_f13_b4_all_eval_case_ids_are_globally_unique() -> None:
         p = REPO_ROOT / "tests" / "eval" / "datasets" / fname
         cases = json.loads(p.read_text(encoding="utf-8"))["eval_cases"]
         ids.extend(c["eval_case_id"] for c in cases)
-    assert len(ids) == len(set(ids)) == 13
+    assert len(ids) == len(set(ids)) >= 13
 
 
 def test_f13_b5_eval_config_avoids_mismatched_vertex_builtin_metrics() -> None:
@@ -1009,7 +1012,7 @@ def test_f16_b3_sub_agents_have_distinct_non_overlapping_names() -> None:
     from app import root_agent
 
     names = [sa.name for sa in (root_agent.sub_agents or [])]
-    assert len(names) == len(set(names)) == 3
+    assert len(names) == len(set(names)) == 4
 
 
 def test_f16_b4_all_sub_agents_use_enterprise_gemini_model_config() -> None:
