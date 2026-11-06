@@ -7,8 +7,10 @@ multi-region endpoint (`pageSize=15`, `snippetSpec` enabled, HTML tags stripped)
 
 from __future__ import annotations
 
+import concurrent.futures
 import logging
 import re
+import time
 from typing import Any
 
 from app.clients import (
@@ -51,6 +53,12 @@ CROSS_SERVICE_DIALECT_MAP: list[tuple[str, str, list[str]]] = [
 ]
 
 _DE_SEARCH_CACHE: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
+_UC2_DE_POOL = concurrent.futures.ThreadPoolExecutor(max_workers=2)
+
+
+def _is_state_mapping(state: Any) -> bool:
+    """Return True for dict and ADK State objects supporting item assignment and .get()."""
+    return state is not None and hasattr(state, "__setitem__") and hasattr(state, "get")
 
 
 def to_authenticated_gcs_url(uri: str | None) -> str:
@@ -183,7 +191,7 @@ def _query_live_eu_datastores(
     bit_fault_present: bool = False,
     preferred_branch: str = "RAF",
 ) -> tuple[dict[str, str], list[dict[str, Any]], dict[str, Any]]:
-    """Query both eu Discovery Engine datastores in a single 15-doc pass with metadata specs."""
+    """Query both eu Discovery Engine datastores concurrently in a single 15-doc pass with metadata specs."""
     search_q = expanded_query or "F-35 canopy latch binding JTD 53-30"
     snippets_by_doc_id: dict[str, str] = {}
     aggregated_facets: list[dict[str, Any]] = []
@@ -195,9 +203,9 @@ def _query_live_eu_datastores(
     boost_spec = build_metadata_boost_spec(preferred_branch=preferred_branch)
     facet_specs = build_metadata_facet_specs()
 
-    for ds_id in (JTD_DATASTORE_ID, NARRATIVE_DATASTORE_ID):
+    def _search_single_datastore(ds_id: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         cache_key = (ds_id, search_q[:120].lower(), filter_expr or "", preferred_branch)
-        raw_results: list[dict[str, Any]] = []
+        ds_facets: list[dict[str, Any]] = []
         try:
             if cache_key not in _DE_SEARCH_CACHE:
                 ext_resp = search_discovery_engine_extended(
@@ -210,8 +218,8 @@ def _query_live_eu_datastores(
                 )
                 _DE_SEARCH_CACHE[cache_key] = ext_resp.get("results", [])
                 if ext_resp.get("facets"):
-                    aggregated_facets.extend(ext_resp["facets"])
-            raw_results = _DE_SEARCH_CACHE[cache_key]
+                    ds_facets.extend(ext_resp["facets"])
+            return _DE_SEARCH_CACHE[cache_key], ds_facets
         except Exception as exc:
             logger.warning(
                 "Discovery Engine eu query with metadata filter warning on %s: %s; falling back to unfiltered search",
@@ -231,16 +239,24 @@ def _query_live_eu_datastores(
                     )
                     _DE_SEARCH_CACHE[fallback_key] = ext_resp.get("results", [])
                     if ext_resp.get("facets"):
-                        aggregated_facets.extend(ext_resp["facets"])
-                raw_results = _DE_SEARCH_CACHE[fallback_key]
+                        ds_facets.extend(ext_resp["facets"])
+                return _DE_SEARCH_CACHE[fallback_key], ds_facets
             except Exception as fb_exc:
                 logger.warning(
                     "Discovery Engine unfiltered fallback warning on %s: %s",
                     ds_id,
                     fb_exc,
                 )
-                raw_results = []
+                return [], ds_facets
 
+    futures = [
+        _UC2_DE_POOL.submit(_search_single_datastore, ds_id)
+        for ds_id in (JTD_DATASTORE_ID, NARRATIVE_DATASTORE_ID)
+    ]
+    for fut in futures:
+        raw_results, ds_facets = fut.result()
+        if ds_facets:
+            aggregated_facets.extend(ds_facets)
         for hit in raw_results:
             doc_id = _extract_doc_id_from_de_result(hit)
             if not doc_id:
@@ -280,6 +296,7 @@ def search_technical_manuals_and_repair_logs(
 
     Display Title: Search Technical Manuals & Maintenance Logs
     """
+    t0 = time.perf_counter()
     raw_query = clean_snippet_text(
         str(symptom_query if symptom_query else (query or ""))
     )
@@ -380,10 +397,15 @@ def search_technical_manuals_and_repair_logs(
     doc02_uri = to_authenticated_gcs_url(str(doc02.get("uri") or doc02.get("gcs_uri") or ""))
     doc09_uri = to_authenticated_gcs_url(str(doc09.get("uri") or doc09.get("gcs_uri") or ""))
 
+    elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 2)
+
     result = {
         "status": "SUCCESS",
         "project_id": PROJECT_ID,
         "discovery_engine_location": DE_LOCATION,
+        "execution_source": "DISCOVERY_ENGINE_EU",
+        "execution_latency_ms": elapsed_ms,
+        "total_latency_ms": elapsed_ms,
         "page_size": DISCOVERY_PAGE_SIZE,
         "datastore_endpoints": [
             build_de_search_url(JTD_DATASTORE_ID),
@@ -407,8 +429,8 @@ def search_technical_manuals_and_repair_logs(
             "markdown_link": f"[DOC-01: {doc01['title']}]({doc01_uri})",
             "summary": (
                 "JTD Section 53-30-01 mechanical rigging verification, forward locking catch "
-                "over-center clearance (0.018-0.024 in), pivot pin lubrication with MIL-PRF-81322 "
-                "grease, and calibrated torque spanner check (45-50 in-lbs)."
+                "over-center clearance (0.020–0.035 in), pivot pin lubrication with MIL-PRF-81322 "
+                "grease, and calibrated torque spanner check (18.5 N·m using JTD-53-30-T14)."
             ),
         },
         "historical_precedent": {
@@ -436,8 +458,11 @@ def search_technical_manuals_and_repair_logs(
         },
     }
 
-    if tool_context is not None and hasattr(tool_context, "state"):
+    if tool_context is not None and _is_state_mapping(getattr(tool_context, "state", None)):
         tool_context.state["last_uc2_search_result"] = result
+        tool_context.state["last_uc2_tool_response"] = result
+        tool_context.state["last_uc2_citations"] = citations
+        tool_context.state["last_uc2_results"] = ranked_results
 
     return result
 
@@ -445,9 +470,11 @@ def search_technical_manuals_and_repair_logs(
 __all__ = [
     "CROSS_SERVICE_DIALECT_MAP",
     "PAGE_SIZE",
+    "_DE_SEARCH_CACHE",
     "build_metadata_boost_spec",
     "build_metadata_filter",
     "normalize_cross_service_terminology",
     "search_technical_manuals_and_repair_logs",
     "to_authenticated_gcs_url",
 ]
+

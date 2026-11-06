@@ -118,7 +118,7 @@ _TAIL_ASSIGNMENT_MAP: dict[str, tuple[str, str, str]] = {
     "ZM153": ("617 Sqn (The Dambusters)", "RAF Marham", "WO1 D. MacLeod"),
     "ZM154": ("617 Sqn (The Dambusters)", "RAF Marham", "Chf Tech M. Davies"),
     "ZM155": ("617 Sqn (The Dambusters)", "RAF Marham", "Sgt T. O'Connor"),
-    "ZM156": ("809 NAS (The Immortals)", "HMS Queen Elizabeth", "POAET J. Stirling"),
+    "ZM156": ("809 NAS (The Immortals)", "HMS Prince of Wales", "POAET J. Stirling"),
     "ZM157": ("809 NAS (The Immortals)", "HMS Queen Elizabeth", "LAET S. Krishnan"),
     "ZM158": ("809 NAS (The Immortals)", "HMS Prince of Wales", "CPOAET N. Armstrong"),
     "ZM159": ("809 NAS (The Immortals)", "HMS Queen Elizabeth", "POAET T. Campbell"),
@@ -142,7 +142,7 @@ _BASE_AIRFRAME_COMPONENT_TELEMETRY_ROWS: list[dict[str, Any]] = [
         "base_location": "RAF Marham",
         "part_serial_number": "ACT-99812-F",
         "nsn": "1680-01-619-4821",
-        "component_name": "Port Electro-Hydrostatic Actuator (EHA)",
+        "component_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "current_flight_hours": 1000.4,
         "life_limit_threshold_hrs": 1000.0,
     },
@@ -153,7 +153,7 @@ _BASE_AIRFRAME_COMPONENT_TELEMETRY_ROWS: list[dict[str, Any]] = [
         "base_location": "RAF Marham",
         "part_serial_number": "ACT-88401-B",
         "nsn": "1680-01-619-4821",
-        "component_name": "Port Electro-Hydrostatic Actuator (EHA)",
+        "component_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "current_flight_hours": 842.0,
         "life_limit_threshold_hrs": 1000.0,
     },
@@ -164,7 +164,7 @@ _BASE_AIRFRAME_COMPONENT_TELEMETRY_ROWS: list[dict[str, Any]] = [
         "base_location": "RAF Marham",
         "part_serial_number": "ACT-91204-A",
         "nsn": "1680-01-619-4821",
-        "component_name": "Port Electro-Hydrostatic Actuator (EHA)",
+        "component_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "current_flight_hours": 964.5,
         "life_limit_threshold_hrs": 1000.0,
     },
@@ -175,7 +175,7 @@ _BASE_AIRFRAME_COMPONENT_TELEMETRY_ROWS: list[dict[str, Any]] = [
         "base_location": "HMS Prince of Wales",
         "part_serial_number": "ACT-77510-C",
         "nsn": "1680-01-619-4821",
-        "component_name": "Port Electro-Hydrostatic Actuator (EHA)",
+        "component_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "current_flight_hours": 918.2,
         "life_limit_threshold_hrs": 1000.0,
     },
@@ -186,7 +186,7 @@ _BASE_AIRFRAME_COMPONENT_TELEMETRY_ROWS: list[dict[str, Any]] = [
         "base_location": "HMS Queen Elizabeth",
         "part_serial_number": "ACT-77542-D",
         "nsn": "1680-01-619-4821",
-        "component_name": "Port Electro-Hydrostatic Actuator (EHA)",
+        "component_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "current_flight_hours": 610.0,
         "life_limit_threshold_hrs": 1000.0,
     },
@@ -197,7 +197,7 @@ _BASE_AIRFRAME_COMPONENT_TELEMETRY_ROWS: list[dict[str, Any]] = [
         "base_location": "RAF Marham",
         "part_serial_number": "ACT-77560-E",
         "nsn": "1680-01-619-4821",
-        "component_name": "Port Electro-Hydrostatic Actuator (EHA)",
+        "component_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "current_flight_hours": 745.8,
         "life_limit_threshold_hrs": 1000.0,
     },
@@ -232,7 +232,7 @@ for _idx in range(6, 100):
 _BASE_GLOBAL_DEPOT_INVENTORY_ROWS: list[dict[str, Any]] = [
     {
         "nsn": "1680-01-619-4821",
-        "part_name": "Port Electro-Hydrostatic Actuator (EHA)",
+        "part_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "depot_id": "DEPOT-MAR-01",
         "depot_name": "RAF Marham Regional Sustainment Hub",
         "quantity_on_hand": 4,
@@ -242,7 +242,7 @@ _BASE_GLOBAL_DEPOT_INVENTORY_ROWS: list[dict[str, Any]] = [
     },
     {
         "nsn": "1680-01-619-4821",
-        "part_name": "Port Electro-Hydrostatic Actuator (EHA)",
+        "part_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "depot_id": "DEPOT-QNLZ-02",
         "depot_name": "HMS Queen Elizabeth Afloat Spares",
         "quantity_on_hand": 2,
@@ -252,7 +252,7 @@ _BASE_GLOBAL_DEPOT_INVENTORY_ROWS: list[dict[str, Any]] = [
     },
     {
         "nsn": "1680-01-619-4821",
-        "part_name": "Port Electro-Hydrostatic Actuator (EHA)",
+        "part_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "depot_id": "DEPOT-PWLS-03",
         "depot_name": "HMS Prince of Wales Afloat Spares",
         "quantity_on_hand": 2,
@@ -301,7 +301,7 @@ for _idx in range(3, 100):
 _BASE_SQUADRON_SORTIE_SCHEDULE_ROWS: list[dict[str, Any]] = [
     {
         "sortie_id": "SRT-MAR-20261103-01",
-        "scheduled_departure_utc": "2026-11-03T06:30:00Z",
+        "scheduled_departure_utc": "2026-11-03T07:30:00Z",
         "assigned_tail_number": "ZM151",
         "assigned_pilot_callsign": "Flt Lt Henderson / VIPER-1",
         "spare_tail_candidate": "ZM154",
@@ -367,9 +367,9 @@ for _idx in range(4, 100):
 
 # ---------------------------------------------------------------------------
 # Table 4: maintenance_work_orders (100 rows)
-# Keep original 14 rows (10 active + 4 COMPLETED) at indices 0..13.
+# Keep original 14 rows (6 active + 8 COMPLETED at indices 0..13).
 # Rows 14..99 (WO-2026-88415..WO-2026-88500) are historical COMPLETED work orders
-# so active-shift filters (`work_order_status != 'COMPLETED'`) return the exact 10 active rows.
+# so active-shift filters (`work_order_status != 'COMPLETED'`) return the exact 6 active rows.
 # ---------------------------------------------------------------------------
 _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
     {
@@ -380,12 +380,12 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         "base_location": "RAF Marham",
         "aircraft_status": "PMC-M",
         "work_order_status": "OPEN",
-        "priority": "PRIORITY_2_URGENT",
+        "priority": "PRIORITY_1_RED_X",
         "work_center": "FLIGHT_LINE",
         "wuc_code": "27-10",
-        "subsystem_name": "Electro-Hydrostatic Actuator (Flaperon)",
+        "subsystem_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "discrepancy_narrative": (
-            "PHM Advisory: Right flaperon EHA S/N ACT-99812-F logged 1,000.4 cumulative "
+            "PHM Advisory: Horizontal tail EHA S/N ACT-99812-F logged 1,000.4 cumulative "
             "high-load hours (exceeds 1,000.0 hr overhaul limit)."
         ),
         "corrective_action": (
@@ -393,7 +393,7 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         ),
         "awaiting_part_nsn": "1680-01-619-4821",
         "assigned_shift_lead": "Chf Tech M. Davies",
-        "estimated_mttr_hours": 4.5,
+        "estimated_mttr_hours": 8.5,
         "logged_man_hours": 1.2,
         "created_at_utc": "2026-11-02T19:10:00Z",
     },
@@ -418,19 +418,19 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         ),
         "awaiting_part_nsn": None,
         "assigned_shift_lead": "Sgt R. Patel",
-        "estimated_mttr_hours": 2.5,
+        "estimated_mttr_hours": 14.0,
         "logged_man_hours": 1.5,
         "created_at_utc": "2026-11-02T20:05:00Z",
     },
     {
         "work_order_id": "WO-2026-88403",
-        "tail_number": "ZM151",
+        "tail_number": "ZM161",
         "aircraft_variant": "F-35B",
-        "squadron": "617 Sqn (The Dambusters)",
+        "squadron": "207 Sqn (OCU)",
         "base_location": "RAF Marham",
-        "aircraft_status": "PMC-M",
-        "work_order_status": "AWAITING_ENGINEERING_DISPOSITION",
-        "priority": "PRIORITY_1_RED_X",
+        "aircraft_status": "FMC",
+        "work_order_status": "COMPLETED",
+        "priority": "PRIORITY_3_ROUTINE",
         "work_center": "STRUCTURES_LO",
         "wuc_code": "53-20",
         "subsystem_name": "Center Fuselage Frame 496 Bulkhead",
@@ -439,8 +439,8 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
             "C-scan anomaly at FS 496.0, WL 112.4."
         ),
         "corrective_action": (
-            "Phased-array ultrasonic NDI inspection completed on Frame 496 bulkhead; awaiting "
-            "structural engineering disposition and fastener torque verification."
+            "Phased-array ultrasonic NDI inspection completed on Frame 496 bulkhead; structural "
+            "engineering disposition cleared and fastener torque verified."
         ),
         "awaiting_part_nsn": None,
         "assigned_shift_lead": "FSgt A. Wallace",
@@ -454,9 +454,9 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         "aircraft_variant": "F-35B",
         "squadron": "617 Sqn (The Dambusters)",
         "base_location": "RAF Marham",
-        "aircraft_status": "NMC-S",
-        "work_order_status": "AWAITING_PARTS (MICAP)",
-        "priority": "PRIORITY_1_RED_X",
+        "aircraft_status": "FMC",
+        "work_order_status": "COMPLETED",
+        "priority": "PRIORITY_3_ROUTINE",
         "work_center": "AVIONICS",
         "wuc_code": "34-40",
         "subsystem_name": "AN/APG-81 AESA Radar Array",
@@ -465,9 +465,9 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
             "ground power-on self-test."
         ),
         "corrective_action": (
-            "Awaiting MICAP shipment of Low Voltage Power Supply assembly from Lakenheath regional hub."
+            "Replaced Low Voltage Power Supply assembly and verified AESA array BIT calibration."
         ),
-        "awaiting_part_nsn": "5841-01-642-9910",
+        "awaiting_part_nsn": None,
         "assigned_shift_lead": "Chf Tech K. Lindqvist",
         "estimated_mttr_hours": 6.0,
         "logged_man_hours": 2.4,
@@ -493,7 +493,7 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         ),
         "awaiting_part_nsn": None,
         "assigned_shift_lead": "WO1 D. MacLeod",
-        "estimated_mttr_hours": 14.5,
+        "estimated_mttr_hours": 8.0,
         "logged_man_hours": 8.0,
         "created_at_utc": "2026-11-01T09:30:00Z",
     },
@@ -508,7 +508,7 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         "priority": "PRIORITY_3_ROUTINE",
         "work_center": "FLIGHT_LINE",
         "wuc_code": "27-10",
-        "subsystem_name": "Electro-Hydrostatic Actuator (Flaperon)",
+        "subsystem_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "discrepancy_narrative": (
             "Routine 850-hour PHM telemetry verification on EHA S/N ACT-88410-B (842.0 hrs logged)."
         ),
@@ -550,18 +550,18 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         "tail_number": "ZM156",
         "aircraft_variant": "F-35B",
         "squadron": "809 NAS (The Immortals)",
-        "base_location": "HMS Queen Elizabeth",
+        "base_location": "HMS Prince of Wales",
         "aircraft_status": "NMC-S",
         "work_order_status": "AWAITING_PARTS (MICAP)",
         "priority": "PRIORITY_1_RED_X",
         "work_center": "FLIGHT_LINE",
         "wuc_code": "27-10",
-        "subsystem_name": "Electro-Hydrostatic Actuator (Flaperon)",
+        "subsystem_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "discrepancy_narrative": (
-            "Port flaperon actuator S/N ACT-99704-A internal seal leak detected on carrier flight deck."
+            "Horizontal tail actuator S/N ACT-99704-A internal seal leak detected on carrier flight deck."
         ),
         "corrective_action": (
-            "MICAP requisition submitted for NSN 1680-01-619-4821; awaiting COD airlift to HMS Queen Elizabeth."
+            "MICAP requisition submitted for NSN 1680-01-619-4821; awaiting COD airlift to HMS Prince of Wales."
         ),
         "awaiting_part_nsn": "1680-01-619-4821",
         "assigned_shift_lead": "POAET J. Stirling",
@@ -576,8 +576,8 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         "squadron": "809 NAS (The Immortals)",
         "base_location": "HMS Queen Elizabeth",
         "aircraft_status": "PMC-M",
-        "work_order_status": "IN_PROGRESS",
-        "priority": "PRIORITY_2_URGENT",
+        "work_order_status": "COMPLETED",
+        "priority": "PRIORITY_3_ROUTINE",
         "work_center": "AVIONICS",
         "wuc_code": "94-10",
         "subsystem_name": "Electro-Optical Targeting System (EOTS)",
@@ -633,7 +633,7 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         ),
         "awaiting_part_nsn": None,
         "assigned_shift_lead": "POAET T. Campbell",
-        "estimated_mttr_hours": 8.0,
+        "estimated_mttr_hours": 7.5,
         "logged_man_hours": 1.5,
         "created_at_utc": "2026-11-02T20:40:00Z",
     },
@@ -643,9 +643,9 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
         "aircraft_variant": "F-35B",
         "squadron": "207 Sqn (OCU)",
         "base_location": "RAF Marham",
-        "aircraft_status": "PMC-M",
-        "work_order_status": "OPEN",
-        "priority": "PRIORITY_2_URGENT",
+        "aircraft_status": "FMC",
+        "work_order_status": "COMPLETED",
+        "priority": "PRIORITY_3_ROUTINE",
         "work_center": "ARMAMENT",
         "wuc_code": "91-20",
         "subsystem_name": "BRU-68/A Pneumatic Bomb Rack Unit",
@@ -653,7 +653,7 @@ _BASE_MAINTENANCE_WORK_ORDERS_ROWS: list[dict[str, Any]] = [
             "Station 4 BRU-68/A ejector hook failed to latch during weapons loading trainer drill."
         ),
         "corrective_action": "Removed rack for bench pneumatic leak test and solenoid valve inspection.",
-        "awaiting_part_nsn": "1095-01-598-3321",
+        "awaiting_part_nsn": None,
         "assigned_shift_lead": "FSgt L. Becker",
         "estimated_mttr_hours": 4.0,
         "logged_man_hours": 1.1,
@@ -762,7 +762,7 @@ _BASE_PHM_BIT_FAULT_EVENTS_ROWS: list[dict[str, Any]] = [
         "base_location": "RAF Marham",
         "sortie_id": "SRT-MAR-20261103-01",
         "wuc_code": "27-10",
-        "subsystem_name": "Electro-Hydrostatic Actuator (Flaperon)",
+        "subsystem_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "hrc_code": "HRC-2710-88A",
         "fault_severity": "DEGRADED_PMC",
         "bit_trigger_type": "PHM_PROGNOSTIC_THRESHOLD",
@@ -792,15 +792,15 @@ _BASE_PHM_BIT_FAULT_EVENTS_ROWS: list[dict[str, Any]] = [
     },
     {
         "fault_event_id": "PHM-2026-99103",
-        "tail_number": "ZM151",
+        "tail_number": "ZM161",
         "aircraft_variant": "F-35B",
-        "squadron": "617 Sqn (The Dambusters)",
+        "squadron": "207 Sqn (OCU)",
         "base_location": "RAF Marham",
-        "sortie_id": "SRT-MAR-20261103-01",
+        "sortie_id": None,
         "wuc_code": "53-20",
         "subsystem_name": "Center Fuselage Frame 496 Bulkhead",
         "hrc_code": "HRC-5320-94G",
-        "fault_severity": "CRITICAL_GROUNDING",
+        "fault_severity": "ADVISORY_PHM",
         "bit_trigger_type": "CONTINUOUS_BIT",
         "recurrence_count_30d": 1,
         "cnd_flag": False,
@@ -818,10 +818,10 @@ _BASE_PHM_BIT_FAULT_EVENTS_ROWS: list[dict[str, Any]] = [
         "wuc_code": "34-40",
         "subsystem_name": "AN/APG-81 AESA Radar Array",
         "hrc_code": "HRC-3440-4402",
-        "fault_severity": "CRITICAL_GROUNDING",
+        "fault_severity": "ADVISORY_PHM",
         "bit_trigger_type": "INITIATED_BIT",
         "recurrence_count_30d": 4,
-        "cnd_flag": True,
+        "cnd_flag": False,
         "diagnostic_confidence_pct": 94.2,
         "linked_work_order_id": "WO-2026-88404",
         "fault_timestamp_utc": "2026-11-01T14:05:00Z",
@@ -852,7 +852,7 @@ _BASE_PHM_BIT_FAULT_EVENTS_ROWS: list[dict[str, Any]] = [
         "base_location": "RAF Marham",
         "sortie_id": "SRT-MAR-20261103-02",
         "wuc_code": "27-10",
-        "subsystem_name": "Electro-Hydrostatic Actuator (Flaperon)",
+        "subsystem_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "hrc_code": "HRC-2710-10B",
         "fault_severity": "ADVISORY_PHM",
         "bit_trigger_type": "PHM_PROGNOSTIC_THRESHOLD",
@@ -885,10 +885,10 @@ _BASE_PHM_BIT_FAULT_EVENTS_ROWS: list[dict[str, Any]] = [
         "tail_number": "ZM156",
         "aircraft_variant": "F-35B",
         "squadron": "809 NAS (The Immortals)",
-        "base_location": "HMS Queen Elizabeth",
+        "base_location": "HMS Prince of Wales",
         "sortie_id": None,
         "wuc_code": "27-10",
-        "subsystem_name": "Electro-Hydrostatic Actuator (Flaperon)",
+        "subsystem_name": "Horizontal Tail Electro-Hydrostatic Actuator (EHA)",
         "hrc_code": "HRC-2710-99L",
         "fault_severity": "CRITICAL_GROUNDING",
         "bit_trigger_type": "CONTINUOUS_BIT",
@@ -955,11 +955,11 @@ _BASE_PHM_BIT_FAULT_EVENTS_ROWS: list[dict[str, Any]] = [
     # 3 unactioned PHM advisories (linked_work_order_id=None) with chronic CND flags
     {
         "fault_event_id": "PHM-2026-99112",
-        "tail_number": "ZM154",
+        "tail_number": "ZM158",
         "aircraft_variant": "F-35B",
-        "squadron": "617 Sqn (The Dambusters)",
-        "base_location": "RAF Marham",
-        "sortie_id": "SRT-MAR-20261103-02",
+        "squadron": "809 NAS (The Immortals)",
+        "base_location": "HMS Prince of Wales",
+        "sortie_id": "SRT-PWLS-20261103-01",
         "wuc_code": "34-40",
         "subsystem_name": "AN/APG-81 AESA Radar Array",
         "hrc_code": "HRC-3440-19C",
@@ -1119,7 +1119,7 @@ _BASE_WORK_CENTER_TOOLING_AND_SQEP_ROWS: list[dict[str, Any]] = [
         "required_special_tool_name": "Portable AESA Waveguide Calibration Test Set (APG-81-BITE-02)",
         "tool_calibration_status": "CALIBRATED_SERVICEABLE",
         "calibration_expiry_utc": "2027-01-18T00:00:00Z",
-        "bay_dispatch_status": "BLOCKED_AWAITING_MICAP_PART",
+        "bay_dispatch_status": "READY_TO_DISPATCH",
         "shift_updated_utc": "2026-11-02T14:30:00Z",
     },
     {
@@ -1179,7 +1179,7 @@ _BASE_WORK_CENTER_TOOLING_AND_SQEP_ROWS: list[dict[str, Any]] = [
     {
         "resource_id": "RES-2026-00008",
         "assigned_work_order_id": "WO-2026-88408",
-        "base_location": "HMS Queen Elizabeth",
+        "base_location": "HMS Prince of Wales",
         "work_center": "FLIGHT_LINE",
         "supported_wuc_code": "27-10",
         "shift_code": "CARRIER_WATCH_1",

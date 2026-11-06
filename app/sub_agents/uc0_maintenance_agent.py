@@ -10,6 +10,10 @@ from __future__ import annotations
 
 from google.adk.agents import LlmAgent
 
+from app.callbacks import (
+    slim_tool_response_after_tool_callback,
+    uc0_before_model_callback,
+)
 from app.config import get_flash_model, get_low_latency_config
 from app.tools.uc0_maintenance import execute_maintenance_sql
 
@@ -21,7 +25,7 @@ TARGET F35 DATAWAREHOUSE TABLES (Location: `EU`, 100 rows per table):
    - Partitioned By: `DAY(created_at_utc)` | Clustered By: `tail_number, aircraft_status`
    - 18 Columns (`A`..`R`):
      `work_order_id` (PK, e.g. `WO-2026-88401`..`WO-2026-88500`), `tail_number` (`ZM135`..`ZM179`), `aircraft_variant` (`F-35B`), `squadron` (`617 Sqn (The Dambusters)`, `809 NAS (The Immortals)`, `207 Sqn (OCU)`), `base_location` (`RAF Marham`, `HMS Queen Elizabeth`, `HMS Prince of Wales`), `aircraft_status` (`FMC`, `PMC-M`, `NMC-M`, `NMC-S`), `work_order_status` (`OPEN`, `IN_PROGRESS`, `AWAITING_PARTS (MICAP)`, `AWAITING_ENGINEERING_DISPOSITION`, `COMPLETED`), `priority` (`PRIORITY_1_RED_X`, `PRIORITY_2_URGENT`, `PRIORITY_3_ROUTINE`), `work_center` (`FLIGHT_LINE`, `STRUCTURES_LO`, `PROPULSION`, `AVIONICS`, `ARMAMENT`), `wuc_code` (`27-10`, `53-30`, `53-20`, `34-40`, `72-30`, `51-10`, `94-10`, `32-40`, `72-50`, `91-20`, `42-10`), `subsystem_name`, `discrepancy_narrative`, `corrective_action`, `awaiting_part_nsn`, `assigned_shift_lead`, `estimated_mttr_hours`, `logged_man_hours`, `created_at_utc`.
-   - Note: `WO-2026-88401`..`WO-2026-88414` represent the current shift's 14 primary work orders (including 10 active non-completed work orders where `work_order_status != 'COMPLETED'`), and `WO-2026-88415`..`WO-2026-88500` represent 86 completed historical work orders.
+   - Note: `WO-2026-88401`..`WO-2026-88414` represent the current shift's 14 primary work orders (including 6 active non-completed work orders where `work_order_status != 'COMPLETED'`), and `WO-2026-88415`..`WO-2026-88500` represent 86 completed historical work orders.
 
 2. **Table 8 (`phm_bit_fault_events`) — UC 0.1 Post-Sortie ODIN PHM / BIT Faults & CND Triage**:
    - FQN: `antig-dave.ukd_f35_sustainment_demo.phm_bit_fault_events`
@@ -43,9 +47,10 @@ MULTI-TABLE JOIN PATTERNS:
 MANDATORY OPERATIONAL RULES:
 1. Synthesize a clean read-only `SELECT` (or `JOIN`) statement against `maintenance_work_orders`, `phm_bit_fault_events`, and/or `work_center_tooling_and_sqep` and invoke `execute_maintenance_sql` with an informative `sheet_title` (and `LIMIT 25` for unaggregated detail queries unless the user explicitly asks for all 100 rows).
 2. SCREEN-FIT & COLUMN PRUNING RULE (MANDATORY): Assess what columns to return based on the user's prompt. Prune columns to a focused, responsive subset (strictly 4 to 6 columns maximum) that fits cleanly on screen without horizontal scrolling. Do NOT select the whole table or unnecessary columns.
-   - For repair time triage or open priority work orders: return strictly `work_order_id`, `tail_number`, `base_location`, `aircraft_status`, `work_order_status`, `estimated_mttr_hours` (do NOT include `logged_man_hours`, `wuc_code`, `assigned_shift_lead`, `awaiting_part_nsn`, etc.).
-   - For PHM/BIT fault triage: return strictly `fault_event_id`, `tail_number`, `subsystem_name`, `fault_severity`, `cnd_flag`, `diagnostic_confidence_pct`.
-   - For SQEP tooling queries: return strictly `work_center`, `required_special_tool_name`, `tool_calibration_status`, `sqep_certified_techs_on_shift`, `bay_dispatch_status`.
+   - For repair time triage or open priority work orders (Prompt 1 / UC 0): return strictly `work_order_id`, `tail_number`, `base_location`, `aircraft_status`, `work_order_status`, `estimated_mttr_hours` (do NOT include `logged_man_hours`, `wuc_code`, `assigned_shift_lead`, `awaiting_part_nsn`, etc.).
+   - For PHM/BIT fault triage & unscheduled fleet health warnings (Prompt 2 / UC 0.1): return strictly `fault_event_id`, `tail_number`, `subsystem_name`, `fault_severity`, `cnd_flag`, `linked_work_order_id`.
+   - For shift readiness & SQEP/tooling dispatch joins (Prompt 3 / UC 0.5): return strictly `wo.work_order_id`, `wo.tail_number`, `res.required_special_tool_id`, `res.tool_calibration_status`, `res.qar_inspector_available`, `res.bay_dispatch_status` (or for standalone `work_center_tooling_and_sqep` queries: `work_center`, `required_special_tool_name`, `tool_calibration_status`, `sqep_certified_techs_on_shift`, `bay_dispatch_status`).
+   - For aircraft / tail readiness queries (e.g. `"Tell me what tails on Lizzy are fit to fly"`): return strictly `SELECT DISTINCT tail_number, aircraft_variant, squadron, base_location, aircraft_status`.
    Only select columns directly relevant to the user's question.
 3. CRITICAL OUTPUT REQUIREMENT: You MUST include the `spreadsheet_card_markdown` returned by `execute_maintenance_sql` VERBATIM in your response, preserving the Spreadsheet Card header banner, Column Letters, Status Badges, Formula Summary Footer row, and collapsible `<details>` SQL block, followed by a concise 2-3 bullet operational takeaway.
 4. NO CSV DOWNLOAD LINKS (MANDATORY): Do NOT include or generate any `[📥 Download .CSV]` link or Cloud Storage URLs in your response. The host Gemini Enterprise interface natively provides table copying and downloading for users.
@@ -55,13 +60,25 @@ MANDATORY OPERATIONAL RULES:
      * `"across the Carrier Strike Group"` / `"CSG"` / `"UK Lightning Force"` / `"across the fleet"` -> NEVER add a `WHERE base_location` filter (include `RAF Marham` MOB + `HMS Queen Elizabeth` + `HMS Prince of Wales`).
      * `"afloat"` / `"embarked"` / `"at sea"` / `"carrier decks"` -> `WHERE base_location IN ('HMS Queen Elizabeth', 'HMS Prince of Wales')`.
      * `"ashore"` / `"shore-based"` / `"MOB"` / `"Main Operating Base"` / `"home station"` -> `WHERE base_location = 'RAF Marham'`.
+     * `"Lizzy"` / `"HMS QE"` / `"QNLZ"` -> `WHERE base_location = 'HMS Queen Elizabeth'`.
      * Squadron shorthand (`"617"`, `"Dambusters"`, `"809"`, `"Immortals"`, `"207"`, `"OCU"`) -> `'617 Sqn (The Dambusters)'`, `'809 NAS (The Immortals)'`, `'207 Sqn (OCU)'`.
    - **Work Order Lifecycle, Readiness & Priority Semantics**:
      * `"open"` / `"active"` / `"current"` / `"on the board"` / `"backlog"` work orders -> `WHERE work_order_status != 'COMPLETED'` (do NOT use `work_order_status = 'OPEN'` unless the user specifically asks for `"unstarted"` jobs).
-     * `"most urgent maintenance jobs and grounded aircraft ... ordered by how long they will take to fix"` -> `SELECT work_order_id, tail_number, base_location, aircraft_status, work_order_status, estimated_mttr_hours FROM antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders WHERE priority = 'PRIORITY_1_RED_X' AND work_order_status != 'COMPLETED' ORDER BY estimated_mttr_hours DESC`.
+     * **Prompt 1 (`UC 0` — `"What are our most urgent maintenance jobs and grounded aircraft across the Carrier Strike Group right now, ordered by how long they will take to fix?"`)** ->
+       `SELECT work_order_id, tail_number, base_location, aircraft_status, work_order_status, estimated_mttr_hours FROM antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders WHERE work_order_status != 'COMPLETED' AND priority IN ('PRIORITY_1_RED_X', 'PRIORITY_2_URGENT') ORDER BY estimated_mttr_hours DESC`
+       (returns the **6** active Urgent & Red-X work orders across `RAF Marham`, `HMS Queen Elizabeth`, and `HMS Prince of Wales`, with lead aircraft **`ZM151`** right at the top in Rows 1 & 2: **`WO-2026-88402`** at `14.0 hrs` for the Canopy Latch and **`WO-2026-88401`** at `8.5 hrs` for the Horizontal Tail Actuator).
      * `"grounded"` / `"unserviceable"` / `"down"` / `"NMC"` aircraft -> `aircraft_status IN ('NMC-M', 'NMC-S')`.
      * `"MICAP"` / `"supply hold"` / `"awaiting parts"` -> `aircraft_status = 'NMC-S'` or `work_order_status = 'AWAITING_PARTS (MICAP)'`.
+     * **Section 3 (`"Tell me what tails on Lizzy are fit to fly"`)** ->
+       `SELECT DISTINCT tail_number, aircraft_variant, squadron, base_location, aircraft_status FROM antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders WHERE base_location = 'HMS Queen Elizabeth' AND aircraft_status = 'FMC'`
+       (returns the exact 5 mission-capable tails `ZM166`, `ZM172`, `ZM136`, `ZM142`, `ZM148`).
    - **PHM/BIT & SQEP/Tooling Semantics**:
+     * **Prompt 2 (`UC 0.1` — `"What faults or pilot-reported issues were raised on ZM151 after its last flight, and are any repeat unconfirmed faults?"` or `"What faults or pilot-reported issues were raised on ZM151 after its last flight..."`)** ->
+       `SELECT fault_event_id, tail_number, subsystem_name, fault_severity, cnd_flag, linked_work_order_id FROM antig-dave.ukd_f35_sustainment_demo.phm_bit_fault_events WHERE tail_number = 'ZM151' ORDER BY fault_timestamp_utc DESC`
+       (returns **`ZM151`'s 2 post-sortie faults**: `PHM-2026-99102` (`Forward Fuselage Canopy Latch`, `⚪ NO_BIT_FAULT_LOGGED`, `⚠️ CND (Repeat)`, linked to `WO-2026-88402`) and `PHM-2026-99101` (`Horizontal Tail Electro-Hydrostatic Actuator (EHA)`, `🟠 DEGRADED_PMC`, `✅ Verified`, linked to `WO-2026-88401`)).
+     * **Prompt 3 (`UC 0.5` — `"Which of our open maintenance jobs are ready to start on this shift, with both qualified crew and calibrated tools staged?"` or `"Which of our open maintenance jobs are ready to start on this shift, and which ones are held up..."`)** ->
+       `SELECT wo.work_order_id, wo.tail_number, res.required_special_tool_id, res.tool_calibration_status, res.qar_inspector_available, res.bay_dispatch_status FROM antig-dave.ukd_f35_sustainment_demo.maintenance_work_orders wo JOIN antig-dave.ukd_f35_sustainment_demo.work_center_tooling_and_sqep res ON wo.work_order_id = res.assigned_work_order_id WHERE wo.work_order_status != 'COMPLETED' ORDER BY wo.work_order_id ASC`
+       (returns the 6 open work orders, confirming **`ZM151`**'s 2 jobs — `WO-2026-88401` with `EHA-HYD-2710` and `WO-2026-88402` with calibrated Digital Micro-Torque Spanner **`JTD-53-30-T14`** — are the **only** jobs `🟢 READY_TO_DISPATCH`, while the 4 jobs on sister tails `ZM153`, `ZM156`, `ZM159`, and `ZM162` are held up by missing QAR inspector `🟠 BLOCKED_NO_QAR_ON_SHIFT`, expired calibration `🔴 BLOCKED_TOOL_OUT_OF_CAL` on `LO-IR-BLANKET-04`, or MICAP supply holds `🔴 BLOCKED_AWAITING_MICAP_PART`).
      * `"zero fault codes"` / `"no BIT"` / `"pilot reported only"` -> `bit_trigger_type = 'PILOT_REPORT_ONLY_NO_BIT'`.
      * `"repeat"` / `"chronic"` / `"rogue"` / `"CND"` -> `cnd_flag = TRUE`.
      * `"unscheduled"` / `"unactioned warnings"` -> `linked_work_order_id IS NULL`.
@@ -80,6 +97,9 @@ f35_maintenance_data_agent = LlmAgent(
     generate_content_config=get_low_latency_config(max_output_tokens=2048),
     instruction=UC0_SYSTEM_INSTRUCTION,
     tools=[execute_maintenance_sql],
+    before_model_callback=uc0_before_model_callback,
+    after_tool_callback=slim_tool_response_after_tool_callback,
 )
 
 __all__ = ["UC0_SYSTEM_INSTRUCTION", "f35_maintenance_data_agent"]
+

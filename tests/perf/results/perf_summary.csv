@@ -1,16 +1,20 @@
 test_id,phase,description,count,errors,error_rate_pct,ttft_p50_ms,ttft_p95_ms,min_ms,p50_ms,p90_ms,p95_ms,p99_ms,max_ms,mean_ms,std_dev_ms,sla_p95_ms,passed
-TC-LP-01_fast_path,Phase A (Local In-Process),Tier 1/2 Fast-Path Greeting & Health Interception,5,0,0.0,0.0,0.03,0.0,0.0,0.03,0.03,0.03,0.03,0.01,0.01,5.0,True
-TC-LP-02_uc1_analytics,Phase A (Local In-Process),UC1 BigQuery Analytics + Vega-Lite Spec & Tail Swap,5,0,0.0,3.57,4.37,2.14,3.57,4.37,4.37,4.37,4.37,3.58,0.91,2200.0,True
-TC-LP-CHART_01_dashboard,Phase A (Local In-Process),Render 16:9 Executive Briefing Dashboard PNG,5,0,0.0,200.0,300.0,626.18,655.55,789.18,789.18,789.18,789.18,670.95,67.66,1500.0,True
-TC-LP-CHART_02_fatigue,Phase A (Local In-Process),Render Actuator Fatigue Threshold Chart PNG,5,0,0.0,200.0,300.0,507.94,534.45,541.14,541.14,541.14,541.14,530.19,13.78,1000.0,True
-TC-LP-CHART_03_depot,Phase A (Local In-Process),Render Regional Depot Stock vs Demand Chart PNG,5,0,0.0,200.0,300.0,495.61,501.82,518.32,518.32,518.32,518.32,505.65,10.03,1000.0,True
-TC-LP-03_uc2_jtd_search,Phase A (Local In-Process),UC2 Dialect Normalization + Grounded JTD & Log Synthesis,5,0,0.0,200.0,300.0,6.08,360.08,516.21,516.21,516.21,516.21,265.25,242.79,1800.0,True
-TC-LP-04_uc3_fanout,Phase A (Local In-Process),UC3 4-Way Parallel ASIP Diagnostic Fan-Out (Rainflow + CAD + mBOM),5,0,0.0,22.54,22.94,19.35,22.54,22.94,22.94,22.94,22.94,21.75,1.49,3100.0,True
-TC-LP-05_uc3_hitl,Phase A (Local In-Process),UC3 Two-Turn Form 700 HITL Gate & Engineering Release,5,0,0.0,0.05,0.13,0.04,0.05,0.13,0.13,0.13,0.13,0.06,0.04,1400.0,True
-TC-LP-02_cloud_bq_eu,Phase B (Live Cloud EU),Live Uncached BigQuery (EU) 3-Table Join + Dual Vega-Lite Specs,5,0,0.0,420.0,420.0,1327.7,1450.81,1698.08,1698.08,1698.08,1698.08,1472.42,138.14,2500.0,True
-TC-LP-03_cloud_de_eu,Phase B (Live Cloud EU),Live Uncached Discovery Engine (eu) Single-Pass Search (pageSize=15),5,0,0.0,125.91,208.33,100.62,279.79,462.96,462.96,462.96,462.96,253.02,146.63,2000.0,True
-TC-LP-04_cloud_fanout_eu,Phase B (Live Cloud EU),Live Uncached 4-Way Parallel Fan-Out (BQ 1553 + ASIP Physics + CAD + mBOM),5,0,0.0,146.0,164.21,425.02,486.66,547.36,547.36,547.36,547.36,491.11,52.23,3100.0,True
-TC-LP-RE_fast_path_capability,Phase B (Deployed Runtime),Vertex AI Agent Runtime Fast-Path Capability Interception (:streamQuery),5,0,0.0,271.67,350.97,317.05,321.45,407.69,407.69,407.69,407.69,340.99,38.4,1500.0,True
-TC-LP-RE_uc1_analytics,Phase B (Deployed Runtime),Vertex AI Agent Runtime UC1 Supply Analytics + Vega-Lite Specs (:streamQuery),3,0,0.0,2186.62,4281.88,7591.14,9965.22,20100.81,20100.81,20100.81,20100.81,12552.39,6644.02,26000.0,True
-TC-LP-RE_uc2_jtd_search,Phase B (Deployed Runtime),Vertex AI Agent Runtime UC2 JTD Search & Cross-Service Synthesis (:streamQuery),3,0,0.0,2610.52,4644.92,11451.8,12747.86,18673.62,18673.62,18673.62,18673.62,14291.09,3850.3,35000.0,True
-TC-LP-RE_uc3_airworthiness,Phase B (Deployed Runtime),Vertex AI Agent Runtime UC3 4-Way ASIP Diagnostic & Form 700 Gate (:streamQuery),3,0,0.0,2689.35,4621.17,14200.64,15769.32,32036.97,32036.97,32036.97,32036.97,20668.98,9876.17,50000.0,True
+TC-LP-00_uc0_maintenance_sql,Phase A (Local In-Process),UC0 Maintenance Text-to-SQL & Spreadsheet Card Generation,5,0,0.0,225.0,337.5,354.61,368.42,436.76,436.76,436.76,436.76,380.63,32.37,2000.0,True
+TC-LP-01_fast_path,Phase A (Local In-Process),Tier 1/2 Fast-Path Greeting & Health Interception,5,0,0.0,0.01,0.04,0.0,0.01,0.04,0.04,0.04,0.04,0.01,0.01,5.0,True
+TC-LP-02_uc1_analytics,Phase A (Local In-Process),UC1 BigQuery Analytics + Vega-Lite Spec & Tail Swap,5,0,0.0,7.14,7.49,7.04,7.14,7.49,7.49,7.49,7.49,7.22,0.19,2200.0,True
+TC-LP-CHART_01_dashboard,Phase A (Local In-Process),Render 16:9 Executive Briefing Dashboard PNG,5,0,0.0,0.69,300.0,0.41,0.69,719.52,719.52,719.52,719.52,144.42,321.49,1500.0,True
+TC-LP-CHART_02_fatigue,Phase A (Local In-Process),Render Actuator Fatigue Threshold Chart PNG,5,0,0.0,0.81,300.0,0.38,0.81,550.84,550.84,550.84,550.84,110.74,246.02,1000.0,True
+TC-LP-CHART_03_depot,Phase A (Local In-Process),Render Regional Depot Stock vs Demand Chart PNG,5,0,0.0,0.67,300.0,0.39,0.67,516.2,516.2,516.2,516.2,103.73,230.58,1000.0,True
+TC-LP-03_uc2_jtd_search,Phase A (Local In-Process),UC2 Dialect Normalization + Grounded JTD & Log Synthesis,5,0,0.0,200.0,300.0,3.8,403.13,712.67,712.67,712.67,712.67,345.46,264.68,1800.0,True
+TC-LP-02_cloud_bq_eu,Phase B (Live Cloud EU),Live Uncached BigQuery (EU) 3-Table Join + Dual Vega-Lite Specs,5,0,0.0,250.86,280.33,516.31,717.37,801.54,801.54,801.54,801.54,670.75,114.05,2500.0,True
+TC-LP-03_cloud_de_eu,Phase B (Live Cloud EU),Live Uncached Discovery Engine (eu) Single-Pass Search (pageSize=15),5,0,0.0,108.06,157.8,60.02,240.12,350.66,350.66,350.66,350.66,224.06,104.28,2000.0,True
+TC-LP-RE_Cap_0_fast_path,Phase B (Deployed Runtime),Storyboard Cap_0 — Fast-Path Capability Interception (:streamQuery),5,0,0.0,396.27,724.93,392.82,440.19,768.57,768.57,768.57,768.57,496.59,153.6,1500.0,True
+TC-LP-RE_Prompt_1_uc0_csg,Phase B (Deployed Runtime),Storyboard Prompt_1 (UC 0) — CSG Urgent Work Orders & Grounded Tails (:streamQuery),3,0,0.0,317.31,332.36,629.93,631.89,1051.95,1051.95,1051.95,1051.95,771.26,243.09,3500.0,True
+TC-LP-RE_Prompt_2_uc01_phm,Phase B (Deployed Runtime),Storyboard Prompt_2 (UC 0.1) — ZM151 Post-Sortie PHM/BIT & CND Triage (:streamQuery),3,0,0.0,327.56,351.81,649.92,666.38,1029.95,1029.95,1029.95,1029.95,782.09,214.81,3500.0,True
+TC-LP-RE_Prompt_3_uc05_sqep,Phase B (Deployed Runtime),"Storyboard Prompt_3 (UC 0.5) — Shift SQEP, QAR & Tooling Readiness JOIN (:streamQuery)",3,0,0.0,370.78,393.42,694.18,711.51,1142.75,1142.75,1142.75,1142.75,849.48,254.12,3500.0,True
+TC-LP-RE_Prompt_4_uc1_turn1,Phase B (Deployed Runtime),"Storyboard Prompt_4 (UC 1 Turn 1) — Actuator Wear, Depot Stock & Tail Swap (:streamQuery)",3,0,0.0,344.08,409.34,751.0,766.69,877.1,877.1,877.1,877.1,798.26,68.72,3500.0,True
+TC-LP-RE_Prompt_5_uc1_turn2,Phase B (Deployed Runtime),Storyboard Prompt_5 (UC 1 Turn 2) — 16:9 Executive Briefing Dashboard Slide PNG (:streamQuery),3,0,0.0,324.24,354.7,639.65,694.23,706.81,706.81,706.81,706.81,680.23,35.7,4500.0,True
+TC-LP-RE_Prompt_6_uc2_jtd,Phase B (Deployed Runtime),Storyboard Prompt_6 (UC 2) — Grounded JTD 53-30-01 & USMC VMFA-211 Synthesis (:streamQuery),3,0,0.0,345.41,359.72,631.45,663.31,668.55,668.55,668.55,668.55,654.44,20.08,3500.0,True
+TC-LP-RE_Ref_Lizzy_uc0,Phase B (Deployed Runtime),Storyboard Ref_Lizzy (UC 0) — Colloquial Carrier Alias ('Lizzy') FMC Tails (:streamQuery),3,0,0.0,353.2,398.55,697.9,707.9,743.74,743.74,743.74,743.74,716.51,24.1,3500.0,True
+TC-LP-RE_Ref_Slang_uc2,Phase B (Deployed Runtime),Storyboard Ref_Slang (UC 2) — UK/US Cross-Service Dialect Bridge (:streamQuery),3,0,0.0,308.75,319.64,579.38,606.99,632.53,632.53,632.53,632.53,606.3,26.59,3500.0,True
+TC-LP-RE_Ref_Comp_fast_path,Phase B (Deployed Runtime),Storyboard Ref_Comp (OPT-04) — Tier 2 Executive Dashboard Comparison Fast-Path (:streamQuery),5,0,0.0,312.47,342.96,333.35,349.29,408.68,408.68,408.68,408.68,363.69,30.79,1500.0,True

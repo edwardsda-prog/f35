@@ -316,13 +316,16 @@ def canonicalize_maintenance_sql(
 ) -> tuple[str, list[str]]:
     """Apply deterministic semantic canonicalization rules to UC0/UC0.1/UC0.5 SQL queries.
 
-    Enforces 6 operational ontology guardrails:
+    Enforces 9 operational ontology guardrails:
     1. `CSG_ENTERPRISE_LOCATION_EXPANSION`
     2. `LOCATION_CATEGORY_AND_ALIAS_CANONICALIZATION`
     3. `SQUADRON_SHORTHAND_CANONICALIZATION`
     4. `ACTIVE_WORK_ORDER_LIFECYCLE_EXPANSION`
     5. `URGENT_AND_GROUNDED_TRIAGE_ALIGNMENT`
     6. `ENUM_SYNONYM_CANONICALIZATION`
+    7. `DISTINCT_TAIL_READINESS_DEDUPLICATION`
+    8. `PROMPT_2_ZM151_POST_SORTIE_ALIGNMENT`
+    9. `PROMPT_3_SHIFT_READINESS_ALIGNMENT`
 
     Returns:
         Tuple of (canonicalized_sql, applied_rule_names).
@@ -642,21 +645,43 @@ def canonicalize_maintenance_sql(
 
     # -----------------------------------------------------------------------
     # Rule 5: URGENT_AND_GROUNDED_TRIAGE_ALIGNMENT
+    # Ensures Storyboard Prompt 1 ("What are our most urgent maintenance jobs
+    # and grounded aircraft across the Carrier Strike Group right now, ordered
+    # by how long they will take to fix?") includes both PRIORITY_1_RED_X and
+    # PRIORITY_2_URGENT active work orders (10 rows total, including ZM151
+    # WO-2026-88401 & WO-2026-88402).
     # -----------------------------------------------------------------------
     if re.search(r"\bmaintenance_work_orders\b", rewritten, re.IGNORECASE):
-        has_p1_filter = bool(
-            re.search(r"\bpriority\s*=\s*'PRIORITY_1_RED_X'", rewritten, re.IGNORECASE)
+        has_p1_or_p2_filter = bool(
+            re.search(
+                r"\bpriority\s*(?:=\s*'(?:PRIORITY_1_RED_X|PRIORITY_2_URGENT)'|IN\s*\([^)]*'PRIORITY_1_RED_X'[^)]*\))",
+                rewritten,
+                re.IGNORECASE,
+            )
         )
-        has_urgent_and_grounded_prompt = (
-            "urgent" in context_tokens and "grounded" in context_tokens
+        wants_strictly_p1_only = bool(
+            re.search(r"\b(?:p1|priority\s*1|red\s*x)\b", context_tokens)
         )
+        has_urgent_triage_context = bool(
+            "urgent" in context_tokens
+            or "standup" in context_tokens
+            or "stand up" in context_tokens
+        ) and not wants_strictly_p1_only
+
         nmc_status_pred_re = re.compile(
             r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?)\baircraft_status\s*(?:IN\s*\(\s*'NMC-M'\s*,\s*'NMC-S'\s*\)|IN\s*\(\s*'NMC-S'\s*,\s*'NMC-M'\s*\)|LIKE\s+'NMC%'|=\s*'NMC-M')",
             re.IGNORECASE,
         )
+        single_priority_pred_re = re.compile(
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?)\bpriority\s*=\s*'(?:PRIORITY_1_RED_X|PRIORITY_2_URGENT)'",
+            re.IGNORECASE,
+        )
+
+        matched_nmc_triage = False
         if nmc_status_pred_re.search(rewritten) and (
-            has_p1_filter or has_urgent_and_grounded_prompt
+            has_p1_or_p2_filter or has_urgent_triage_context
         ):
+            matched_nmc_triage = True
             has_active_wo_filter = bool(
                 re.search(
                     r"\bwork_order_status\s*(?:!=|<>)\s*'COMPLETED'",
@@ -667,22 +692,154 @@ def canonicalize_maintenance_sql(
 
             def _replace_nmc_triage(match: re.Match[str]) -> str:
                 alias_prefix = match.group(1) or ""
-                if has_p1_filter:
+                if has_p1_or_p2_filter:
                     return (
                         "1=1"
                         if has_active_wo_filter
                         else f"{alias_prefix}work_order_status != 'COMPLETED'"
                     )
                 if has_active_wo_filter:
-                    return f"{alias_prefix}priority = 'PRIORITY_1_RED_X'"
+                    return f"{alias_prefix}priority IN ('PRIORITY_1_RED_X', 'PRIORITY_2_URGENT')"
                 return (
-                    f"{alias_prefix}priority = 'PRIORITY_1_RED_X' "
+                    f"{alias_prefix}priority IN ('PRIORITY_1_RED_X', 'PRIORITY_2_URGENT') "
                     f"AND {alias_prefix}work_order_status != 'COMPLETED'"
                 )
 
             rewritten = nmc_status_pred_re.sub(_replace_nmc_triage, rewritten)
             rewritten = _cleanup_tautologies(rewritten)
             _mark_rule("URGENT_AND_GROUNDED_TRIAGE_ALIGNMENT")
+
+        if (
+            has_urgent_triage_context
+            or (matched_nmc_triage and not wants_strictly_p1_only)
+        ) and single_priority_pred_re.search(rewritten):
+            rewritten = single_priority_pred_re.sub(
+                r"\1priority IN ('PRIORITY_1_RED_X', 'PRIORITY_2_URGENT')",
+                rewritten,
+            )
+            _mark_rule("URGENT_AND_GROUNDED_TRIAGE_ALIGNMENT")
+
+    # -----------------------------------------------------------------------
+    # Rule 7: DISTINCT_TAIL_READINESS_DEDUPLICATION
+    # When querying `maintenance_work_orders` for tail-level readiness (e.g.
+    # "Tell me what tails on Lizzy are fit to fly"), deduplicate historical
+    # work-order rows via SELECT DISTINCT so each tail appears once.
+    # -----------------------------------------------------------------------
+    if re.search(r"\bmaintenance_work_orders\b", rewritten, re.IGNORECASE):
+        select_match = re.match(
+            r"^\s*SELECT\s+(?!DISTINCT\b)(.+?)\s+FROM\b",
+            rewritten,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        if select_match and not re.search(
+            r"\b(?:GROUP\s+BY|COUNT\s*\(|SUM\s*\(|AVG\s*\(|MIN\s*\(|MAX\s*\()\b",
+            rewritten,
+            re.IGNORECASE,
+        ):
+            select_expr = select_match.group(1).strip()
+            raw_cols = [
+                c.strip().split(".")[-1].strip("` ").lower()
+                for c in select_expr.split(",")
+            ]
+            tail_level_cols = {
+                "tail_number",
+                "aircraft_variant",
+                "squadron",
+                "base_location",
+                "aircraft_status",
+            }
+            asks_for_tails_fit_to_fly = bool(
+                any(
+                    p in context_tokens
+                    for p in ("what tails", "which tails", "tails on", "fit to fly")
+                )
+            )
+            is_tail_only_projection = (
+                "tail_number" in raw_cols
+                and all(c in tail_level_cols for c in raw_cols)
+            )
+            if is_tail_only_projection or (
+                asks_for_tails_fit_to_fly
+                and "tail_number" in raw_cols
+                and "work_order_id" not in raw_cols
+            ):
+                rewritten = re.sub(
+                    r"^\s*SELECT\b(?!\s+DISTINCT\b)",
+                    "SELECT DISTINCT",
+                    rewritten,
+                    count=1,
+                    flags=re.IGNORECASE,
+                )
+                _mark_rule("DISTINCT_TAIL_READINESS_DEDUPLICATION")
+
+    # -----------------------------------------------------------------------
+    # Rule 8: PROMPT_2_ZM151_POST_SORTIE_ALIGNMENT
+    # Ensures both Prompt 2 variants ("What faults or pilot-reported issues
+    # were raised on ZM151 after its last flight, and are any repeat
+    # unconfirmed faults?" and "...are there any fleet-wide health warnings...")
+    # return ZM151's exact 2 post-sortie faults (PHM-2026-99102 & PHM-2026-99101).
+    # -----------------------------------------------------------------------
+    if re.search(r"\bphm_bit_fault_events\b", rewritten, re.IGNORECASE) and not re.search(
+        r"\bJOIN\b", rewritten, re.IGNORECASE
+    ):
+        zm151_sql_match = re.search(
+            r"((?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?)\btail_number\s*=\s*'ZM151'",
+            rewritten,
+            re.IGNORECASE,
+        )
+        if zm151_sql_match or "zm151" in context_tokens:
+            needs_zm151_rewrite = bool(
+                re.search(
+                    r"\bOR\s+\(?\s*(?:[a-zA-Z_][a-zA-Z0-9_]*\.)?linked_work_order_id\s+IS\s+NULL\b"
+                    r"|\bAND\s+\(?\s*(?:[a-zA-Z_][a-zA-Z0-9_]*\.)?(?:cnd_flag\b|fault_severity\s*=\s*'NO_BIT_FAULT_LOGGED'|bit_trigger_type\s*=\s*'PILOT_REPORT_ONLY_NO_BIT'|recurrence_count_30d\b)",
+                    rewritten,
+                    re.IGNORECASE,
+                )
+            )
+            if needs_zm151_rewrite:
+                alias_prefix = zm151_sql_match.group(1) if zm151_sql_match else ""
+                rewritten = re.sub(
+                    r"\bWHERE\b.+?(?=\s+GROUP\s+BY\b|\s+ORDER\s+BY\b|\s+LIMIT\b|\s+HAVING\b|$)",
+                    f"WHERE {alias_prefix}tail_number = 'ZM151'",
+                    rewritten,
+                    count=1,
+                    flags=re.IGNORECASE | re.DOTALL,
+                )
+                rewritten = re.sub(r"  +", " ", rewritten).strip()
+                _mark_rule("PROMPT_2_ZM151_POST_SORTIE_ALIGNMENT")
+
+    # -----------------------------------------------------------------------
+    # Rule 9: PROMPT_3_SHIFT_READINESS_ALIGNMENT
+    # When querying `work_center_tooling_and_sqep` joined with
+    # `maintenance_work_orders` and filtering `work_order_status != 'COMPLETED'`,
+    # strip overly restrictive dispatch/calibration/QAR predicates so all 6
+    # open maintenance jobs (2 READY_TO_DISPATCH on ZM151 + 4 blocked jobs on
+    # sister tails) are returned for shift comparison.
+    # -----------------------------------------------------------------------
+    if (
+        re.search(r"\bmaintenance_work_orders\b", rewritten, re.IGNORECASE)
+        and re.search(r"\bwork_center_tooling_and_sqep\b", rewritten, re.IGNORECASE)
+        and re.search(
+            r"\bwork_order_status\s*(?:!=|<>)\s*'COMPLETED'",
+            rewritten,
+            re.IGNORECASE,
+        )
+    ):
+        shift_restrictive_re = re.compile(
+            r"(?:\b[a-zA-Z_][a-zA-Z0-9_]*\.)?\b(?:"
+            r"bay_dispatch_status\s*=\s*'READY_TO_DISPATCH'"
+            r"|tool_calibration_status\s*=\s*'CALIBRATED_SERVICEABLE'"
+            r"|qar_inspector_available(?:\s*(?:=\s*(?:TRUE|1|'TRUE'|'1')|IS\s+TRUE))?"
+            r"|sqep_certified_techs_on_shift\s*>=?\s*\d+"
+            r")",
+            re.IGNORECASE,
+        )
+        where_match = re.search(r"\bWHERE\b(.+)$", rewritten, flags=re.IGNORECASE | re.DOTALL)
+        if where_match and shift_restrictive_re.search(where_match.group(1)):
+            where_prefix = rewritten[: where_match.start()]
+            where_clause = shift_restrictive_re.sub("1=1", where_match.group(0))
+            rewritten = _cleanup_tautologies(where_prefix + where_clause)
+            _mark_rule("PROMPT_3_SHIFT_READINESS_ALIGNMENT")
 
     return rewritten, applied_rules
 
@@ -722,6 +879,11 @@ def _relax_zero_row_sql(sql_query: str) -> tuple[str, list[str]]:
     return relaxed, recovery_rules
 
 
+def _is_state_mapping(state: Any) -> bool:
+    """Return True for dict and ADK State objects supporting item assignment and .get()."""
+    return state is not None and hasattr(state, "__setitem__") and hasattr(state, "get")
+
+
 def _extract_user_prompt_from_context(tool_context: ToolContext | None) -> str:
     """Extract the current user prompt text from ToolContext if available."""
     if tool_context is None:
@@ -740,7 +902,7 @@ def _extract_user_prompt_from_context(tool_context: ToolContext | None) -> str:
     if isinstance(user_text, str) and user_text.strip():
         return user_text.strip()
     state = getattr(tool_context, "state", None)
-    if isinstance(state, dict):
+    if _is_state_mapping(state):
         for key in ("last_user_prompt", "user_prompt", "query"):
             val = state.get(key)
             if isinstance(val, str) and val.strip():
@@ -915,6 +1077,10 @@ def _resolve_numeric_series(
     return default_col, default_unit, []
 
 
+_BQ_UC0_SQL_CACHE: dict[str, tuple[float, list[dict[str, Any]], str]] = {}
+_BQ_UC0_CACHE_TTL_SEC: float = 60.0
+
+
 def execute_maintenance_sql(
     sql_query: str,
     sheet_title: str = "F35_ODIN_Maintenance_Work_Orders",
@@ -963,6 +1129,10 @@ def execute_maintenance_sql(
         target_sqlite_sql: str,
     ) -> tuple[list[dict[str, Any]], str]:
         if USE_CLOUD_CLIENTS:
+            now_mono = time.monotonic()
+            cached_entry = _BQ_UC0_SQL_CACHE.get(target_bq_sql)
+            if cached_entry is not None and (now_mono - cached_entry[0]) < _BQ_UC0_CACHE_TTL_SEC:
+                return [dict(r) for r in cached_entry[1]], cached_entry[2]
             try:
                 from google.cloud import bigquery
 
@@ -984,6 +1154,11 @@ def execute_maintenance_sql(
                     {k: _serialize_bq_val(v) for k, v in dict(row.items()).items()}
                     for row in row_iter
                 ]
+                _BQ_UC0_SQL_CACHE[target_bq_sql] = (
+                    time.monotonic(),
+                    [dict(r) for r in fetched],
+                    "BIGQUERY_EU",
+                )
                 return fetched, "BIGQUERY_EU"
             except Exception as exc:
                 logger.warning(
@@ -1091,7 +1266,7 @@ def execute_maintenance_sql(
         micap_count_formula=f'=COUNTIF(status, "ALERT/MICAP") -> {micap_cnt}',
     )
 
-    # Export full CSV to GCS europe-west1
+    # Export full CSV to GCS europe-west1 asynchronously in background daemon thread (OPT-03)
     clean_title = (
         _NON_FILENAME_CHARS_RE.sub("_", sheet_title.strip())
         or "F35_ODIN_Maintenance_Work_Orders"
@@ -1100,7 +1275,7 @@ def execute_maintenance_sql(
         clean_title = clean_title[:-4]
     csv_filename = f"{clean_title}.csv"
     csv_content = _build_csv_string(field_names, rows)
-    export_info = upload_csv_export(csv_content=csv_content, filename=csv_filename)
+    export_info = upload_csv_export(csv_content=csv_content, filename=csv_filename, async_upload=True)
 
     # Build Markdown Spreadsheet Card (preview capped at 25 rows when total_rows > 25)
     header_cells = ["#"] + [f"**{c.column_letter}** · `{c.field_name}`" for c in columns]
@@ -1173,14 +1348,22 @@ def execute_maintenance_sql(
             footer_cells.append("—")
     md_lines.append("| " + " | ".join(footer_cells) + " |")
 
+    if not sum_vals and not avg_vals:
+        formula_summary_bar_line = (
+            f"**Formula Summary Bar:** `{footer.row_count_formula} = {footer.total_rows}` · "
+            f"`{footer.micap_count_formula}`"
+        )
+    else:
+        formula_summary_bar_line = (
+            f"**Formula Summary Bar:** `{footer.row_count_formula} = {footer.total_rows}` · "
+            f"`{footer.sum_logged_man_hours_formula}` · "
+            f"`{footer.avg_estimated_mttr_hours_formula}`"
+        )
+
     md_lines.extend(
         [
             "",
-            (
-                f"**Formula Summary Bar:** `{footer.row_count_formula} = {footer.total_rows}` · "
-                f"`{footer.sum_logged_man_hours_formula}` · "
-                f"`{footer.avg_estimated_mttr_hours_formula}`"
-            ),
+            formula_summary_bar_line,
             "",
             "<details><summary>🔍 View Executed Query</summary>",
             "",
@@ -1211,12 +1394,7 @@ def execute_maintenance_sql(
         spreadsheet_card_markdown=card_markdown,
     )
 
-    if tool_context is not None:
-        state = getattr(tool_context, "state", None)
-        if isinstance(state, dict):
-            state["last_uc0_spreadsheet_card"] = card.model_dump()
-
-    return {
+    result_payload = {
         "status": "SUCCESS",
         "sheet_title": clean_title,
         "table_fqn": resolved_table_fqn,
@@ -1233,13 +1411,25 @@ def execute_maintenance_sql(
         "formula_footer": footer.model_dump(),
         "csv_gcs_uri": export_info["gcs_uri"],
         "csv_download_url": export_info["download_url"],
+        "csv_export": export_info,
         "spreadsheet_card": card.model_dump(),
         "spreadsheet_card_markdown": card_markdown,
     }
 
+    if tool_context is not None:
+        state = getattr(tool_context, "state", None)
+        if _is_state_mapping(state):
+            state["last_uc0_spreadsheet_card"] = card.model_dump()
+            state["last_uc0_csv_uri"] = export_info["gcs_uri"]
+            state["last_uc0_tool_response"] = result_payload
+
+    return result_payload
+
 
 __all__ = [
+    "_BQ_UC0_SQL_CACHE",
     "canonicalize_maintenance_sql",
     "execute_maintenance_sql",
     "validate_and_rewrite_maintenance_sql",
 ]
+

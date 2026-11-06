@@ -41,7 +41,7 @@ def test_rw00_uc0_conversational_maintenance_sql_and_spreadsheet_card_workflow()
     elapsed_ms = (time.perf_counter() - t0) * 1000.0
     assert elapsed_ms < 2500.0
     assert res["status"] == "SUCCESS"
-    assert res["row_count"] == 10
+    assert res["row_count"] == 6
     assert "=COUNTA(" in res["spreadsheet_card_markdown"]
     assert "storage.cloud.google.com" in res["csv_download_url"]
 

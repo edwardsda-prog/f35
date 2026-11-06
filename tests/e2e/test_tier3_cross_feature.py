@@ -208,7 +208,7 @@ def test_xf10_uc0_x_f11_maintenance_spreadsheet_card_integrates_with_frontend_sh
         "FROM maintenance_work_orders WHERE work_order_status != 'COMPLETED' ORDER BY priority ASC"
     )
     assert res["status"] == "SUCCESS"
-    assert res["row_count"] == 10
+    assert res["row_count"] == 6
     card = res["spreadsheet_card"]
     assert "columns" in card and "rows" in card and "formula_footer" in card
 

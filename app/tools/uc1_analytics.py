@@ -8,6 +8,7 @@ inline Vega-Lite v5 JSON specifications (`depot_stock_vs_demand_bar_chart` and
 
 from __future__ import annotations
 
+import concurrent.futures
 import logging
 import time
 from typing import Any
@@ -31,10 +32,16 @@ from app.tools.chart_painter import generate_sustainment_graphics
 logger = logging.getLogger(__name__)
 
 _BQ_UC1_CACHE: dict[str, dict[str, list[dict[str, Any]]]] = {}
+_UC1_BQ_POOL = concurrent.futures.ThreadPoolExecutor(max_workers=3)
+
+
+def _is_state_mapping(state: Any) -> bool:
+    """Return True for dict and ADK State objects supporting item assignment and .get()."""
+    return state is not None and hasattr(state, "__setitem__") and hasattr(state, "get")
 
 
 def _fetch_uc1_tables_from_bq(base_location: str) -> dict[str, list[dict[str, Any]]]:
-    """Query BigQuery EU tables for UC1 telemetry, depot stock, and sortie schedules."""
+    """Query BigQuery EU tables concurrently for UC1 telemetry, depot stock, and sortie schedules."""
     cache_key = base_location.strip().lower() or "all"
     if cache_key in _BQ_UC1_CACHE:
         return _BQ_UC1_CACHE[cache_key]
@@ -59,13 +66,6 @@ def _fetch_uc1_tables_from_bq(base_location: str) -> dict[str, list[dict[str, An
             WHERE LOWER(base_location) = LOWER(@base_location)
             ORDER BY current_flight_hours DESC
         """
-        telemetry_rows = run_bq_query(
-            t1_sql,
-            query_parameters=[
-                bigquery.ScalarQueryParameter("base_location", "STRING", base_location)
-            ],
-        )
-
         t2_sql = f"""
             SELECT
                 nsn,
@@ -80,8 +80,6 @@ def _fetch_uc1_tables_from_bq(base_location: str) -> dict[str, list[dict[str, An
             WHERE nsn = '1680-01-619-4821'
             ORDER BY quantity_on_hand DESC
         """
-        inventory_rows = run_bq_query(t2_sql)
-
         t3_sql = f"""
             SELECT
                 sortie_id,
@@ -93,7 +91,16 @@ def _fetch_uc1_tables_from_bq(base_location: str) -> dict[str, list[dict[str, An
             FROM `{PROJECT_ID}.{BQ_DATASET}.squadron_sortie_schedule`
             ORDER BY scheduled_departure_utc ASC
         """
-        sortie_rows = run_bq_query(t3_sql)
+        f_t1 = _UC1_BQ_POOL.submit(
+            run_bq_query,
+            t1_sql,
+            [bigquery.ScalarQueryParameter("base_location", "STRING", base_location)],
+        )
+        f_t2 = _UC1_BQ_POOL.submit(run_bq_query, t2_sql)
+        f_t3 = _UC1_BQ_POOL.submit(run_bq_query, t3_sql)
+        telemetry_rows = f_t1.result()
+        inventory_rows = f_t2.result()
+        sortie_rows = f_t3.result()
     except Exception as exc:
         logger.warning(
             "BigQuery EU query warning for %s (using seed records): %s",
@@ -345,6 +352,7 @@ def check_actuator_fatigue_and_depot_inventory(
 
     Display Title: Check Actuator Fatigue & Depot Inventory
     """
+    t0 = time.perf_counter()
     effective_window = float(
         window_hours if window_hours is not None else hours_to_limit_window
     )
@@ -409,10 +417,11 @@ def check_actuator_fatigue_and_depot_inventory(
     on_hand = int(primary_depot.get("quantity_on_hand", 4))
     reserved_30d = int(primary_depot.get("quantity_reserved_30d", 2))
     eta_hrs = float(primary_depot.get("avg_shipping_eta_hours", 18.0))
+    depot_id_str = str(primary_depot.get("depot_id", "DEPOT-RAF-MARHAM-01"))
 
     depot_summary = {
         "nsn": str(primary_depot.get("nsn", "1680-01-619-4821")),
-        "depot_id": str(primary_depot.get("depot_id", "DEPOT-RAF-MARHAM-01")),
+        "depot_id": depot_id_str,
         "depot_location": str(
             primary_depot.get("depot_location")
             or primary_depot.get("depot_name")
@@ -451,6 +460,14 @@ def check_actuator_fatigue_and_depot_inventory(
         ),
     }
 
+    # OPT-02: Automatically compute and embed swap_recommendation in a single tool call
+    swap_rec = recommend_tail_swap_and_replenishment(
+        sortie_id=str(impacted_sortie["sortie_id"]),
+        primary_tail=str(zm151_rec["tail_number"]),
+        spare_tail=str(zm154_rec["tail_number"]),
+        tool_context=tool_context,
+    )
+
     depot_chart = _build_depot_stock_bar_chart(inventory_rows)
     fatigue_chart = _build_actuator_fatigue_threshold_chart(telemetry_rows)
 
@@ -461,17 +478,26 @@ def check_actuator_fatigue_and_depot_inventory(
         f"| **{zm151_rec['tail_number']}** | `{zm151_rec['part_serial_number']}` | **{zm151_rec['current_flight_hours']:.1f}** | {zm151_rec['life_limit_threshold_hrs']:.1f} | `{zm151_rec['mission_capable_status']}` |\n"
         f"| **{zm154_rec['tail_number']}** | `{zm154_rec['part_serial_number']}` | **{zm154_rec['current_flight_hours']:.1f}** | {zm154_rec['life_limit_threshold_hrs']:.1f} | `{zm154_rec['mission_capable_status']}` |\n\n"
         "### 📦 Regional Depot Inventory\n"
-        "| NSN | Depot Stock | 30-Day Reserved | Shipping ETA |\n"
-        "| :--- | :---: | :---: | :---: |\n"
-        f"| `{zm151_rec['nsn']}` | {on_hand} units | {reserved_30d} units | {eta_hrs:.1f} hrs |\n\n"
-        f"**Assigned Sortie:** `{impacted_sortie['sortie_id']}` ({impacted_sortie['assigned_pilot_callsign']} / Flt Lt Henderson)"
+        "| Depot | NSN | Depot Stock | 30-Day Reserved | Shipping ETA |\n"
+        "| :--- | :--- | :---: | :---: | :---: |\n"
+        f"| `{depot_id_str}` | `{zm151_rec['nsn']}` | {on_hand} units | {reserved_30d} units | {eta_hrs:.1f} hrs |\n\n"
+        "### 🔄 Automated Action Plan & Sortie Tail-Swap Recommendation\n"
+        f"- **Assigned Sortie:** `{impacted_sortie['sortie_id']}` (`07:30Z` · `{impacted_sortie['assigned_pilot_callsign']}`)\n"
+        f"- **Immediate Tail Swap:** Reallocate morning `07:30Z` sortie `{impacted_sortie['sortie_id']}` from primary tail **{zm151_rec['tail_number']}** (`S/N {zm151_rec['part_serial_number']}` at `{zm151_rec['current_flight_hours']:.1f} hrs`, `+0.4 hrs` over `{zm151_rec['life_limit_threshold_hrs']:.1f}-hr` limit, `{zm151_rec['mission_capable_status']}`) to serviceable spare tail **{zm154_rec['tail_number']}** (`S/N {zm154_rec['part_serial_number']}` at `{zm154_rec['current_flight_hours']:.1f} hrs`, `158.0 hrs` remaining margin, `{zm154_rec['mission_capable_status']}`).\n"
+        f"- **Priority-1 Supply Requisition:** Stage replacement Horizontal Tail Actuator `NSN {zm151_rec['nsn']}` from `{depot_id_str}` (`{on_hand}` serviceable units on hand, `{reserved_30d}` reserved, `+{max(0, on_hand - reserved_30d)}` net buffer, `{eta_hrs:.1f}-hr` shipping ETA).\n\n"
+        "Would you like me to render: 1. Actuator Fatigue Threshold Chart, 2. Regional Depot Stock vs 30-Day Demand Chart, or the full Executive Briefing Dashboard for your presentation slide deck?"
     )
+
+    elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 2)
 
     result = {
         "status": "SUCCESS",
         "bq_project": PROJECT_ID,
         "bq_dataset": BQ_DATASET,
         "bq_location": BQ_LOCATION,
+        "execution_source": "BIGQUERY_EU",
+        "execution_latency_ms": elapsed_ms,
+        "total_latency_ms": elapsed_ms,
         "base_location": base_location,
         "hours_to_limit_window": effective_window,
         "primary_breach_tail": zm151_rec,
@@ -480,6 +506,7 @@ def check_actuator_fatigue_and_depot_inventory(
         "flagged_tails": flagged_tails,
         "depot_inventory": depot_summary,
         "impacted_sortie": impacted_sortie,
+        "swap_recommendation": swap_rec,
         "sortie_schedule": sortie_rows,
         "depot_stock_vs_demand_bar_chart": depot_chart,
         "actuator_fatigue_threshold_chart": fatigue_chart,
@@ -490,8 +517,9 @@ def check_actuator_fatigue_and_depot_inventory(
         "markdown_summary_table": markdown_table,
     }
 
-    if tool_context is not None and hasattr(tool_context, "state") and isinstance(tool_context.state, dict):
+    if tool_context is not None and _is_state_mapping(getattr(tool_context, "state", None)):
         tool_context.state["last_uc1_analytics_result"] = result
+        tool_context.state["last_uc1_tool_response"] = result
         tool_context.state["last_uc1_metrics"] = {
             "telemetry_rows": telemetry_rows,
             "inventory_rows": inventory_rows,
@@ -500,6 +528,7 @@ def check_actuator_fatigue_and_depot_inventory(
             "spare_tail_candidate": zm154_rec,
             "depot_summary": depot_summary,
             "impacted_sortie": impacted_sortie,
+            "swap_recommendation": swap_rec,
             "depot_chart": depot_chart,
             "fatigue_chart": fatigue_chart,
         }
@@ -592,7 +621,7 @@ def recommend_tail_swap_and_replenishment(
         }
     )
 
-    if tool_context is not None and hasattr(tool_context, "state"):
+    if tool_context is not None and _is_state_mapping(getattr(tool_context, "state", None)):
         tool_context.state["last_uc1_swap_recommendation"] = result
 
     return result
@@ -624,7 +653,7 @@ def render_sustainment_chart(
     inventory_rows: list[dict[str, Any]] | None = None
 
     state = getattr(tool_context, "state", None) if tool_context is not None else None
-    if isinstance(state, dict):
+    if _is_state_mapping(state):
         cached_metrics = state.get("last_uc1_metrics") or state.get("last_uc1_analytics_result")
         if isinstance(cached_metrics, dict):
             depot_chart = cached_metrics.get("depot_chart") or cached_metrics.get("depot_stock_vs_demand_bar_chart")
@@ -674,8 +703,8 @@ def render_sustainment_chart(
     # Generate high-resolution presentation graphics (PNG) and upload to GCS
     graphics_res: dict[str, Any] = {}
     if render_graphics:
-        # Check if already generated and cached in state
-        cached_graphics = state.get(f"cached_graphics_{resolved_name}") if isinstance(state, dict) else None
+        # Check if already generated and cached in state or module-level _RENDERED_CHART_CACHE
+        cached_graphics = state.get(f"cached_graphics_{resolved_name}") if _is_state_mapping(state) else None
         if isinstance(cached_graphics, dict):
             graphics_res = cached_graphics
         else:
@@ -684,7 +713,7 @@ def render_sustainment_chart(
                 telemetry_rows=telemetry_rows,
                 inventory_rows=inventory_rows,
             )
-            if isinstance(state, dict):
+            if _is_state_mapping(state):
                 state[f"cached_graphics_{resolved_name}"] = graphics_res
 
     elapsed_ms = (time.perf_counter() - t0) * 1000.0
@@ -704,16 +733,34 @@ def render_sustainment_chart(
 
     presentation_markdown = "\n".join(markdown_lines)
 
+    primary_png_url = (
+        image_urls[0]
+        if image_urls
+        else "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/charts/f35_sustainment_executive_dashboard.png"
+    )
+    primary_dl_link = (
+        download_links[0]
+        if download_links
+        else f"[📥 Download Executive Slide Graphic (PNG)]({primary_png_url})"
+    )
+    clean_slide_markdown = (
+        "### 📊 Presentation Briefing Graphics (Ready for Slide Decks)\n"
+        f"- {primary_dl_link}"
+    )
+
     res = {
         "status": "SUCCESS",
         "chart_name": resolved_name,
         "requested_name": chart_name,
         "generation_time_ms": round(elapsed_ms, 3),
+        "execution_latency_ms": round(elapsed_ms, 2),
         "render_latency_ms": round(graphics_res.get("render_latency_ms", 0.0), 2),
         "upload_latency_ms": round(graphics_res.get("upload_latency_ms", 0.0), 2),
         "total_latency_ms": round(elapsed_ms, 2),
+        "png_download_url": primary_png_url,
         "presentation_graphics": charts_list,
         "presentation_graphics_markdown": presentation_markdown,
+        "presentation_Slide_markdown": clean_slide_markdown,
         "download_links": download_links,
         "image_urls": image_urls,
         "instruction_for_agent": (
@@ -725,12 +772,18 @@ def render_sustainment_chart(
         "description": f"Successfully rendered {resolved_name} graphics and specification in {elapsed_ms:.2f} ms.",
     }
     res.update(rendered_charts)
+    if _is_state_mapping(state):
+        state["last_rendered_chart"] = res
+        state["last_uc1_chart_response"] = res
     return res
 
 
+
 __all__ = [
+    "_BQ_UC1_CACHE",
     "check_actuator_fatigue_and_depot_inventory",
     "recommend_tail_swap_and_replenishment",
     "render_sustainment_chart",
 ]
+
 

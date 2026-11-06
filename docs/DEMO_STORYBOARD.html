@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>Executive Demo Storyboard: F-35 Fleet Sustainment</title>
+<style>
+
+@page {
+    size: A4 portrait;
+    margin: 18mm 14mm 18mm 14mm;
+    @top-right {
+        content: "OFFICIAL-SENSITIVE // DEMO TRACK";
+        font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+        font-size: 7.5pt;
+        color: #5f6368;
+    }
+    @bottom-center {
+        content: "Royal Air Force · Carrier Strike Group · F-35 Fleet Sustainment Agent Platform";
+        font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+        font-size: 7.5pt;
+        color: #5f6368;
+    }
+}
+body {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.55;
+    color: #202124;
+    max-width: 100%;
+}
+.header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid #4285F4;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+}
+.classification {
+    font-size: 8pt;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #5f6368;
+}
+h1 {
+    font-size: 18pt;
+    color: #1a73e8;
+    margin-top: 0.8em;
+    margin-bottom: 0.3em;
+    font-weight: 700;
+}
+h2 {
+    font-size: 13.5pt;
+    color: #202124;
+    border-bottom: 1.5px solid #dadce0;
+    padding-bottom: 4px;
+    margin-top: 1.4em;
+    margin-bottom: 0.5em;
+    page-break-after: avoid;
+}
+h3 {
+    font-size: 11pt;
+    color: #3c4043;
+    margin-top: 1.1em;
+    margin-bottom: 0.4em;
+    page-break-after: avoid;
+}
+p {
+    margin: 0.5em 0;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.2em 0;
+    font-size: 8.2pt;
+    page-break-inside: auto;
+}
+tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+}
+tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+th, td {
+    border: 1px solid #dadce0;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: top;
+}
+th {
+    background-color: #f1f3f4;
+    color: #202124;
+    font-weight: 600;
+}
+code {
+    background-color: #f1f3f4;
+    color: #d93025;
+    padding: 0.15em 0.35em;
+    border-radius: 3px;
+    font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 88%;
+}
+pre {
+    background-color: #f8f9fa;
+    padding: 10px 14px;
+    border-radius: 5px;
+    overflow-x: auto;
+    font-size: 8pt;
+    border: 1px solid #dadce0;
+    page-break-inside: avoid;
+}
+pre code {
+    background-color: transparent;
+    color: #202124;
+    padding: 0;
+}
+blockquote {
+    border-left: 4px solid #4285F4;
+    margin: 1em 0;
+    padding: 6px 12px;
+    background-color: #f8fafd;
+    color: #3c4043;
+}
+div.tip, div.note, div.important, div.warning, div.caution {
+    padding: 8px 12px;
+    margin: 1em 0;
+    border-radius: 0 4px 4px 0;
+    page-break-inside: avoid;
+}
+div.tip {
+    border-left: 4px solid #34a853;
+    background-color: #f6fbf7;
+}
+div.note {
+    border-left: 4px solid #4285F4;
+    background-color: #f8fafd;
+}
+div.important {
+    border-left: 4px solid #ea4335;
+    background-color: #fdf7f7;
+}
+div.warning {
+    border-left: 4px solid #fbbc04;
+    background-color: #fffdf5;
+}
+div.caution {
+    border-left: 4px solid #ea4335;
+    background-color: #fdf7f7;
+}
+div.title {
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-size: 7.5pt;
+    letter-spacing: 0.5px;
+}
+div.tip div.title { color: #1e8e3e; }
+div.note div.title { color: #1a73e8; }
+div.important div.title { color: #d93025; }
+div.warning div.title { color: #b06000; }
+div.caution div.title { color: #d93025; }
+hr {
+    border: 0;
+    border-top: 1px solid #dadce0;
+    margin: 1.5em 0;
+}
+ul, ol {
+    margin: 0.4em 0;
+    padding-left: 20px;
+}
+li {
+    margin: 0.25em 0;
+}
+
+</style>
+</head>
+<body>
+<div class="header-bar">
+    <span class="classification">OFFICIAL-SENSITIVE // DEMO TRACK</span>
+    <span class="classification">ROYAL AIR FORCE · CSG · 617 SQN</span>
+</div>
+<h1
+id="executive-demo-storyboard-f-35-fleet-sustainment-f35-support">Executive
+Demo Storyboard: F-35 Fleet Sustainment (<code>F35 Support</code>)</h1>
+<h3
+id="the-6-prompt-golden-thread--compressing-a-full-morning-of-sustainment-into-4-minutes"><em>The
+"6-Prompt Golden Thread" — Compressing a Full Morning of Sustainment
+into 4 Minutes</em></h3>
+<p><strong>Target Audience:</strong> Senior Defence Leadership, Air
+Command, MOD DE&amp;S, &amp; Industry Executives<br />
+<strong>Operational Setting:</strong> RAF Marham (617 Squadron "The
+Dambusters"), HMS Queen Elizabeth &amp; HMS Prince of Wales Carrier
+Strike Group<br />
+<strong>Agent Application:</strong> <code>Agents (F35 Support)</code>
+(Hosted 100% in <code>EU</code> / <code>europe-west1</code> Belgium)</p>
+<hr />
+<h2
+id="0-presenter-quick-copy-cheat-sheet-the-6-golden-prompts-across-acts-1-2--3">0.
+Presenter Quick-Copy Cheat Sheet (The 6 Golden Prompts Across Acts 1, 2,
+&amp; 3)</h2>
+<div class="tip">
+<div class="title">
+<p>Tip</p>
+</div>
+<p><strong>Current State vs. Target State Across a Continuous Morning
+Timeline (<code>06:30Z</code> → <code>07:00Z</code>).</strong></p>
+<ul>
+<li><strong>The Current State (Step 0 Baseline ·
+<code>06:30Z</code>):</strong> Engineers, maintainers, and maintenance
+managers spend <strong>45–90 minutes every morning</strong> manually
+exporting operational slices from <strong>Oracle (the system of
+record)</strong> into disconnected Microsoft Excel workbooks
+(<code>F35_Maintenance_Export_20261103.xlsx</code>), triggering stale
+data ("dead on export"), spreadsheet version drift, and severe
+airworthiness traceability risks.</li>
+<li><strong>The Target State (Steps 0 to 6 · <code>06:45Z</code> →
+<code>07:00Z</code>):</strong> <strong>Agents
+(<code>F35 Support</code>)</strong> acts as the non-disruptive
+<strong>Intelligent Action Layer</strong> directly on top of the F35
+Data Warehouse. Maintainers and commanders use <strong>6 plain-English
+prompts</strong>—with <strong>zero references to backend systems,
+database tables, or SQL joins</strong>—to interrogate live data in
+<code>&lt; 1.5s</code>, swap aircraft to protect the <code>07:30Z</code>
+launch, and unlock allied fleet memory.</li>
+</ul>
+</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Step</th>
+<th style="text-align: left;">Act &amp; Persona
+(<code>Timeline</code>)</th>
+<th style="text-align: left;">Exact Executive Prompt or Scenario</th>
+<th style="text-align: left;">What Appears on Screen &amp; How It
+Advances the Story</th>
+<th style="text-align: center;">Live EU Speed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>0</strong></td>
+<td style="text-align: left;"><strong>Baseline: The Current State
+(Oracle-to-Excel Export)</strong><br/><em>(Maintenance Manager &amp;
+Data Analyst — <code>06:30Z</code>)</em></td>
+<td style="text-align: left;"><em>(The Current State)</em>: Manual
+export from Oracle (system of record) into
+<code>F35_Maintenance_Export_20261103.xlsx</code>. Maintainers run
+manual VLOOKUPs across tool stores and personnel rosters to prepare the
+morning briefing.</td>
+<td style="text-align: left;"><strong>The 06:30Z Export Ritual &amp;
+Analyst Bottleneck</strong>: Illustrates the operational drag of static
+Excel dumps: data is <strong>stale on export</strong>, different teams
+suffer <strong>"Spreadsheet Roulette"</strong> with conflicting files,
+and ad-hoc questions wait days in an IT queue. Sets the contrast for
+<strong>Steps 0–6 as the Target State</strong>.</td>
+<td
+style="text-align: center;"><strong><code>45–90 Mins</code></strong><br/><em>(Manual
+Excel Drag)</em></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>1</strong></td>
+<td style="text-align: left;"><strong>Act 1: Morning Stand-Up &amp;
+Shift Dispatch</strong><br/><em>(Squadron Maintenance Officer — UC 0 ·
+<code>06:45Z</code>)</em></td>
+<td
+style="text-align: left;"><code>What are our most urgent maintenance jobs and grounded aircraft across the Carrier Strike Group right now, ordered by how long they will take to fix?</code></td>
+<td style="text-align: left;"><strong>Screen-Fitted Spreadsheet Card
+(<code>A</code>..<code>E</code>)</strong>: Renders urgent fleet jobs
+with Status Badges (<code>🔴 NMC-S (MICAP)</code>,
+<code>🟠 NMC-M</code>, <code>🟡 PMC-M</code>) and Formula Footer
+(<code>=COUNTA()</code>, <code>=AVERAGE()</code>).<br/><strong>Story
+Hook:</strong> Spots our <code>07:30Z</code> lead aircraft,
+<strong><code>ZM151</code></strong>, sitting on the urgent maintenance
+list (<code>WO-2026-88401</code> &amp; <code>WO-2026-88402</code>).</td>
+<td
+style="text-align: center;"><strong><code>&lt; 1.5s</code></strong><br/><em>(SQL
+<code>&lt; 350ms</code>)</em></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>2</strong></td>
+<td style="text-align: left;"><strong>Act 1: Morning Stand-Up &amp;
+Shift Dispatch</strong><br/><em>(Flight-Line Avionics Lead — UC 0.1 ·
+<code>06:47Z</code>)</em></td>
+<td
+style="text-align: left;"><code>What faults or pilot-reported issues were raised on ZM151 after its last flight, and are there any fleet-wide health warnings that haven't been scheduled for repair yet?</code></td>
+<td style="text-align: left;"><strong>Screen-Fitted Spreadsheet Card
+(<code>A</code>..<code>F</code>)</strong>: Reveals <strong>why
+<code>ZM151</code> is flagged</strong>: (1) its <strong>Horizontal Tail
+Actuator</strong> just crossed the <code>1,000.0-hr</code> limit
+(<code>1,000.4 hrs</code>), and (2) the night pilot reported a
+<strong>stiff canopy handle with zero fault codes</strong>
+(<code>⚠️ CND (Repeat)</code> — 3rd time in 30 days), plus unscheduled
+fleet warnings on sister tails (<code>ZM159</code>,
+<code>ZM162</code>).</td>
+<td
+style="text-align: center;"><strong><code>&lt; 1.5s</code></strong><br/><em>(SQL
+<code>&lt; 350ms</code>)</em></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>3</strong></td>
+<td style="text-align: left;"><strong>Act 1: Morning Stand-Up &amp;
+Shift Dispatch</strong><br/><em>(Wing Maintenance Controller — UC 0.5 ·
+<code>06:50Z</code>)</em></td>
+<td
+style="text-align: left;"><code>Which of our open maintenance jobs are ready to start on this shift, and which ones are held up waiting for certified technicians, an inspector, or calibrated tools?</code></td>
+<td style="text-align: left;"><strong>Cross-Checked Shift Readiness Card
+(<code>A</code>..<code>F</code>)</strong>: Confirms
+<strong><code>ZM151</code></strong>'s jobs have qualified crews, an
+inspector, and the calibrated Digital Micro-Torque Spanner
+(<code>JTD-53-30-T14</code>)
+<strong><code>🟢 READY_TO_DISPATCH</code></strong> now (while flagging
+out-of-calibration tools &amp; missing inspectors on sister
+tails).<br/><strong>Story Hook:</strong> Since <code>ZM151</code> is
+going into the bay now, we must protect the <code>07:30Z</code>
+mission!</td>
+<td
+style="text-align: center;"><strong><code>&lt; 1.6s</code></strong><br/><em>(2-Table
+<code>&lt; 360ms</code>)</em></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>4</strong></td>
+<td style="text-align: left;"><strong>Act 2: Mission Protection &amp;
+Leadership Briefing</strong><br/><em>(Squadron Logistics Officer — UC 1A
+· <code>06:52Z</code>)</em></td>
+<td
+style="text-align: left;"><code>Check RAF Marham F-35 horizontal tail actuator hours against our 30-day spare parts stock, and recommend an aircraft swap for morning sortie SRT-MAR-20261103-01.</code></td>
+<td style="text-align: left;"><strong>Tabular Fleet Briefing</strong>:
+Confirms <strong><code>ZM151</code></strong> is grounded for the
+actuator swap (<code>1,000.4 hrs</code>), verifies <strong>4 spare
+actuators in stock</strong> at RAF Marham (<code>18-hr</code> ETA), and
+reallocates Flt Lt Henderson's <code>07:30Z</code> sortie
+(<code>SRT-MAR-20261103-01</code>) to clean spare
+<strong><code>ZM154</code></strong> (<code>842.0 hrs</code>). Prompts to
+render briefing charts.</td>
+<td
+style="text-align: center;"><strong><code>1.2s</code></strong><br/><em>(TTFT
+<code>269ms</code>)</em></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>5</strong></td>
+<td style="text-align: left;"><strong>Act 2: Mission Protection &amp;
+Leadership Briefing</strong><br/><em>(Squadron Logistics Officer — UC 1B
+· <code>06:54Z</code>)</em></td>
+<td
+style="text-align: left;"><code>Render the full Executive Briefing Dashboard for my presentation slide deck.</code></td>
+<td style="text-align: left;"><strong>Full HD Presentation
+Graphic</strong>: Renders the composite slide image showing
+<strong><code>ZM151</code> in Red (<code>1,000.4 hrs</code>)</strong> vs
+<strong><code>ZM154</code> in Green (<code>842.0 hrs</code>)</strong>
+alongside Regional Depot Stock vs 30-Day Demand, with a <strong>[📥
+Download Executive Slide Graphic (PNG)]</strong> link for the
+<code>07:00Z</code> Wing Commander brief.</td>
+<td
+style="text-align: center;"><strong><code>&lt; 0.8s</code></strong><br/><em>(Chart
+Painter <code>&lt; 790ms</code>)</em></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>6</strong></td>
+<td style="text-align: left;"><strong>Act 3: Allied Fleet Memory &amp;
+Defect Resolution</strong><br/><em>(Flight-Line Maintenance Chief — UC 2
+· <code>06:56Z</code>)</em></td>
+<td
+style="text-align: left;"><code>On ZM151, our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, with no fault codes logged on the jet. Have allied squadrons seen this before, and what is the approved fix?</code></td>
+<td style="text-align: left;"><strong>Grounded Checklist &amp; Browser
+Citations</strong>: Now that the <code>07:30Z</code> launch is covered
+by <code>ZM154</code>, gives the bay crew working on
+<strong><code>ZM151</code></strong> the exact root cause from a
+<strong>USMC sister-squadron log</strong> (<strong>cured silicon sealant
+debris in the roller track</strong>) + <strong>Section 53-30-01</strong>
+torque spec (<code>18.5 N·m</code>) for the spanner staged in
+<code>Prompt 3</code>.</td>
+<td
+style="text-align: center;"><strong><code>0.38s</code></strong><br/><em>(<code>100%</code>
+Cited)</em></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1-the-executive-storyline--elevator-pitch">1. The Executive
+Storyline &amp; Elevator Pitch</h2>
+<h3 id="the-30-second-spoken-elevator-pitch-presenter-opening-hook">The
+30-Second Spoken Elevator Pitch (Presenter Opening Hook)</h3>
+<div class="important">
+<div class="title">
+<p>Important</p>
+</div>
+<p><strong>Executive Tagline:</strong><br />
+<em>"From Red Tiles to Decisive Action: Dashboards are a rearview mirror
+that displays problems in red; Agents are the operational cockpit that
+diagnoses the root cause, sources the spare, protects the sortie, and
+cites the approved fix in seconds."</em></p>
+<p><strong>Presenter Opening Talk-Track (Deliver Verbatim Before
+Touching the Keyboard):</strong><br />
+*"In defence aviation, we've spent a decade building dashboards. PowerBI
+and Tableau have their place—they are excellent rearview mirrors for
+monthly macro reporting and retrospective fleet trends. But on the
+flight line at 06:45 in the morning, a rearview mirror cannot protect
+the flying program.</p>
+<p>More critically, our current operational reality across squadrons and
+carrier strike wings relies on a daily manual ritual: engineers,
+maintenance controllers, and managers exporting data out of Oracle—our
+system of record—into disconnected Microsoft Excel spreadsheets every
+morning at 06:30.</p>
+<p>When an aircraft is grounded, static dashboards and disconnected
+spreadsheets leave maintainers stranded in front of a red tile or
+playing 'spreadsheet roulette' across conflicting files, forcing them
+into a painful 'swivel-chair' routine across SAP, GOLDesp, spreadsheets,
+and 10,000-page PDF technical manuals.</p>
+<p><strong>Agents (<code>F35 Support</code>) represents the Target
+State: a non-disruptive Intelligent Action Layer on top of the F35 Data
+Warehouse.</strong> Steps 0 to 6 in today's demonstration show how we
+eliminate the manual Excel drag. Without replacing the transactional
+system of record, we democratise data analytics directly to the flight
+line. Maintainers and squadron commanders interrogate live data across
+engineering, supply, and sortie schedules in seconds, dynamically swap
+aircraft to protect the morning wave, and unlock coalition repair memory
+from allied squadrons.</p>
+<p>And crucially for defence airworthiness: <strong>the agent never
+guesses or hallucinates.</strong> It executes deterministic read-only
+queries against live data warehouses, anchors 100% of its technical
+specs with verbatim citations to official S1000D publications, and keeps
+engineering authority strictly in the loop. We aren't replacing
+Oracle—we're turning passive dashboards, manual exports, and analyst
+queues into decisive operational velocity."*</p>
+</div>
+<hr />
+<h3 id="why-agents-beat-static-dashboards-the-leadership-matrix">Why
+Agents Beat Static Dashboards: The Leadership Matrix</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Operational Dimension</th>
+<th style="text-align: left;">Static BI Dashboard (e.g., PowerBI /
+Tableau)</th>
+<th style="text-align: left;">Autonomous Multi-Agent
+(<code>F35 Support</code>)</th>
+<th style="text-align: left;">Live Demonstration Proof Point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>1. Decision Velocity &amp; Mission
+Protection</strong></td>
+<td style="text-align: left;"><strong>Passive Observation &amp;
+Swivel-Chair Lag</strong>: Surfaces a red tile or breach metric, forcing
+officers to manually open 3–4 separate systems to figure out what to do,
+often causing sortie delays or mission scrub.</td>
+<td style="text-align: left;"><strong>Active Decision
+Orchestration</strong>: Not only detects the breach, but immediately
+checks 30-day depot stock, verifies clean spare aircraft, reallocates
+the sortie schedule, and stages the supply ticket.</td>
+<td style="text-align: left;"><strong>Prompt 4 (Act 2)</strong>:
+Replaces grounded <code>ZM151</code> with clean spare <code>ZM154</code>
+(842 hrs) and orders depot actuator in <code>1.2s</code>, protecting the
+07:30Z launch.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>2. Data Democratisation &amp;
+Workforce Empowerment</strong></td>
+<td style="text-align: left;"><strong>Analyst Gatekeeper &amp; Queue
+Bottleneck</strong>: Only trained data analysts who know SQL syntax and
+table schemas can pull ad-hoc data. Frontline maintainers must wait in a
+queue, while analysts are swamped with repetitive requests.</td>
+<td style="text-align: left;"><strong>The Self-Service Flight Line &amp;
+Analyst Elevation</strong>: Maintainers and commanders query the data
+warehouse directly in plain operational English. Central data analysts
+are liberated to focus on high-value predictive reliability and data
+engineering.</td>
+<td style="text-align: left;"><strong>Step 0 Baseline vs. Prompt
+1</strong>: Replaces the data analyst's manual SQL queries and backlog
+with instant, democratised self-service for the Squadron Maintenance
+Officer in <code>&lt; 1.5s</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>3. Data Scope &amp;
+Modality</strong></td>
+<td style="text-align: left;"><strong>Siloed &amp; Structured
+Only</strong>: Limited to pre-aggregated SQL tables. Completely blind to
+unstructured S1000D manuals, pilot debrief narratives, and foreign
+flight logs.</td>
+<td style="text-align: left;"><strong>Multimodal &amp;
+Cross-Domain</strong>: Seamlessly queries live SQL data warehouses
+<em>and</em> reads unstructured technical manuals, pilot write-ups, and
+coalition repair logs simultaneously.</td>
+<td style="text-align: left;"><strong>Prompt 6 (Act 3)</strong>: Unlocks
+USMC flight narratives (<code>DOC-02</code>) and S1000D torque specs
+(<code>DOC-01</code>) to solve a zero-code CND fault.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>4. Flexibility &amp;
+Agility</strong></td>
+<td style="text-align: left;"><strong>Rigid Pre-Canned Views</strong>:
+Any new operational question (e.g. cross-referencing tool calibration
+with technician qualifications) requires a 3-week BI developer
+backlog.</td>
+<td style="text-align: left;"><strong>Instant Ad-Hoc
+Interrogation</strong>: Maintainers and commanders ask arbitrary
+operational questions in plain English; the agent generates and executes
+dynamic queries in <code>&lt; 360ms</code>.</td>
+<td style="text-align: left;"><strong>Prompt 3 (Act 1)</strong>:
+Dynamically joins open work orders with shift SQEP and calibrated
+spanner certifications with zero developer intervention.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>5. Airworthiness Safety &amp; User
+Friction</strong></td>
+<td style="text-align: left;"><strong>High Analyst Burden &amp; Silent
+Data Drift</strong>: Requires complex DAX filters, drill-downs, and
+manual cross-checking. High risk of human error during manual
+swivel-chair translation.</td>
+<td style="text-align: left;"><strong>Deterministic Grounding &amp;
+Zero-Training Flow</strong>: Speak plain flight-line operational
+English. Zero hallucination: 100% cited S1000D torque specs,
+deterministic SQL, and human-in-the-loop control.</td>
+<td style="text-align: left;"><strong>Prompts 1–6</strong>: 100% plain
+operational English, <code>&lt; 1.5s</code> speed, zero tech jargon, and
+verbatim manual links.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3
+id="the-operational-reality-current-state-oracle-to-excel-vs-target-state-agents-intelligent-action-layer">The
+Operational Reality: Current State (Oracle-to-Excel) vs. Target State
+(Agents Intelligent Action Layer)</h3>
+<p>In military aerospace sustainment today, <strong>Oracle</strong>
+serves as the transactional system of record (MRO / ERP) for aircraft
+maintenance, flight hours, configuration accounting, and supply
+tracking.</p>
+<p>However, the way frontline personnel interact with that system on a
+daily basis represents a major operational vulnerability:</p>
+<h4 id="1-the-current-state-the-0630z-oracle-to-excel-ritual">1. The
+Current State: The 06:30Z "Oracle-to-Excel" Ritual</h4>
+<p>Every morning at <code>06:30Z</code>, before the shift stand-up,
+maintenance managers, squadron engineering officers, and data analysts
+log into Oracle, run ad-hoc queries or standard report extracts, and
+dump thousands of rows into desktop Microsoft Excel workbooks
+(<code>F35_Maintenance_Export_20261103.xlsx</code>). Maintainers then
+spend <strong>45 to 90 minutes</strong> manually formatting columns,
+copying rows into local templates, and writing fragile
+<code>=VLOOKUP</code> or <code>=XLOOKUP</code> formulas across
+disconnected tool calibration sheets and shift rosters to assemble the
+morning briefing.</p>
+<h4
+id="2-the-operational-impact-of-continuing-the-current-state-the-operational-triad">2.
+The Operational Impact of Continuing the Current State (The Operational
+Triad)</h4>
+<p>Continuing with this manual Oracle-to-Excel workflow imposes four
+severe operational penalties:</p>
+<ol type="1">
+<li><strong>Stale Data ("Dead on Export"):</strong><br />
+The instant an Excel sheet is exported from Oracle at
+<code>06:30Z</code>, it is frozen in time. If a late-night sortie
+debrief finishes at <code>06:40Z</code>, an overnight avionics BIT fault
+is ingested at <code>06:42Z</code>, or an emergency priority actuator
+arrives at the Marham depot at <code>06:45Z</code>, <strong>the exported
+spreadsheet is completely blind to it</strong>. Shift decisions are made
+on stale assumptions, leading to grounded jets sitting idle and
+avoidable sortie cancellations.</li>
+<li><strong>"Spreadsheet Roulette" &amp; Version Drift:</strong><br />
+Because multiple roles (e.g. Maintenance Controller, Avionics Lead,
+Airframe Chief, Logistics Petty Officer) export their own slices of
+Oracle data with differing filters or date ranges, their workbooks
+instantly diverge. By the <code>07:00Z</code> morning briefing,
+leadership encounters conflicting numbers
+(<code>F35_Maint_v2.xlsx</code> vs
+<code>F35_Maint_final_FINAL.xlsx</code>). Up to 20 minutes of crucial
+briefing time is wasted debating <em>whose spreadsheet is right</em>,
+rather than generating combat sorties.</li>
+<li><strong>Airworthiness Compliance &amp; Traceability Risk (MAA / DEF
+STAN 00-970):</strong><br />
+Microsoft Excel provides no tamper-evident audit logging, cryptographic
+lineage, or role-based cell governance. A tired maintainer or manager
+can accidentally overwrite a formula, misalign a component life-limit
+column, or delete a warning row. In military aviation under the Military
+Aviation Authority (MAA) and DEF STAN 00-970, unmonitored spreadsheet
+manipulation creates unacceptable airworthiness safety risks and
+compliance gaps.</li>
+<li><strong>Flight-Line Productivity Drain:</strong><br />
+Highly trained aircraft technicians, avionics specialists, and
+engineering officers spend <strong>1.5 to 2 hours per shift</strong>
+acting as "human ETL pipelines"—cutting, pasting, merging, and filtering
+data between Oracle exports, Excel spreadsheets, and static PDF manuals.
+This administrative friction strips hundreds of wrench-turning hours
+from the front line each week.</li>
+</ol>
+<h4
+id="3-the-target-state-steps-0-to-6-agents-as-the-intelligent-action-layer">3.
+The Target State (Steps 0 to 6): Agents as the Intelligent Action
+Layer</h4>
+<p>The Target State demonstrated in Steps 0 through 6 does
+<strong>NOT</strong> require replacing Oracle. Replacing an enterprise
+aerospace ERP/MRO costs tens of millions of pounds and years of
+disruption.</p>
+<p>Instead, <strong>Agents (<code>F35 Support</code>) sits directly on
+top of the F35 Data Warehouse as a non-disruptive "Intelligent Action
+Layer":</strong></p>
+<ul>
+<li><strong>Oracle remains the authoritative system of record</strong>,
+capturing transactions, work orders, and configuration baselines.</li>
+<li><strong>Continuous, real-time cloud data warehouse
+replication</strong> eliminates stale data snapshots.</li>
+<li><strong>Natural Language to SQL
+(<code>@F35-Maintenance-Data</code>)</strong> democratises direct,
+read-only operational querying to maintainers, flight leads, and
+commanders in <code>&lt; 1.5s</code>, eliminating the manual Excel
+export middleman entirely.</li>
+<li><strong>Multimodal grounding (<code>@F35-JTD-Search</code>)</strong>
+links structured Oracle records directly to unstructured S1000D
+technical manuals and allied squadron flight debriefs, closing the loop
+from fault identification to certified repair action.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Operational Dimension</th>
+<th style="text-align: left;">Current State: Daily Oracle-to-Excel
+Exports</th>
+<th style="text-align: left;">Target State: Agents
+(<code>F35 Support</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>System of Record</strong></td>
+<td style="text-align: left;">Oracle ERP/MRO (locked behind complex SQL
+&amp; manual export screens)</td>
+<td style="text-align: left;">Oracle ERP/MRO remains intact; mirrored to
+cloud warehouse in real time</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Data Freshness</strong></td>
+<td style="text-align: left;"><strong>Stale on Export</strong> (static
+point-in-time snapshot frozen at <code>06:30Z</code>)</td>
+<td style="text-align: left;"><strong>Live Sub-Second Telemetry</strong>
+(real-time stream reflecting latest night landings)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Data Governance &amp;
+Integrity</strong></td>
+<td style="text-align: left;"><strong>Spreadsheet Roulette</strong>
+(uncontrolled desktop workbooks, broken VLOOKUPs)</td>
+<td style="text-align: left;"><strong>Single Source of Truth</strong>
+(deterministic read-only queries with auditable lineage)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Workforce Access</strong></td>
+<td style="text-align: left;"><strong>Analyst Gatekeeper</strong>
+(maintainers wait in queue for SQL extracts)</td>
+<td style="text-align: left;"><strong>Democratised Access</strong>
+(maintainers ask in plain operational English in
+<code>&lt; 1.5s</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Cross-System
+Integration</strong></td>
+<td style="text-align: left;"><strong>Manual Swivel-Chair</strong>
+(cutting &amp; pasting across Oracle, HR, and PDF manuals)</td>
+<td style="text-align: left;"><strong>Autonomous Multi-Domain
+Joins</strong> (unifies work orders, SQEP, tools, &amp; allied
+logs)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Shift Preparation
+Time</strong></td>
+<td style="text-align: left;"><strong>45–90 Minutes</strong> of manual
+data extraction and spreadsheet formatting</td>
+<td style="text-align: left;"><strong>Instant (&lt; 5 Seconds)</strong>
+conversational stand-up queries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Airworthiness
+Auditability</strong></td>
+<td style="text-align: left;"><strong>High Risk</strong> (untracked cell
+edits, accidental deletions, zero cryptographic trail)</td>
+<td style="text-align: left;"><strong>100% Deterministic &amp;
+Cited</strong> (verbatim S1000D links, MAA compliance)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="the-4-minute-flight-plan">The 4-Minute Flight Plan</h3>
+<pre class="mermaid"><code>flowchart LR
+    S0[&quot;Step 0 (06:30Z · Baseline)&lt;br/&gt;CURRENT STATE: Oracle-to-Excel Export &amp; Analyst Bottleneck&quot;] -.-&gt;|Transition to Target State| P1[&quot;Prompt 1 (06:45Z · Act 1 · UC 0)&lt;br/&gt;TARGET STATE: Spot Lead Jet ZM151 in Stand-Up (&lt; 1.5s)&quot;]
+    P1 --&gt; P2[&quot;Prompt 2 (06:47Z · Act 1 · UC 0.1)&lt;br/&gt;TRIAGE ZM151: Actuator Hour Breach &amp; Zero-Code Canopy&quot;]
+    P2 --&gt; P3[&quot;Prompt 3 (06:50Z · Act 1 · UC 0.5)&lt;br/&gt;CREWS &amp; TOOLS: Confirm Bay Crew &amp; Calibrated Spanner Ready&quot;]
+    P3 --&gt; P4[&quot;Prompt 4 (06:52Z · Act 2 · UC 1A)&lt;br/&gt;SAVE SORTIE: Order Depot Spares &amp; Swap to ZM154 (842 hrs)&quot;]
+    P4 --&gt; P5[&quot;Prompt 5 (06:54Z · Act 2 · UC 1B)&lt;br/&gt;BRIEF COMMANDER: Render Executive Slide Graphic (&lt; 790ms)&quot;]
+    P5 --&gt; P6[&quot;Prompt 6 (06:56Z · Act 3 · UC 2)&lt;br/&gt;FIX ZM151: USMC Silicon Debris Log &amp; 18.5 N·m Torque Spec&quot;]</code></pre>
+<blockquote>
+<p>In the next <strong>4 minutes</strong>, after exposing the friction
+of the <strong>Current State at <code>06:30Z</code> (Step 0:
+Oracle-to-Excel daily export and the analyst bottleneck)</strong>, we
+demonstrate the <strong>Target State (Steps 1 to 6)</strong> across a
+single continuous morning timeline (<code>06:45Z</code> to
+<code>07:00Z</code>) inside <strong>Agents
+(<code>F35 Support</code>)</strong> around lead jet
+<strong><code>ZM151</code></strong> and spare jet
+<strong><code>ZM154</code></strong>:</p>
+<ul>
+<li><strong>Prologue: The Current State Baseline (Step 0 ·
+<code>06:30Z</code>)</strong> — The traditional 45–90 minute manual
+Oracle export ritual, showing the vulnerabilities of stale data, version
+drift, and analyst queues.</li>
+<li><strong>Act 1: Morning Stand-Up &amp; Shift Dispatch (Prompts 1, 2,
+&amp; 3 · Target State)</strong> — Demonstrating the Intelligent Action
+Layer: democratising data access to spot <code>ZM151</code> on the
+urgent list (<code>UC 0</code>), triaging its post-flight faults
+(<code>UC 0.1</code>), and confirming shift crew and tool readiness
+(<code>UC 0.5</code>) in live sub-second queries.</li>
+<li><strong>Act 2: Mission Protection &amp; Leadership Briefing (Prompts
+4 &amp; 5 · Target State)</strong> — Ordering replacement spares,
+swapping its <code>07:30Z</code> sortie onto spare aircraft
+<strong><code>ZM154</code></strong> (<code>UC 1A</code>), and instantly
+rendering presentation slide graphics for the Wing Commander
+(<code>UC 1B</code>).</li>
+<li><strong>Act 3: Allied Fleet Memory &amp; Defect Resolution (Prompt 6
+· Target State)</strong> — Giving the bay crew the exact allied USMC fix
+for <code>ZM151</code>'s mysterious zero-code canopy latch defect
+(<code>UC 2</code>).</li>
+</ul>
+</blockquote>
+<h3
+id="the-dual-fault-alignment-matrix-tracking-zm151-across-the-6-prompts">The
+Dual-Fault Alignment Matrix (Tracking ZM151 Across the 6 Prompts)</h3>
+<p>To understand how the <strong>Unexplained Canopy Fault</strong> and
+the <strong>Actuator Over-Hour Fault</strong> develop together without
+confusion, this matrix aligns each stage of the fault lifecycle directly
+with the corresponding Act and exact Prompt:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Stage &amp; Timeline</th>
+<th style="text-align: left;">Act &amp; Exact Prompt</th>
+<th style="text-align: left;">Fault 1: Actuator Over-Hour Limit
+(<code>WUC 27-10</code>)</th>
+<th style="text-align: left;">Fault 2: Unexplained Canopy Fault
+(<code>WUC 53-30</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>Operational
+Backstory</strong><br/><em>(Night Debrief ·
+<code>19:55Z</code>)</em></td>
+<td style="text-align: left;"><strong>Pre-Demo
+Debrief</strong><br/><em>(Flight-Line Post-Flight Ingest)</em></td>
+<td style="text-align: left;">Component hours logged as
+<code>1,000.4 hrs</code> (over <code>1,000.0-hr</code> limit). Telemetry
+raises <code>PHM-2026-99101</code> (<code>WO-2026-88401</code>).</td>
+<td style="text-align: left;">Night pilot reports stiff handle / latch
+hesitation. Aircraft logs <strong>zero BIT fault codes</strong>. Raised
+as <code>WO-2026-88402</code>.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Step 0
+Baseline</strong><br/><em>(Current State ·
+<code>06:30Z</code>)</em></td>
+<td style="text-align: left;"><strong>Oracle-to-Excel
+Export</strong><br/><em>(Manual <code>06:30Z</code> Export
+Ritual)</em></td>
+<td style="text-align: left;">Maintenance manager exports Oracle work
+orders to Excel; identifies <code>ZM151</code> actuator breach
+(<code>WO-2026-88401</code>), but data is static and disconnected from
+live supply.</td>
+<td style="text-align: left;">Identifies open ticket
+<code>WO-2026-88402</code> for <code>ZM151</code> canopy handle in
+Excel, but spreadsheet is blind to unstructured S1000D manuals and
+allied logs.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Stage 1</strong><br/><em>(Act 1
+· <code>06:45Z</code>)</em></td>
+<td style="text-align: left;"><strong>Prompt 1
+(<code>UC 0</code>):</strong><br/><code>What are our most urgent maintenance jobs and grounded aircraft across the Carrier Strike Group right now, ordered by how long they will take to fix?</code></td>
+<td style="text-align: left;"><strong>Surfaced on Stand-Up</strong>:
+Democratised plain-English query flags lead jet
+<strong><code>ZM151</code></strong> with urgent ticket
+<code>WO-2026-88401</code>.</td>
+<td style="text-align: left;"><strong>Surfaced on Stand-Up</strong>:
+Shows <code>ZM151</code> has a second open ticket,
+<code>WO-2026-88402</code> (<code>PMC-M</code>,
+<code>IN_PROGRESS</code>).</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Stage 2</strong><br/><em>(Act 1
+· <code>06:47Z</code>)</em></td>
+<td style="text-align: left;"><strong>Prompt 2
+(<code>UC 0.1</code>):</strong><br/><code>What faults or pilot-reported issues were raised on ZM151 after its last flight, and are there any fleet-wide health warnings that haven't been scheduled for repair yet?</code></td>
+<td style="text-align: left;"><strong>Automated Health
+Exceedance</strong>: Confirms <code>HRC-2710-88A</code> actuator
+threshold breach (<code>1,000.4 hrs</code>).</td>
+<td style="text-align: left;"><strong>Diagnosed as Unexplained
+CND</strong>: Confirms <code>HRC-5330-000-NONE</code> has <strong>zero
+computer codes</strong> (<code>PILOT_REPORT_ONLY_NO_BIT</code>) and is
+<code>⚠️ CND (Repeat)</code> (3rd time in 30 days).</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Stage 3</strong><br/><em>(Act 1
+· <code>06:50Z</code>)</em></td>
+<td style="text-align: left;"><strong>Prompt 3
+(<code>UC 0.5</code>):</strong><br/><code>Which of our open maintenance jobs are ready to start on this shift, and which ones are held up waiting for certified technicians, an inspector, or calibrated tools?</code></td>
+<td style="text-align: left;"><strong>Bay Readiness Checked</strong>:
+Confirms hydraulic bleed cart <code>EHA-HYD-2710</code> is calibrated
+and ready.</td>
+<td style="text-align: left;"><strong>Staged for Bay Crew</strong>:
+Verifies Bay 2 has qualified canopy rigging crew, QAR inspector, and
+calibrated Micro-Torque Spanner <code>JTD-53-30-T14</code>
+<strong><code>🟢 READY_TO_DISPATCH</code></strong>.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Stage 4</strong><br/><em>(Act 2
+· <code>06:52Z</code>)</em></td>
+<td style="text-align: left;"><strong>Prompt 4
+(<code>UC 1A</code>):</strong><br/><code>Check RAF Marham F-35 horizontal tail actuator hours against our 30-day spare parts stock, and recommend an aircraft swap for morning sortie SRT-MAR-20261103-01.</code></td>
+<td style="text-align: left;"><strong>Supply &amp; Swap</strong>: 4
+spare actuators verified in stock (<code>18-hr</code> ETA). Sortie
+swapped to clean spare <strong><code>ZM154</code></strong>
+(<code>842.0 hrs</code>).</td>
+<td style="text-align: left;"><strong>Sortie Protected</strong>:
+Swapping to <code>ZM154</code> guarantees the morning wave launches
+while maintainers prepare <code>ZM151</code> in Bay 2.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Stage 5</strong><br/><em>(Act 2
+· <code>06:54Z</code>)</em></td>
+<td style="text-align: left;"><strong>Prompt 5
+(<code>UC 1B</code>):</strong><br/><code>Render the full Executive Briefing Dashboard for my presentation slide deck.</code></td>
+<td style="text-align: left;"><strong>Leadership Visualized</strong>:
+Renders 1920×1080 composite slide graphic showing <code>ZM151</code> in
+Red vs <code>ZM154</code> in Green with regional depot stock.</td>
+<td style="text-align: left;"><strong>Executive Assurance</strong>: Wing
+Commander brief has instant slide-ready proof of mission readiness and
+parts pipeline.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Stage 6</strong><br/><em>(Act 3
+· <code>06:56Z</code>)</em></td>
+<td style="text-align: left;"><strong>Prompt 6
+(<code>UC 2</code>):</strong><br/><code>On ZM151, our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, with no fault codes logged on the jet. Have allied squadrons seen this before, and what is the approved fix?</code></td>
+<td style="text-align: left;"><em>(Actuator replacement proceeds in
+parallel in Bay 2 using depot stock ordered in Prompt 4).</em></td>
+<td style="text-align: left;"><strong>Root Cause &amp; Approved
+Fix</strong>: Unlocks USMC fleet memory—cured silicon sealant debris
+(<code>PR-1776M</code>) in the cam track. Gives verbatim cleaning spec
+and <code>18.5 N·m</code> torque setting for spanner
+<code>JTD-53-30-T14</code> from Prompt 3.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-act-by-act-executive-walkthrough">2. Act-by-Act Executive
+Walkthrough</h2>
+<hr />
+<h3
+id="act-1-morning-stand-up-post-sortie-triage--shift-readiness-prompts-1-2--3--uc-0--01--05">Act
+1: Morning Stand-Up, Post-Sortie Triage &amp; Shift Readiness (Prompts
+1, 2, &amp; 3 · <code>UC 0</code> / <code>0.1</code> /
+<code>0.5</code>)</h3>
+<pre class="mermaid"><code>flowchart LR
+    S0[&quot;Step 0 (06:30Z · Baseline)&lt;br/&gt;CURRENT STATE: Oracle-to-Excel Export (45-90 Min Drag)&quot;] -.-&gt;|Transition to Target State| P1[&quot;Prompt 1 (06:45Z · Act 1 · UC 0)&lt;br/&gt;TARGET STATE: Democratised Stand-Up (Spots ZM151 in &lt; 1.5s)&quot;]
+    P1 --&gt; P2[&quot;Prompt 2 (06:47Z · Act 1 · UC 0.1)&lt;br/&gt;TRIAGE ZM151: Actuator Hour Breach &amp; Zero-Code Canopy&quot;]
+    P2 --&gt; P3[&quot;Prompt 3 (06:50Z · Act 1 · UC 0.5)&lt;br/&gt;CREWS &amp; TOOLS: Confirm Bay Crew &amp; Calibrated Spanner Ready&quot;]
+    P3 --&gt; E1[&quot;ZM151 Enters Bay -&gt; Triggers Act 2 (Sortie Swap) &amp; Act 3 (Canopy Fix)&quot;]</code></pre>
+<ul>
+<li><strong>The Executive Challenge (<code>06:45Z</code>):</strong> At
+the start of the morning shift, the Squadron Maintenance Officer needs
+to know which aircraft are grounded across the Carrier Strike Group
+(including <code>617 Squadron</code> and <code>207 Squadron</code> at
+RAF Marham, and <code>809 Naval Air Squadron</code> embarked across
+<code>HMS Queen Elizabeth</code> and <code>HMS Prince of Wales</code>),
+what issues came off the jets after last night's flying, and which jobs
+can actually be started on the morning watch.</li>
+</ul>
+<h4
+id="step-0--baseline-the-current-state-the-0630z-oracle-to-excel-ritual">Step
+0 — Baseline: The Current State: The 06:30Z "Oracle-to-Excel"
+Ritual</h4>
+<ul>
+<li><strong>The Operational Setting:</strong> At <code>06:30Z</code>, 15
+minutes before the squadron maintenance stand-up, the Maintenance
+Manager and Squadron Data Analyst log into <strong>Oracle (the
+authoritative system of record)</strong> to extract work orders,
+component hours, and fleet status into a desktop workbook
+(<code>F35_Maintenance_Export_20261103.xlsx</code>).</li>
+<li><strong>The Current State Friction (The 4 Operational
+Bottlenecks):</strong>
+<ul>
+<li><strong>Stale Data ("Dead on Export"):</strong> The moment Oracle
+exports data at <code>06:30Z</code>, it is static. If
+<code>ZM151</code>'s post-flight debrief or overnight telemetry is
+committed at <code>06:40Z</code>, the exported Excel file is completely
+blind to it. Decisions made at the <code>06:45Z</code> stand-up are
+based on stale history.</li>
+<li><strong>"Spreadsheet Roulette" &amp; Version Drift:</strong>
+Different maintenance shops (Avionics, Airframe, Weapons, Carrier
+Detachments) pull their own filtered Oracle extracts. By
+<code>07:00Z</code>, officers sit with conflicting spreadsheets
+(<code>F35_Maint_v1.xlsx</code> vs
+<code>F35_Maint_v2_final.xlsx</code>), spending valuable briefing
+minutes debating whose numbers are accurate.</li>
+<li><strong>Airworthiness Compliance &amp; Traceability Risk (MAA / DEF
+STAN 00-970):</strong> Spreadsheets lack cryptographic lineage and
+immutable audit logs. Broken <code>=VLOOKUP</code> formulas or
+accidental row deletions can silently mask a life-limited component
+breach, exposing the squadron to severe regulatory compliance and flight
+safety violations.</li>
+<li><strong>Flight-Line Productivity Drain (The Analyst Queue):</strong>
+Maintenance managers and technicians spend <strong>45 to 90
+minutes</strong> every morning running manual spreadsheet macros and
+formatting tables instead of turning wrenches. If leadership asks a new
+operational question (e.g. cross-referencing certified crews and tool
+calibrations), maintainers are blocked waiting days for a central SQL
+data analyst to build a custom query.</li>
+</ul></li>
+<li><strong>The Target State Breakthrough (Steps 0 to 6):</strong>
+<strong>Agents (<code>F35 Support</code>)</strong> replaces this manual,
+error-prone export ritual by acting as a live <strong>Intelligent Action
+Layer</strong> directly on top of the F35 Data Warehouse. Maintainers
+and commanders query live operational status in plain English in
+<code>&lt; 1.5s</code>—democratising data access, eliminating
+spreadsheet friction, and turning passive data into decisive operational
+momentum.</li>
+</ul>
+<h4
+id="step-1--paste-prompt-1-uc-0-urgent-jobs--grounded-aircraft--0645z">Step
+1 — Paste Prompt 1 (<code>UC 0</code>: Urgent Jobs &amp; Grounded
+Aircraft · <code>06:45Z</code>)</h4>
+<pre class="text"><code>What are our most urgent maintenance jobs and grounded aircraft across the Carrier Strike Group right now, ordered by how long they will take to fix?</code></pre>
+<ul>
+<li><strong>What Appears on Screen:</strong>
+<code>@F35-Maintenance-Data</code> automatically translates the
+plain-English question into a live query against the F35 Data Warehouse
+in <code>&lt; 350 ms</code>, rendering a <strong>screen-fitted
+Spreadsheet Card (<code>Columns A..E</code>)</strong> with Status Badges
+(<code>🔴 NMC-S (MICAP)</code>, <code>🟠 NMC-M</code>,
+<code>🟡 PMC-M</code>), Formula Footer (<code>=COUNTA()</code>,
+<code>=AVERAGE()</code>), and native spreadsheet table copy/export.</li>
+<li><strong>How It Advances the Story:</strong> Right at the top of the
+urgent list is Tail <strong><code>ZM151</code></strong>—the aircraft
+scheduled to lead the <code>07:30Z</code> morning sortie
+(<code>VIPER-1</code>)—showing open Urgent / Red-X jobs
+(<code>WO-2026-88401</code> and <code>WO-2026-88402</code>). That
+immediately prompts the next question: <em>"What happened on
+<code>ZM151</code>'s last flight?"</em></li>
+<li><strong>The Dashboard Limitation Shattered:</strong> A static
+dashboard requires clicking through squadron filters, status dropdowns,
+and separate carrier tabs. The agent delivers an instant, screen-fitted
+stand-up spreadsheet across Marham and both carriers in
+<code>&lt; 1.5s</code> without touching a mouse.</li>
+</ul>
+<h4
+id="step-2--paste-prompt-2-uc-01-post-sortie-issues--unscheduled-fleet-warnings--0647z">Step
+2 — Paste Prompt 2 (<code>UC 0.1</code>: Post-Sortie Issues &amp;
+Unscheduled Fleet Warnings · <code>06:47Z</code>)</h4>
+<pre class="text"><code>What faults or pilot-reported issues were raised on ZM151 after its last flight, and are there any fleet-wide health warnings that haven&#39;t been scheduled for repair yet?</code></pre>
+<ul>
+<li><strong>What Appears on Screen:</strong> Without the user needing to
+name any diagnostic system, <code>@F35-Maintenance-Data</code> renders a
+Spreadsheet Card with Severity &amp; Repeat-Fault Badges:
+<ol type="1">
+<li><strong><code>PHM-2026-99101</code> (<code>ZM151</code> ·
+<code>🟠 DEGRADED_PMC</code>):</strong> Left Horizontal Tail Actuator
+crossed its <code>1,000.0</code>-hour life limit (<code>1,000.4</code>
+hrs) → <em>Explains <code>WO-2026-88401</code> and tees up
+<code>Prompt 4</code> (<code>Act 2</code>)</em>.</li>
+<li><strong><code>PHM-2026-99102</code> (<code>ZM151</code> ·
+<code>⚪ NO_BIT_FAULT_LOGGED</code> ·
+<code>⚠️ CND (Repeat)</code>):</strong> The night-sortie pilot reported
+a <strong>stiff canopy release handle that hesitated to latch</strong>,
+with <strong>zero computer fault codes logged</strong>
+(<code>PILOT_REPORT_ONLY_NO_BIT</code> — repeating for the 3rd time in
+30 days) → <em>Explains <code>WO-2026-88402</code> and tees up
+<code>Prompt 6</code> (<code>Act 3</code>)</em>.</li>
+<li><strong>Proactive Fleet Watch:</strong> Surfaces <strong>unscheduled
+fleet warnings</strong> (<code>linked_work_order_id IS NULL</code> on
+sister tails such as <code>ZM159</code> and <code>ZM162</code>) that do
+not have a repair job raised yet, while confirming spare tail
+<strong><code>ZM154</code></strong> is clean.</li>
+</ol></li>
+<li><strong>How It Advances the Story:</strong> Now we know
+<code>ZM151</code> needs both an actuator replacement and a canopy
+rigging fix. Before we pull <code>ZM151</code> off the
+<code>07:30Z</code> flying schedule, the Wing Maintenance Controller
+asks: <em>"Do we actually have the certified crew, inspector, and
+calibrated tools on shift right now to work on
+<code>ZM151</code>?"</em></li>
+<li><strong>The Dashboard Limitation Shattered:</strong> In PowerBI,
+<code>ZM151</code> is simply a red tile. It cannot explain the
+difference between an automated component hour exceedance and an
+unexplained zero-code pilot report (CND). The agent surfaces both root
+causes in plain language without requiring the user to know diagnostic
+codes.</li>
+</ul>
+<h4
+id="step-3--paste-prompt-3-uc-05-shift-dispatch-technicians--tooling-readiness--0650z">Step
+3 — Paste Prompt 3 (<code>UC 0.5</code>: Shift Dispatch, Technicians
+&amp; Tooling Readiness · <code>06:50Z</code>)</h4>
+<pre class="text"><code>Which of our open maintenance jobs are ready to start on this shift, and which ones are held up waiting for certified technicians, an inspector, or calibrated tools?</code></pre>
+<ul>
+<li><strong>What Appears on Screen:</strong> Behind the scenes,
+<code>@F35-Maintenance-Data</code> automatically links open maintenance
+jobs with shift staffing and tool calibration records in
+<code>&lt; 360 ms</code>:
+<ul>
+<li><strong>Green Light for <code>ZM151</code>:</strong> Confirms
+<strong><code>ZM151</code></strong>'s jobs (including
+<code>WO-2026-88402</code> with calibrated Digital Micro-Torque Spanner
+<strong><code>JTD-53-30-T14</code></strong>) are
+<strong><code>🟢 READY_TO_DISPATCH</code></strong> with qualified
+technicians and a Quality Assurance inspector on shift right now.</li>
+<li><strong>Bottlenecks Isolated on Sister Tails:</strong> Flags jobs on
+other aircraft held up by
+<strong><code>🔴 EXPIRED_OUT_OF_CAL</code></strong>
+(<code>LO-IR-BLANKET-04</code> Infrared Cure Blanket) and
+<strong><code>🟠 BLOCKED_NO_QAR_ON_SHIFT</code></strong>.</li>
+</ul></li>
+<li><strong>How It Advances the Story:</strong> Because the morning crew
+and calibrated tools are ready to start on
+<strong><code>ZM151</code></strong> immediately, we commit
+<code>ZM151</code> to the maintenance bay. That leaves two urgent tasks:
+<ol type="1">
+<li><strong>Logistics (<code>Act 2</code> · Prompts 4 &amp; 5):</strong>
+Order the replacement actuator for <code>ZM151</code> and swap Flt Lt
+Henderson's <code>07:30Z</code> sortie
+(<code>SRT-MAR-20261103-01</code>) onto a serviceable spare jet.</li>
+<li><strong>Technical Support (<code>Act 3</code> · Prompt 6):</strong>
+Tell the crew in Bay 2 how to permanently fix <code>ZM151</code>'s
+repeat zero-code canopy latch problem so it stops coming back as "Could
+Not Duplicate."</li>
+</ol></li>
+<li><strong>The Dashboard Limitation Shattered:</strong> In standard BI,
+maintenance work orders live in one system, technician rosters live in
+HR/training databases, and tool calibration logs live in airfield
+equipment databases. Merging them requires weeks of ETL engineering. The
+agent joins all three dynamically in <code>&lt; 360 ms</code>.</li>
+</ul>
+<div class="important">
+<div class="title">
+<p>Important</p>
+</div>
+<p><strong>Act 1 Executive Takeaway ("The So What?")</strong></p>
+<ul>
+<li><strong>Zero Analytics Training Required:</strong> Maintainers and
+controllers ask plain-English questions about aircraft, faults, crews,
+and tools—the agent figures out which tables to query and link
+automatically.</li>
+<li><strong>Time Compressed:</strong> <strong>1–2 hours</strong> of
+morning data pulls and manual spreadsheet cross-checking compressed into
+<strong>three <code>&lt; 1.5s</code> conversational
+questions</strong>.</li>
+</ul>
+</div>
+<hr />
+<h3
+id="act-2-mission-protection--leadership-briefing--instant-spares-check-aircraft-swap--slide-graphic-prompts-4--5--uc-1a--1b">Act
+2: Mission Protection &amp; Leadership Briefing — Instant Spares Check,
+Aircraft Swap &amp; Slide Graphic (Prompts 4 &amp; 5 ·
+<code>UC 1A</code> / <code>1B</code>)</h3>
+<pre class="mermaid"><code>flowchart LR
+    P4[&quot;Prompt 4 (06:52Z · UC 1A): Check Actuator Spares &amp; Swap 07:30Z Sortie&quot;] --&gt; R4[&quot;@F35-Sustainment-Analytics (3-Table Readiness Check · 1.2s)&quot;]
+    R4 --&gt; S4[&quot;Tabular Briefing: 4 Spares in Stock + Swap Flt Lt Henderson from ZM151 to ZM154 (842 hrs)&quot;]
+    S4 --&gt; Q4[&quot;Prompt User: Render Chart 1, Chart 2, or Executive Dashboard?&quot;]
+    Q4 --&gt; P5[&quot;Prompt 5 (06:54Z · UC 1B): &#39;Render the full Executive Briefing Dashboard...&#39;&quot;]
+    P5 --&gt; T5[&quot;render_sustainment_chart Tool (&lt; 790ms Headless Matplotlib + Cloud Upload)&quot;]
+    T5 --&gt; C5[&quot;Full HD Presentation Graphic + Clickable PNG Download Link for 07:00Z Brief&quot;]</code></pre>
+<ul>
+<li><strong>The Executive Challenge (<code>06:52Z</code>):</strong> With
+<strong><code>ZM151</code></strong> now committed to the maintenance bay
+from <code>Prompt 3</code> (<code>Act 1</code>), <strong>Flt Lt
+Henderson (<code>VIPER-1</code>)</strong> needs a serviceable aircraft
+for the <code>07:30Z</code> morning sortie
+(<code>SRT-MAR-20261103-01</code>), and the bay crew needs a replacement
+Horizontal Tail Actuator (<code>NSN 1680-01-619-4821</code>) from depot
+stock.</li>
+</ul>
+<h4
+id="step-4--paste-prompt-4-uc-1a-fleet-readiness-analysis--aircraft-swap--0652z">Step
+4 — Paste Prompt 4 (<code>UC 1A</code>: Fleet Readiness Analysis &amp;
+Aircraft Swap · <code>06:52Z</code>)</h4>
+<pre class="text"><code>Check RAF Marham F-35 horizontal tail actuator hours against our 30-day spare parts stock, and recommend an aircraft swap for morning sortie SRT-MAR-20261103-01.</code></pre>
+<ul>
+<li><strong>What the Executive Audience Sees:</strong>
+<ol type="1">
+<li><strong>Operational Readiness Table:</strong> Displays real-time
+fleet and spares status:
+<ul>
+<li><strong>Primary Tail <code>ZM151</code>
+(<code>S/N ACT-99812-F</code>)</strong>: <code>1,000.4 hrs</code>
+(Breached <code>1,000.0-hr</code> limit by <code>+0.4 hrs</code>, status
+<code>PMC-M</code>).</li>
+<li><strong>Serviceable Spare Tail <code>ZM154</code>
+(<code>S/N ACT-88401-B</code>)</strong>: <code>842.0 hrs</code>
+(<code>158.0 hrs</code> safe margin remaining, Fully Mission Capable
+<code>MC</code>).</li>
+<li><strong>Regional Spares (<code>RAF Marham</code>)</strong>:
+<code>4</code> serviceable actuators on hand vs <code>2</code> reserved
+for 30-day demand (<code>+2</code> net buffer, <code>18.0-hr</code>
+shipping ETA).</li>
+</ul></li>
+<li><strong>Automated Action Plan:</strong> Reallocates Flt Lt
+Henderson's <code>07:30Z</code> sortie
+(<code>SRT-MAR-20261103-01</code>) from <code>ZM151</code> to Spare Tail
+<strong><code>ZM154</code></strong> and stages a Priority-1 supply issue
+for <code>NSN: 1680-01-619-4821</code> so <code>ZM151</code>'s actuator
+replacement can proceed.</li>
+<li><strong>Interactive Chart Prompt:</strong>
+<blockquote>
+<p><em>"Would you like me to render: 1. Actuator Fatigue Threshold
+Chart, 2. Regional Depot Stock vs 30-Day Demand Chart, or the full
+Executive Briefing Dashboard for your presentation slide deck?"</em></p>
+</blockquote></li>
+</ol></li>
+<li><strong>The Dashboard Limitation Shattered:</strong> Dashboards are
+read-only; they cannot make operational decisions. A dashboard shows an
+actuator over-hours, but leaves the logistics officer to manually open
+the flight roster and inventory ERP. The agent checks 30-day stock,
+validates spare tail <code>ZM154</code>, and reallocates the sortie in
+one turn.</li>
+</ul>
+<h4
+id="step-5--paste-prompt-5-uc-1b-on-demand-presentation-slide-graphic-rendering--0654z">Step
+5 — Paste Prompt 5 (<code>UC 1B</code>: On-Demand Presentation Slide
+Graphic Rendering · <code>06:54Z</code>)</h4>
+<pre class="text"><code>Render the full Executive Briefing Dashboard for my presentation slide deck.</code></pre>
+<ul>
+<li><strong>What the Executive Audience Sees:</strong>
+<ul>
+<li>The agent invokes <code>render_sustainment_chart</code>, rendering
+the presentation graphic in <strong><code>&lt; 790 ms</code></strong>
+for the Wing Commander's <code>07:00Z</code> briefing.</li>
+<li>The UI displays the publication-quality <strong>Full HD widescreen
+presentation slide graphic (1920×1080 at 160 DPI)</strong>:
+<ul>
+<li><strong>Panel 1 (Actuator Fatigue Threshold):</strong> Tail
+<strong>ZM151</strong> in <strong>Red</strong> at
+<code>1,000.4 hrs</code> breaching the dashed <code>1,000.0-hr</code>
+condemnation limit; Tail <strong>ZM154</strong> in
+<strong>Green</strong> at <code>842.0 hrs</code> (serviceable).</li>
+<li><strong>Panel 2 (Regional Depot Stock vs 30-Day Demand):</strong>
+Grouped bar chart comparing RAF Marham and Carrier Strike Group afloat
+stock on hand, 30-day demand, and net uncommitted spares.</li>
+</ul></li>
+<li><strong>Clickable Download Link for Briefing Decks:</strong>
+<ul>
+<li>Provides a direct link:
+<strong><code>[📥 Download Executive Slide Graphic (PNG)](https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/charts/f35_sustainment_executive_dashboard.png)</code></strong>
+allowing officers to immediately drop the graphic into Google Slides /
+PowerPoint.</li>
+</ul></li>
+</ul></li>
+<li><strong>The Dashboard Limitation Shattered:</strong> To brief the
+Wing Commander, staff officers typically take screenshots of 3 different
+PowerBI tabs and spend 20 minutes formatting PowerPoint slides. The
+agent generates a publication-quality 1920×1080 briefing graphic and
+cloud download link on demand in <code>&lt; 790 ms</code>.</li>
+</ul>
+<div class="important">
+<div class="title">
+<p>Important</p>
+</div>
+<p><strong>Act 2 Executive Takeaway ("The So What?")</strong></p>
+<ul>
+<li><strong>Operational Impact:</strong> Morning training wave launches
+on time on <strong><code>ZM154</code></strong>; zero mission
+cancellation, while <strong><code>ZM151</code></strong> gets its spare
+actuator allocated immediately.</li>
+<li><strong>Time Compressed:</strong> <strong>2–4 hours</strong> of
+manual supply and flight-schedule reconciliation reduced to <strong>1.2
+seconds</strong>.</li>
+<li><strong>Zero Latency Spikes:</strong> Decoupling tabular analysis
+(<code>Prompt 4</code>) from on-demand chart rendering
+(<code>Prompt 5</code>) cuts response time by 90%
+(<code>&lt; 2.5s</code> turn 1, <code>&lt; 0.8s</code> turn 2).</li>
+</ul>
+</div>
+<hr />
+<h3
+id="act-3-empower-front-line-maintainers--solving-zm151s-no-fault-canopy-mystery-prompt-6--uc-2">Act
+3: Empower Front-Line Maintainers — Solving <code>ZM151</code>'s
+"No-Fault" Canopy Mystery (Prompt 6 · <code>UC 2</code>)</h3>
+<pre class="mermaid"><code>flowchart LR
+    P6[&quot;Prompt 6 (06:56Z · UC 2): Fix ZM151&#39;s Repeat Zero-Code Canopy Issue&quot;] --&gt; R6[&quot;@F35-JTD-Search (Single-Pass Search · 0.38s)&quot;]
+    R6 --&gt; D6[&quot;Coalition Jargon Bridge: Links UK RAF Query to USMC Silicon Debris Log (DOC-02)&quot;]
+    D6 --&gt; J6[&quot;100% Cited Checklist: Section 53-30-01 Roller Clearance (0.020-0.035 in) &amp; 18.5 N·m Torque (Using Spanner JTD-53-30-T14 from Prompt 3)&quot;]</code></pre>
+<ul>
+<li><strong>The Executive Challenge (<code>06:56Z</code>):</strong> Now
+that the <code>07:30Z</code> sortie is safely reassigned to
+<code>ZM154</code>, the Flight-Line Maintenance Chief turns back to
+<strong><code>ZM151</code></strong> in Bay 2. Remember from
+<code>Prompt 2</code> (<code>PHM-2026-99102</code>) that
+<code>ZM151</code>'s night-sortie pilot reported a <strong>stiff canopy
+release handle that hesitated to latch, with zero fault codes logged on
+the jet</strong>—and that this is the <strong>3rd repeat occurrence in
+30 days</strong>. In <code>Prompt 3</code>, we confirmed the technician
+crew and calibrated micro-torque spanner (<code>JTD-53-30-T14</code>)
+are standing by at the aircraft. Before they waste an entire shift
+tearing down the canopy electrical system, the Chief asks if any allied
+squadron has solved this exact symptom.</li>
+<li><strong>Paste Prompt 6 into <code>F35 Support</code>:</strong>
+<pre class="text"><code>On ZM151, our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, with no fault codes logged on the jet. Have allied squadrons seen this before, and what is the approved fix?</code></pre></li>
+<li><strong>What the Executive Audience Sees:</strong>
+<ol type="1">
+<li><strong>Cross-Service Fleet Memory:</strong> Automatically bridges
+UK and US maintenance terminology across 5 years of RAF, Royal Navy,
+USAF, and USMC logs (<code>DOC-02</code>), pinpointing a <strong>USMC
+sister-squadron (<code>VMFA-211</code>) precedent</strong>:
+<strong>cured silicon sealant debris (<code>PR-1776M</code>) wedged in
+the forward canopy roller cam track</strong>—which causes mechanical
+hesitation just before microswitch trip (explaining why zero computer
+fault codes are logged!).</li>
+<li><strong>100% Grounded Repair Checklist:</strong> Cites <strong><a
+href="https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/docs/DOC-01_JTD_Section_53-30-01_Canopy_Rigging.pdf">DOC-01:
+JTD Section 53-30-01</a></strong> verbatim—verify roller clearance
+(<code>0.020–0.035 in</code>), purge cured sealant debris from the cam
+track, and re-torque the bellcrank pivot pin to
+<strong><code>18.5 N·m</code></strong> using the exact calibrated torque
+spanner (<code>JTD-53-30-T14</code>) verified ready in
+<code>Prompt 3</code>.</li>
+</ol></li>
+<li><strong>The Dashboard Limitation Shattered:</strong> Static
+dashboards cannot read English paragraphs, let alone US Marine Corps
+flight debriefs or S1000D technical publications. A dashboard would
+leave maintainers to dismantle the canopy electrical system. The agent
+searches allied text archives to deliver the mechanical root cause and
+calibrated torque spec in <code>378 ms</code>.</li>
+</ul>
+<div class="important">
+<div class="title">
+<p>Important</p>
+</div>
+<p><strong>Act 3 Executive Takeaway ("The So What?")</strong></p>
+<ul>
+<li><strong>Closes the Loop on <code>ZM151</code>:</strong> What started
+in <code>Prompt 2</code> as a frustrating 3-time repeat "Could Not
+Duplicate" fault on <code>ZM151</code> is permanently solved in
+<code>&lt; 1 second</code> using allied US Marine Corps fleet
+memory.</li>
+<li><strong>Time Compressed:</strong> <strong>4–8 hours</strong> of
+manual PDF/XML manual hunting and unnecessary electrical teardown
+reduced to <strong><code>378 ms</code></strong>.</li>
+<li><strong>Safety &amp; Trust Proof:</strong> <strong>Zero hallucinated
+torque specs</strong>—every step is anchored with a clickable link to
+the official technical manual.</li>
+</ul>
+</div>
+<hr />
+<h2 id="3-executive-inquiries--scenario-reference-cards">3. Executive
+Inquiries &amp; Scenario Reference Cards</h2>
+<p>The following reference scenarios demonstrate how Agents resolve
+ad-hoc executive and operational inquiries in real time:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Executive / Operational Inquiry</th>
+<th style="text-align: left;">Natural Language Prompt</th>
+<th style="text-align: left;">Operational Proof &amp; Capability
+Demonstrated</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><em>"Why can't we just keep exporting
+Oracle data to Excel or rely on scheduled Oracle reports?"</em></td>
+<td style="text-align: left;"><em>(Spoken Explanation)</em></td>
+<td style="text-align: left;"><strong>The Fragility of the Current
+State</strong>: Daily Oracle-to-Excel dumps create stale data ("dead on
+export"), version drift ("spreadsheet roulette"), broken VLOOKUPs, and
+severe MAA airworthiness traceability risks, while draining 45–90
+minutes per shift. Agents (<code>F35 Support</code>) keep the
+transactional system of record intact, but eliminate the manual Excel
+middleman with real-time, deterministic natural language querying
+directly against the F35 Data Warehouse in <code>&lt; 1.5s</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><em>"Why can't our analytics team just
+build this in PowerBI or Tableau?"</em></td>
+<td
+style="text-align: left;"><code>Compare the time and data sources required to solve ZM151's canopy fault in a static dashboard versus F35 Support.</code></td>
+<td style="text-align: left;"><strong>The Action vs Display
+Gap</strong>: Proves live that dashboards are passive rearview mirrors
+requiring human swivel-chair integration across 4 tools, whereas agents
+cross-examine telemetry, supply, shift rosters, and PDF manuals to take
+decisive action in <code>&lt; 2 seconds</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><em>"Does this replace our central data
+analytics team or make them redundant?"</em></td>
+<td style="text-align: left;"><em>(Spoken Explanation)</em></td>
+<td style="text-align: left;"><strong>Analyst Elevation &amp;
+Democratisation</strong>: It liberates analysts from the 80% mundane
+ad-hoc reporting backlog. Maintainers get instant self-service answers
+directly from the flight line, while centralized data teams are elevated
+to focus on high-value predictive modeling, reliability engineering, and
+data pipeline governance.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><em>"Tell me what tails on Lizzy are fit
+to fly"</em></td>
+<td
+style="text-align: left;"><code>Tell me what tails on Lizzy are fit to fly</code></td>
+<td style="text-align: left;"><strong>Full Vernacular &amp; Semantic
+Governance Proof</strong>: Resolves colloquial military vernacular
+('Lizzy' → HMS Queen Elizabeth, 'fit to fly' → FMC / Fully Mission
+Capable) via the semantic governance layer, rendering a live Spreadsheet
+Card of the 5 mission-capable tails (<code>ZM166</code>,
+<code>ZM172</code>, <code>ZM136</code>, <code>ZM142</code>,
+<code>ZM148</code>) with zero SQL errors or hallucinations.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><em>"Does it really understand British vs.
+American military slang?"</em></td>
+<td
+style="text-align: left;"><code>The canopy catch is binding on pre-flight—what is the spanner torque spec and have allied squadrons seen fouling in this mechanism?</code></td>
+<td style="text-align: left;"><strong>Coalition
+Interoperability</strong>: Translates UK
+<code>catch/spanner/binding</code> into US
+<code>latch/wrench/stiff</code> and pulls the USMC fix.</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

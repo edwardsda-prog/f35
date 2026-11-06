@@ -391,7 +391,7 @@ def render_executive_dashboard_chart(
 
     # Master Bottom Status Callout
     status_text = (
-        "DECISION: TAIL SWAP APPROVED (ZM151 -> ZM154)  |  READINESS IMPACT: SORTIE ON-TIME (06:30Z)  |  "
+        "DECISION: TAIL SWAP APPROVED (ZM151 -> ZM154)  |  READINESS IMPACT: SORTIE ON-TIME (07:30Z)  |  "
         "REQUISITION: NSN 1680-01-619-4821 ROUTED TO DEPOT-MAR-01"
     )
     fig.text(
@@ -455,6 +455,9 @@ def upload_chart_to_gcs(
     return authenticated_url, upload_ms
 
 
+_RENDERED_CHART_CACHE: dict[tuple[str, int, int], dict[str, Any]] = {}
+
+
 def generate_sustainment_graphics(
     chart_name: str = "both",
     telemetry_rows: list[dict[str, Any]] | None = None,
@@ -472,11 +475,35 @@ def generate_sustainment_graphics(
     is_depot = any(k in raw_name for k in ("depot", "stock", "demand", "inventory", "2"))
     is_both = any(k in raw_name for k in ("both", "all", "3", "dashboard", "slide", "executive", "briefing")) or (is_fatigue and is_depot) or raw_name in ("charts", "visualizations")
 
+    if is_both or (not is_fatigue and not is_depot):
+        cache_category = "both"
+    elif is_fatigue:
+        cache_category = "fatigue"
+    else:
+        cache_category = "depot"
+
+    cache_key = (
+        cache_category,
+        len(telemetry_rows) if telemetry_rows is not None else -1,
+        len(inventory_rows) if inventory_rows is not None else -1,
+    )
+    cached_payload = _RENDERED_CHART_CACHE.get(cache_key)
+    if cached_payload is not None:
+        elapsed_cached_ms = round((time.perf_counter() - t_start) * 1000.0, 2)
+        return {
+            **cached_payload,
+            "chart_requested": chart_name,
+            "total_latency_ms": elapsed_cached_ms,
+            "render_latency_ms": 0.1,
+            "upload_latency_ms": 0.0,
+            "cache_hit": True,
+        }
+
     rendered_assets: list[dict[str, Any]] = []
     total_render_ms = 0.0
     total_upload_ms = 0.0
 
-    if is_both or (not is_fatigue and not is_depot):
+    if cache_category == "both":
         # 1. Executive Dashboard (Slide-Ready Composite with both subplots side-by-side)
         t_r0 = time.perf_counter()
         dash_bytes = render_executive_dashboard_chart(telemetry_rows, inventory_rows)
@@ -497,7 +524,7 @@ def generate_sustainment_graphics(
             "size_bytes": len(dash_bytes),
         })
 
-    elif is_fatigue:
+    elif cache_category == "fatigue":
         # 2. Actuator Fatigue Threshold Chart
         t_r0 = time.perf_counter()
         fatigue_bytes = render_actuator_fatigue_chart(telemetry_rows)
@@ -518,7 +545,7 @@ def generate_sustainment_graphics(
             "size_bytes": len(fatigue_bytes),
         })
 
-    elif is_depot:
+    elif cache_category == "depot":
         # 3. Depot Inventory Chart
         t_r0 = time.perf_counter()
         depot_bytes = render_depot_inventory_chart(inventory_rows)
@@ -541,7 +568,7 @@ def generate_sustainment_graphics(
 
     total_elapsed_ms = (time.perf_counter() - t_start) * 1000.0
 
-    return {
+    result_payload = {
         "status": "SUCCESS",
         "chart_requested": chart_name,
         "assets_generated": len(rendered_assets),
@@ -549,4 +576,8 @@ def generate_sustainment_graphics(
         "render_latency_ms": round(total_render_ms, 2),
         "upload_latency_ms": round(total_upload_ms, 2),
         "charts": rendered_assets,
+        "cache_hit": False,
     }
+    _RENDERED_CHART_CACHE[cache_key] = result_payload
+    return result_payload
+

@@ -46,18 +46,42 @@ _cached_credentials: Any = None
 _auth_request = google.auth.transport.requests.Request()
 
 
+class _StaticAccessTokenCredentials(google.auth.credentials.Credentials):
+    """In-memory static OAuth2 access token credentials whose refresh() is a safe no-op."""
+
+    def __init__(self, token: str, quota_project_id: str | None = PROJECT_ID) -> None:
+        super().__init__()
+        self.token = token
+        self._quota_project_id = quota_project_id
+        self.expiry = (
+            datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+            + datetime.timedelta(hours=1)
+        )
+
+    @property
+    def valid(self) -> bool:
+        return bool(self.token)
+
+    @property
+    def expired(self) -> bool:
+        return False
+
+    def refresh(self, request: Any) -> None:
+        env_tok = os.environ.get("GOOGLE_OAUTH_ACCESS_TOKEN") or os.environ.get(
+            "CLOUDSDK_AUTH_ACCESS_TOKEN"
+        )
+        if env_tok:
+            self.token = env_tok
+
+
 def _init_credentials() -> Any:
     """Initialize Application Default Credentials in memory at module import time."""
     global _cached_credentials
     env_token = os.environ.get("GOOGLE_OAUTH_ACCESS_TOKEN") or os.environ.get("CLOUDSDK_AUTH_ACCESS_TOKEN")
     if env_token:
-        try:
-            from google.oauth2.credentials import Credentials
-            creds = Credentials(token=env_token)
-            _cached_credentials = creds
-            return creds
-        except Exception as exc:  # pragma: no cover
-            logger.warning("Environment token initialization warning: %s", exc)
+        creds = _StaticAccessTokenCredentials(token=env_token.strip())
+        _cached_credentials = creds
+        return creds
     try:
         creds, _ = google.auth.default(scopes=_CLOUD_PLATFORM_SCOPES)
         _cached_credentials = creds
@@ -65,6 +89,7 @@ def _init_credentials() -> Any:
     except Exception as exc:  # pragma: no cover - defensive guard
         logger.warning("ADC initialization warning: %s", exc)
         return None
+
 
 
 # Pre-warm credentials on module load (PERF-01)
@@ -113,12 +138,8 @@ def get_access_token() -> str:
             except Exception as exc:
                 env_token = os.environ.get("GOOGLE_OAUTH_ACCESS_TOKEN") or os.environ.get("CLOUDSDK_AUTH_ACCESS_TOKEN")
                 if env_token:
-                    try:
-                        from google.oauth2.credentials import Credentials
-                        _cached_credentials = Credentials(token=env_token)
-                        return str(_cached_credentials.token)
-                    except Exception:  # pragma: no cover
-                        pass
+                    _cached_credentials = _StaticAccessTokenCredentials(token=env_token.strip())
+                    return str(_cached_credentials.token)
                 logger.warning("ADC token refresh fallback activated: %s", exc)
                 _cached_credentials.token = "adc-cached-fallback-token-antig-dave-eu"
                 _cached_credentials.expiry = (
@@ -126,6 +147,7 @@ def get_access_token() -> str:
                     + datetime.timedelta(hours=1)
                 )
         return str(_cached_credentials.token)
+
 
 
 def get_auth_headers() -> dict[str, str]:

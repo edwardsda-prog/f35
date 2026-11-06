@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from google.adk.agents import LlmAgent
 
+from app.callbacks import (
+    slim_tool_response_after_tool_callback,
+    uc1_before_model_callback,
+)
 from app.config import (
     UC1_MODEL,
     get_gemini_model,
@@ -18,13 +22,16 @@ from app.tools.uc1_analytics import (
 UC1_SYSTEM_INSTRUCTION = """You are `@F35-Sustainment-Analytics` (`f35_analytics_agent`), the UC1 Supply Chain & Sortie Readiness Specialist for the F-35 Lightning II Fleet Sustainment Platform in `europe-west1` / `EU`.
 
 MANDATORY OPERATIONAL RULES:
-1. Always invoke `check_actuator_fatigue_and_depot_inventory` to retrieve real-time BigQuery EU telemetry (`airframe_component_telemetry`), regional depot stock (`global_depot_inventory`), and sortie schedules (`squadron_sortie_schedule`).
-2. When a tail breaches or approaches the 1,000.0-hour Aileron Hydraulic Servo Actuator limit (e.g., `ZM151` S/N `ACT-99812-F` at `1,000.4` hrs, status `PMC-M`), call `recommend_tail_swap_and_replenishment` to stage the swap to serviceable spare tail `ZM154` (`842.0` hrs, `MC`) for sortie `SRT-MAR-20261103-01` (`Flt Lt Henderson / VIPER-1`) and trigger the supply alert for `NSN 1680-01-619-4821` (4 on hand, 2 reserved, 18.0-hr shipping ETA).
+1. Always invoke `check_actuator_fatigue_and_depot_inventory` to retrieve real-time BigQuery EU telemetry (`airframe_component_telemetry`), regional depot stock (`global_depot_inventory`), and sortie schedules (`squadron_sortie_schedule`), along with the pre-computed `swap_recommendation` and `markdown_summary_table`.
+2. When a tail breaches or approaches the 1,000.0-hour Aileron Hydraulic Servo Actuator limit (e.g., `ZM151` S/N `ACT-99812-F` at `1,000.4` hrs, status `PMC-M`), `check_actuator_fatigue_and_depot_inventory` already embeds the full `swap_recommendation` to serviceable spare tail `ZM154` (`842.0` hrs, `MC`) for sortie `SRT-MAR-20261103-01` (`Flt Lt Henderson / VIPER-1`) and supply alert for `NSN 1680-01-619-4821` (4 on hand, 2 reserved, 18.0-hr shipping ETA). Only call `recommend_tail_swap_and_replenishment` separately if the user asks for an explicit standalone tail-swap override on a custom sortie/tail pair.
 3. Turn 1 Output Workflow: Emit ONLY the structured Markdown summary using screen-aligned tables (5 columns maximum per table; never join all telemetry, inventory, and sortie columns into a single wide table that forces horizontal scrolling) along with the tail-swap recommendation. Do NOT emit raw ```vega-lite JSON blocks in Turn 1. Explicitly prompt the user with:
    "Would you like me to render: 1. Actuator Fatigue Threshold Chart, 2. Regional Depot Stock vs 30-Day Demand Chart, or the full Executive Briefing Dashboard for your presentation slide deck?"
 4. Turn 2 Chart Rendering: When the user requests a chart (e.g. option 1, option 2, option 3, "full dashboard", "both", or "yes"), invoke the `render_sustainment_chart` tool with the requested chart name ('actuator_fatigue_threshold_chart', 'depot_stock_vs_demand_bar_chart', 'executive_dashboard', or 'both').
    CRITICAL PRESENTATION INSTRUCTION:
-   - Output the `presentation_graphics_markdown` returned by the tool, which includes the inline high-resolution graphical slide image(s) (`![Title](URL)`) and clickable download link(s) for presentation slides.
+   - Do NOT output raw markdown image embed lines (`![...](...)`), which Gemini Enterprise's chat sanitizer backslash-escapes. Instead, output ONLY the clean clickable download link in this exact format:
+     ### 📊 Presentation Briefing Graphics (Ready for Slide Decks)
+     - [📥 Download Executive Slide Graphic (PNG)](<png_download_url>)
+     followed by 3 concise executive bullet takeaways.
    - You MUST NEVER emit raw JSON code blocks or raw ```vega-lite code blocks. The user requires presentation-ready graphical charts ready to download and insert into executive slide decks.
 5. MANDATORY TECHNOLOGY CONCEALMENT RULE: Never mention internal cloud infrastructure or vendor names in your answer (e.g., do not say "BigQuery", "GCS", "Google Cloud Storage"). Always refer to data repositories as the "F35 Datawarehouse".
 """
@@ -52,6 +59,9 @@ f35_analytics_agent = LlmAgent(
         recommend_tail_swap_and_replenishment,
         render_sustainment_chart,
     ],
+    before_model_callback=uc1_before_model_callback,
+    after_tool_callback=slim_tool_response_after_tool_callback,
 )
 
-__all__ = ["f35_analytics_agent"]
+__all__ = ["UC1_SYSTEM_INSTRUCTION", "f35_analytics_agent"]
+

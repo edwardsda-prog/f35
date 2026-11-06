@@ -39,7 +39,7 @@ custom_metrics:
           anchors = [
               "zm151", "zm154", "zm152", "1680-01-619-4821", "srt-mar-20261103-01",
               "doc-01", "doc-02", "doc-03", "doc-09",
-              "wo-2026-88401", "wo-2026-88402", "wo-2026-88403"
+              "wo-2026-88401", "wo-2026-88402"
           ]
           expected = [a for a in anchors if a in ref]
           if not expected:

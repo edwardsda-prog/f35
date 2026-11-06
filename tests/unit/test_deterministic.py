@@ -439,11 +439,12 @@ class TestFastPathCapabilityInterception:
             f"Capability interception took {elapsed_ms:.3f} ms, exceeding 5.0 ms SLA"
         )
         part_text = response.content.parts[0].text
-        assert "F-35 Fleet Sustainment Agent Platform" in part_text
-        assert "Core Purpose & Operational Benefits" in part_text
-        assert "Accelerate Fleet Readiness" in part_text
-        assert "Actionable Decision Support" in part_text
-        assert "Authoritative Engineering Guidance" in part_text
+        assert "AI decision-support coordinator for the UK F-35 Lightning II fleet" in part_text
+        assert "uphold sovereign airworthiness across the Carrier Strike Group" in part_text
+        assert "3 Core Capabilities: Purpose & Operational Benefit" in part_text
+        assert "Conversational Maintenance Operations & Shift Resource Management" in part_text
+        assert "Predictive Fleet Readiness, Supply Chain Synchronization & Sortie Protection" in part_text
+        assert "Grounded Technical Publication Retrieval & Coalition Fleet Memory" in part_text
         # Verify technology names and fragile use-case breakdowns are not present (Issue 1 & 2)
         for tech in ("BigQuery", "GCS", "Google Cloud Storage", "ADK", "Table 7", "Discovery Engine", "UC0", "UC1", "UC2", "UC3", "Form 700", "Miner's Rule"):
             assert tech not in part_text, f"Internal technology or deprecated UC3 term '{tech}' found in capability response"
@@ -464,6 +465,7 @@ class TestFastPathCapabilityInterception:
     @pytest.mark.parametrize(
         "prompt",
         [
+            "What is your operational capability?",
             "Describe your operational capability",
             "What are your operational capabilities?",
             "Explain your capability",
@@ -732,16 +734,14 @@ def test_uc0_seed_records_match_schema() -> None:
         if row.get("tail_number") == "ZM151"
         and row.get("work_order_status") != "COMPLETED"
     }
-    assert {"WO-2026-88401", "WO-2026-88402", "WO-2026-88403"}.issubset(
-        zm151_open_wos
-    )
+    assert zm151_open_wos == {"WO-2026-88401", "WO-2026-88402"}
 
     active_wos = [
         row
         for row in MAINTENANCE_WORK_ORDERS_ROWS
         if row.get("work_order_status") != "COMPLETED"
     ]
-    assert len(active_wos) == 10
+    assert len(active_wos) == 6
 
     for idx, row in enumerate(MAINTENANCE_WORK_ORDERS_ROWS):
         assert set(row.keys()) == set(expected_col_names), (
@@ -763,7 +763,7 @@ def test_uc0_execute_maintenance_sql_spreadsheet_card_and_csv_link() -> None:
     res = execute_maintenance_sql(sql)
 
     assert res["status"] == "SUCCESS"
-    assert res["row_count"] == 10
+    assert res["row_count"] == 6
 
     card = res["spreadsheet_card"]
     assert card["columns"][0]["col_letter"] == "A"
@@ -925,7 +925,7 @@ def test_uc0_1_phm_bit_fault_events_triage_and_unlinked_advisories() -> None:
 
     rows = res["rows"]
     dumped = json.dumps(rows, default=str)
-    for expected_hrc in ("HRC-2710-88A", "HRC-5330-000-NONE", "HRC-5320-94G"):
+    for expected_hrc in ("HRC-2710-88A", "HRC-5330-000-NONE"):
         assert expected_hrc in dumped, f"Missing ZM151 HRC {expected_hrc} in UC 0.1 query"
     assert "PILOT_REPORT_ONLY_NO_BIT" in dumped
 
@@ -975,12 +975,13 @@ def test_uc0_5_multi_table_join_work_orders_and_tooling_sqep() -> None:
         sql_2tbl, sheet_title="F35_Work_Order_Tooling_SQEP_Join"
     )
     assert res_2tbl["status"] == "SUCCESS"
-    assert res_2tbl["row_count"] >= 5
+    assert res_2tbl["row_count"] == 6
 
     dumped_2tbl = json.dumps(res_2tbl["rows"], default=str)
     for token in (
         "JTD-53-30-T14",
-        "NDI-PAUT-496A",
+        "EHA-HYD-2710",
+        "LO-IR-BLANKET-04",
         "EXPIRED_OUT_OF_CAL",
         "BLOCKED_TOOL_OUT_OF_CAL",
         "BLOCKED_NO_QAR_ON_SHIFT",
@@ -1014,14 +1015,13 @@ def test_uc0_5_multi_table_join_work_orders_and_tooling_sqep() -> None:
         sql_3tbl, sheet_title="F35_ZM151_3Way_Diagnostic_Join"
     )
     assert res_3tbl["status"] == "SUCCESS"
-    assert res_3tbl["row_count"] >= 3
+    assert res_3tbl["row_count"] == 2
     dumped_3tbl = json.dumps(res_3tbl["rows"], default=str)
     for token in (
         "HRC-2710-88A",
         "HRC-5330-000-NONE",
-        "HRC-5320-94G",
+        "EHA-HYD-2710",
         "JTD-53-30-T14",
-        "NDI-PAUT-496A",
     ):
         assert token in dumped_3tbl, f"Missing expected token {token} in 3-table JOIN"
 
@@ -1069,3 +1069,338 @@ def test_uc0_live_bq_table_and_column_descriptions_verified() -> None:
     except Exception:
         # Offline / sandboxed environment without live GCP credentials
         pass
+
+
+# ===========================================================================
+# 8. ISS-017 Production Latency Optimizations (OPT-01 through OPT-06)
+# ===========================================================================
+
+
+def test_iss017_opt01_after_tool_callback_slims_llm_payloads() -> None:
+    """Verify OPT-01 `slim_tool_response_after_tool_callback` strips duplicate JSON blobs while caching full payload in state."""
+    from app.callbacks import slim_tool_response_after_tool_callback
+    from app.tools.uc0_maintenance import execute_maintenance_sql
+    from app.tools.uc1_analytics import (
+        check_actuator_fatigue_and_depot_inventory,
+        render_sustainment_chart,
+    )
+    from app.tools.uc2_jtd_search import search_technical_manuals_and_repair_logs
+
+    ctx = DummyToolContext()
+
+    # 1. UC0 execute_maintenance_sql
+    uc0_raw = execute_maintenance_sql(
+        "SELECT work_order_id, tail_number, base_location, aircraft_status, work_order_status, estimated_mttr_hours "
+        "FROM maintenance_work_orders WHERE work_order_status != 'COMPLETED' ORDER BY estimated_mttr_hours DESC",
+        sheet_title="Test_UC0_Slim",
+        tool_context=ctx,
+    )
+    assert "spreadsheet_card" in uc0_raw
+    assert "rows" in uc0_raw
+    uc0_slim = slim_tool_response_after_tool_callback(
+        tool=execute_maintenance_sql,
+        args={},
+        tool_context=ctx,
+        tool_response=uc0_raw,
+    )
+    assert isinstance(uc0_slim, dict)
+    assert "spreadsheet_card_markdown" in uc0_slim
+    assert "spreadsheet_card" not in uc0_slim
+    assert "rows" not in uc0_slim
+    assert "last_uc0_tool_response" in ctx.state
+
+    # 2. UC1 Turn 1 check_actuator_fatigue_and_depot_inventory
+    uc1_raw = check_actuator_fatigue_and_depot_inventory(tool_context=ctx)
+    assert "telemetry_records" in uc1_raw
+    assert "swap_recommendation" in uc1_raw
+    uc1_slim = slim_tool_response_after_tool_callback(
+        tool=check_actuator_fatigue_and_depot_inventory,
+        args={},
+        tool_context=ctx,
+        tool_response=uc1_raw,
+    )
+    assert isinstance(uc1_slim, dict)
+    assert "markdown_summary_table" in uc1_slim
+    assert "swap_recommendation" in uc1_slim
+    assert "telemetry_records" not in uc1_slim
+    assert "depot_inventory" not in uc1_slim
+    assert "vega_lite_charts" not in uc1_slim
+
+    # 3. UC1 Turn 2 render_sustainment_chart
+    chart_raw = render_sustainment_chart(
+        chart_name="executive_dashboard",
+        tool_context=ctx,
+        render_graphics=False,
+    )
+    assert "vega_lite_spec" in chart_raw
+    chart_slim = slim_tool_response_after_tool_callback(
+        tool=render_sustainment_chart,
+        args={},
+        tool_context=ctx,
+        tool_response=chart_raw,
+    )
+    assert isinstance(chart_slim, dict)
+    assert "presentation_Slide_markdown" in chart_slim
+    assert "vega_lite_spec" not in chart_slim
+    assert "fenced_vega_lite_markdown" not in chart_slim
+
+    # 4. UC2 search_technical_manuals_and_repair_logs
+    uc2_raw = search_technical_manuals_and_repair_logs(
+        symptom_query="canopy handle binding on final lock with no BIT fault",
+        bit_fault_present=False,
+        subsystem_filter="53-30",
+        tool_context=ctx,
+    )
+    uc2_slim = slim_tool_response_after_tool_callback(
+        tool=search_technical_manuals_and_repair_logs,
+        args={},
+        tool_context=ctx,
+        tool_response=uc2_raw,
+    )
+    assert isinstance(uc2_slim, dict)
+    assert len(uc2_slim["results"]) <= 4
+    assert all(len(r.get("snippet", "")) <= 420 for r in uc2_slim["results"])
+
+
+def test_iss017_opt02_uc1_single_pass_embeds_swap_recommendation() -> None:
+    """Verify OPT-02 embeds `swap_recommendation` and 5-column Markdown briefing inside `check_actuator_fatigue_and_depot_inventory`."""
+    from app.tools.uc1_analytics import check_actuator_fatigue_and_depot_inventory
+
+    ctx = DummyToolContext()
+    res = check_actuator_fatigue_and_depot_inventory(
+        base_location="RAF Marham",
+        hours_to_limit_window=100.0,
+        tool_context=ctx,
+    )
+    assert res["status"] == "SUCCESS"
+    swap = res.get("swap_recommendation")
+    assert isinstance(swap, dict)
+    assert swap["sortie_id"] == "SRT-MAR-20261103-01"
+    assert swap["primary_tail"] == "ZM151"
+    assert swap["spare_tail"] == "ZM154"
+    assert swap["nsn"] == "1680-01-619-4821"
+    assert "Would you like me to render" in res["markdown_summary_table"]
+
+
+def test_iss017_opt03_rendered_chart_cache_and_uc0_sql_cache() -> None:
+    """Verify OPT-03 module-level caches (`_RENDERED_CHART_CACHE` and `_BQ_UC0_SQL_CACHE`)."""
+    from app.tools.chart_painter import _RENDERED_CHART_CACHE, generate_sustainment_graphics
+    from app.tools.uc0_maintenance import _BQ_UC0_SQL_CACHE, execute_maintenance_sql
+
+    res1 = generate_sustainment_graphics("actuator_fatigue_threshold_chart")
+    res2 = generate_sustainment_graphics("actuator_fatigue_threshold_chart")
+    assert res1["charts"][0]["url"] == res2["charts"][0]["url"]
+    assert res2["cache_hit"] is True
+    assert len(_RENDERED_CHART_CACHE) >= 1
+
+
+
+    sql = "SELECT DISTINCT tail_number, aircraft_variant, squadron, base_location, aircraft_status FROM maintenance_work_orders WHERE base_location = 'HMS Queen Elizabeth' AND aircraft_status = 'FMC'"
+    r1 = execute_maintenance_sql(sql, sheet_title="HMS_QE_FMC")
+    r2 = execute_maintenance_sql(sql, sheet_title="HMS_QE_FMC")
+    assert r1["row_count"] == r2["row_count"] == 5
+    assert isinstance(_BQ_UC0_SQL_CACHE, dict)
+
+
+def test_iss017_opt04_tier2_dashboard_comparison_fast_path() -> None:
+    """Verify OPT-04 intercepts Storyboard `Ref_Comp` prompt in < 5 ms with zero forbidden tech terms."""
+    from app.callbacks import fast_path_before_model_callback
+
+    prompt = "Compare the time and data sources required to solve ZM151's canopy fault in a static dashboard versus F35 Support"
+    ctx = DummyCallbackContext(user_text=prompt)
+    t0 = time.perf_counter()
+    resp = fast_path_before_model_callback(ctx, DummyLlmRequest(prompt))
+    elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+    assert resp is not None
+    assert elapsed_ms < 5.0
+    assert ctx.state.get("fast_path_tier") == "TIER_2_COMPARISON"
+    text = resp.content.parts[0].text
+    for token in (
+        "ZM151",
+        "WO-2026-88402",
+        "PHM-2026-99102",
+        "JTD-53-30-T14",
+        "SRT-MAR-20261103-01",
+        "ZM154",
+        "DOC-01",
+        "DOC-02",
+        "PR-1776M",
+        "18.5 N·m",
+    ):
+        assert token in text, f"Missing expected Storyboard token {token} in Ref_Comp fast-path response"
+    for forbidden in ("BigQuery", "GCS", "Google Cloud Storage", "Discovery Engine", "SQLite"):
+        assert forbidden.lower() not in text.lower()
+
+
+def test_iss017_opt05_and_opt06_subagent_callbacks() -> None:
+    """Verify OPT-05 post-tool direct Markdown short-circuit and OPT-06 deterministic pre-dispatch."""
+    from app.callbacks import (
+        _classify_target_specialist_agent,
+        uc0_before_model_callback,
+        uc1_before_model_callback,
+        uc2_before_model_callback,
+    )
+
+    assert (
+        _classify_target_specialist_agent(
+            "What are our most urgent maintenance jobs and grounded aircraft across the Carrier Strike Group right now, ordered by how long they will take to fix?"
+        )
+        == "f35_maintenance_data_agent"
+    )
+    assert (
+        _classify_target_specialist_agent(
+            "How is ZM151's actuator wear impacting tomorrow's flying schedule, do we have spares in stock, and which aircraft should take its flight?"
+        )
+        == "f35_analytics_agent"
+    )
+    assert (
+        _classify_target_specialist_agent(
+            "Render the full Executive Briefing Dashboard for my presentation slide deck"
+        )
+        == "f35_analytics_agent"
+    )
+    assert (
+        _classify_target_specialist_agent(
+            "Before Bay 2 starts tearing down ZM151's canopy, search our technical manuals and historical repair logs: the canopy handle is binding on final lock without triggering a BIT fault."
+        )
+        == "f35_jtd_search_agent"
+    )
+
+    # Pre-Tool FunctionCall dispatch check
+    p1 = "What are our most urgent maintenance jobs and grounded aircraft across the Carrier Strike Group right now, ordered by how long they will take to fix?"
+    r_uc0 = uc0_before_model_callback(DummyCallbackContext(user_text=p1), DummyLlmRequest(p1))
+    assert r_uc0 is not None
+    assert r_uc0.content.parts[0].function_call.name == "execute_maintenance_sql"
+
+    p4 = "How is ZM151's actuator wear impacting tomorrow's flying schedule, do we have spares in stock, and which aircraft should take its flight?"
+    r_uc1 = uc1_before_model_callback(DummyCallbackContext(user_text=p4), DummyLlmRequest(p4))
+    assert r_uc1 is not None
+    assert r_uc1.content.parts[0].function_call.name == "check_actuator_fatigue_and_depot_inventory"
+
+    p6 = "The canopy catch is binding on pre-flight—what is the spanner torque spec and have allied squadrons seen fouling in this mechanism?"
+    r_uc2 = uc2_before_model_callback(DummyCallbackContext(user_text=p6), DummyLlmRequest(p6))
+    assert r_uc2 is not None
+    assert r_uc2.content.parts[0].function_call.name == "search_technical_manuals_and_repair_logs"
+    assert r_uc2.content.parts[0].function_call.args["bit_fault_present"] is False
+
+
+def test_iss017_adk_state_and_post_tool_storyboard_markdown() -> None:
+    """Verify ADK `State` (non-dict mapping) persistence, `_format_uc0_post_tool_markdown` takeaways, and `_format_uc2_post_tool_markdown` authenticated links."""
+    from google.adk.sessions.state import State
+
+    from app.callbacks import (
+        _build_uc0_pre_dispatch_sql,
+        _format_uc0_post_tool_markdown,
+        _format_uc2_post_tool_markdown,
+        slim_tool_response_after_tool_callback,
+    )
+    from app.tools.uc0_maintenance import execute_maintenance_sql
+    from app.tools.uc2_jtd_search import search_technical_manuals_and_repair_logs
+
+    # 1. Verify ADK State (where isinstance(adk_state, dict) is False) persists full tool responses
+    adk_state = State(value={}, delta={})
+    assert not isinstance(adk_state, dict)
+
+    class _AdkStateToolContext:
+        def __init__(self, state_obj: State) -> None:
+            self.state = state_obj
+
+    adk_ctx = _AdkStateToolContext(adk_state)
+
+    # 2. Verify Prompt_1, Prompt_2, Prompt_3, and Ref_Lizzy UC0 post-tool takeaways
+    prompt_1 = "What are our most urgent maintenance jobs and grounded aircraft across the Carrier Strike Group right now, ordered by how long they will take to fix?"
+    sql_1, title_1 = _build_uc0_pre_dispatch_sql(prompt_1)  # type: ignore[misc]
+    res_1 = execute_maintenance_sql(sql_1, sheet_title=title_1, tool_context=adk_ctx)
+    slim_tool_response_after_tool_callback(
+        tool=execute_maintenance_sql,
+        args={},
+        tool_context=adk_ctx,
+        tool_response=res_1,
+    )
+    assert isinstance(adk_state.get("last_uc0_tool_response"), dict)
+    md_1 = _format_uc0_post_tool_markdown(adk_state.get("last_uc0_tool_response"))
+    for expected_1 in (
+        "49.5 hrs",
+        "8.25 hrs",
+        "WO-2026-88402",
+        "WO-2026-88401",
+        "WO-2026-88405",
+        "WO-2026-88411",
+        "WO-2026-88414",
+        "WO-2026-88408",
+    ):
+        assert expected_1 in md_1, f"Missing {expected_1} in Prompt_1 post-tool Markdown"
+    assert "54.0 hrs" not in md_1
+
+    prompt_2 = "What faults or pilot-reported issues were raised on ZM151 after its last flight, and are any repeat unconfirmed faults?"
+    sql_2, title_2 = _build_uc0_pre_dispatch_sql(prompt_2)  # type: ignore[misc]
+    res_2 = execute_maintenance_sql(sql_2, sheet_title=title_2, tool_context=adk_ctx)
+    md_2 = _format_uc0_post_tool_markdown(res_2)
+    for expected_2 in (
+        "PHM-2026-99102",
+        "PHM-2026-99101",
+        "WO-2026-88402",
+        "WO-2026-88401",
+        "3rd repeat",
+        "1,000.4 hrs",
+        "1,000.0-hr",
+        "HRC-5330-000-NONE",
+        "HRC-2710-88A",
+    ):
+        assert expected_2 in md_2, f"Missing {expected_2} in Prompt_2 post-tool Markdown"
+
+    prompt_3 = "Which of our open maintenance jobs are ready to start on this shift, with both qualified crew and calibrated tools staged?"
+    sql_3, title_3 = _build_uc0_pre_dispatch_sql(prompt_3)  # type: ignore[misc]
+    res_3 = execute_maintenance_sql(sql_3, sheet_title=title_3, tool_context=adk_ctx)
+    md_3 = _format_uc0_post_tool_markdown(res_3)
+    for expected_3 in (
+        "READY_TO_DISPATCH",
+        "WO-2026-88401",
+        "WO-2026-88402",
+        "EHA-HYD-2710",
+        "JTD-53-30-T14",
+        "WO-2026-88405",
+        "WO-2026-88411",
+        "LO-IR-BLANKET-04",
+        "WO-2026-88414",
+        "WO-2026-88408",
+    ):
+        assert expected_3 in md_3, f"Missing {expected_3} in Prompt_3 post-tool Markdown"
+
+    prompt_lizzy = "Tell me what tails on Lizzy are fit to fly"
+    sql_lizzy, title_lizzy = _build_uc0_pre_dispatch_sql(prompt_lizzy)  # type: ignore[misc]
+    res_lizzy = execute_maintenance_sql(sql_lizzy, sheet_title=title_lizzy, tool_context=adk_ctx)
+    md_lizzy = _format_uc0_post_tool_markdown(res_lizzy)
+    for expected_lizzy in (
+        "5 Fully Mission Capable",
+        "ZM136",
+        "ZM142",
+        "ZM148",
+        "ZM166",
+        "ZM172",
+        "HMS Queen Elizabeth",
+    ):
+        assert expected_lizzy in md_lizzy, f"Missing {expected_lizzy} in Ref_Lizzy post-tool Markdown"
+
+    # 3. Verify UC2 post-tool Markdown uses authenticated storage.cloud.google.com/.../unstructured/docs/ links
+    uc2_res = search_technical_manuals_and_repair_logs(
+        symptom_query="On ZM151, our night-sortie pilot reported a stiff canopy release handle that hesitated to latch, with no fault codes logged on the jet.",
+        bit_fault_present=False,
+        subsystem_filter="53-30",
+        tool_context=adk_ctx,
+    )
+    slim_tool_response_after_tool_callback(
+        tool=search_technical_manuals_and_repair_logs,
+        args={},
+        tool_context=adk_ctx,
+        tool_response=uc2_res,
+    )
+    assert isinstance(adk_state.get("last_uc2_tool_response"), dict)
+    md_uc2 = _format_uc2_post_tool_markdown(adk_state.get("last_uc2_tool_response"))
+    assert "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/docs/DOC-01_JTD_Section_53-30-01_Canopy_Rigging.pdf" in md_uc2
+    assert "https://storage.cloud.google.com/antig-dave-f35-staging-europe-west1/unstructured/docs/DOC-02_Joint_Force_Maintenance_Logs_2021_2026" in md_uc2
+    assert "storage.googleapis.com" not in md_uc2
+    assert "unstructured/pdfs/" not in md_uc2
+
+

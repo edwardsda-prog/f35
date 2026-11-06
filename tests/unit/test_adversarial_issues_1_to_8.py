@@ -111,8 +111,10 @@ class TestFastPathRegexAdversarial:
             "explain your operational features please",
             # Edge-case whitespace between "what" and "are":
             "   what    are    your    capabilities   ",
-            # Singular 'operational capability' without verb:
+            # Singular 'operational capability' and 'what is your capability' variations:
             "operational capability",
+            "What is your operational capability?",
+            "what is your capability?",
         ],
     )
     def test_fast_path_capability_interception_edge_cases(self, query: str) -> None:
@@ -120,12 +122,16 @@ class TestFastPathRegexAdversarial:
         resp = _invoke_callback(query)
         assert resp is not None, f"Expected fast-path match for query: {query!r}"
         assert resp == _FAST_PATH_CAPABILITY_RESPONSE
-        # Verify response text includes core sustainment purpose and benefits (Issue 1 & 2)
+        # Verify response text includes CSG elevator pitch and 3 Core Capabilities (ISS-015 R1)
         text = resp.content.parts[0].text
-        assert "Core Purpose & Operational Benefits" in text
-        assert "Accelerate Fleet Readiness" in text
-        assert "Actionable Decision Support" in text
-        assert "Authoritative Engineering Guidance" in text
+        assert "AI decision-support coordinator for the UK F-35 Lightning II fleet" in text
+        assert "uphold sovereign airworthiness across the Carrier Strike Group" in text
+        assert "3 Core Capabilities: Purpose & Operational Benefit" in text
+        assert "Conversational Maintenance Operations & Shift Resource Management" in text
+        assert "Predictive Fleet Readiness, Supply Chain Synchronization & Sortie Protection" in text
+        assert "Grounded Technical Publication Retrieval & Coalition Fleet Memory" in text
+        assert "Core Purpose" in text
+        assert "Operational Benefit" in text
         for tech in ("BigQuery", "GCS", "Google Cloud Storage", "ADK", "UC1:", "UC2:", "UC3:"):
             assert tech not in text, f"Found '{tech}' in capability response"
 
@@ -427,13 +433,16 @@ class TestIssue10ElevatorPitchAndTableFormatting:
     """Tests covering Issue 1 (Elevator pitch), Issues 2 & 3 (Column pruning & screen-fitting), and Issue 4 (CSV download link removal)."""
 
     def test_root_agent_description_is_elevator_pitch(self) -> None:
-        """Issue 1: Root agent description must be a high-level elevator pitch without enumerating UC0-UC3, ending with Carrier Strike Group."""
+        """Issue 1 (ISS-015 R1): Root agent description must match the exact Carrier Strike Group elevator pitch without enumerating UC0-UC3."""
         from app.agent import root_agent
 
         desc = root_agent.description
-        assert "AI decision-support coordinator" in desc
-        assert "F-35 Lightning II" in desc
-        assert "Carrier Strike Group" in desc
+        assert desc == (
+            "AI decision-support coordinator for the UK F-35 Lightning II fleet, "
+            "empowering commanders and engineers to maximize aircraft availability, "
+            "accelerate maintenance triage, resolve complex technical faults, and "
+            "uphold sovereign airworthiness across the Carrier Strike Group."
+        )
         # Ensure it does NOT enumerate technical UC codes
         assert "UC0" not in desc
         assert "UC1" not in desc
@@ -469,6 +478,24 @@ class TestIssue10ElevatorPitchAndTableFormatting:
             "for your presentation slide deck?"
         )
         assert expected_prompt in UC1_SYSTEM_INSTRUCTION
+
+    def test_uc2_system_instruction_explicit_storyboard_citations(self) -> None:
+        """ISS-015 R2.5: Verify UC2_SYSTEM_INSTRUCTION explicitly references DOC-01, 18.5 N·m, 0.020–0.035 in, JTD-53-30-T14, DOC-02, VMFA-211, PR-1776M, and DOC-09."""
+        from app.sub_agents.uc2_search_agent import UC2_SYSTEM_INSTRUCTION
+
+        for expected_token in (
+            "DOC-01",
+            "18.5 N·m",
+            "0.020–0.035 in",
+            "JTD-53-30-T14",
+            "DOC-02",
+            "VMFA-211",
+            "PR-1776M",
+            "DOC-09",
+        ):
+            assert expected_token in UC2_SYSTEM_INSTRUCTION, (
+                f"Expected token {expected_token!r} missing from UC2_SYSTEM_INSTRUCTION"
+            )
 
     def test_uc0_open_p1_micap_column_pruning_and_screen_alignment(self) -> None:
         """Issues 2 & 3: Open P1/MICAP query returns screen-friendly 5 columns, omitting logged_man_hours."""
