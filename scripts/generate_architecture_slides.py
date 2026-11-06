@@ -213,7 +213,7 @@ def generate_executive_capability_slide(output_path: Path) -> None:
     )
     ax.text(
         0.885, 0.941,
-        "Sovereign EU Cloud | 100% Cited",
+        "europe-west2 (London) | 100% Cited",
         fontsize=8.2, fontweight="normal", color=TEXT_BODY, ha="center", va="top", zorder=5
     )
 
@@ -414,7 +414,7 @@ def generate_executive_capability_slide(output_path: Path) -> None:
     )
     ax.text(
         left_x + 0.014, 0.222,
-        "3. SOVEREIGN ENTERPRISE DATA & COALITION KNOWLEDGE FOUNDATION (STRICT EU DATA RESIDENCY)",
+        "3. SOVEREIGN ENTERPRISE DATA & COALITION KNOWLEDGE FOUNDATION — europe-west2 (London)",
         fontsize=10.5, fontweight="bold", color=GC_BLUE_DARK, ha="left", va="top", zorder=8,
         bbox=dict(boxstyle="round,pad=0.15", facecolor=BG_CONTAINER, edgecolor="none"),
     )
@@ -426,7 +426,7 @@ def generate_executive_capability_slide(output_path: Path) -> None:
 
     # Foundation Box 1
     add_box(ax, p1_x, 0.034, p_w, 0.152, facecolor=BG_WHITE, edgecolor=GC_GREEN, lw=1.4, radius=0.008, zorder=3)
-    ax.text(p1_x + 0.012, 0.174, "Flight-Line Operations Data (EU)", fontsize=9.2, fontweight="bold", color=GC_GREEN_DARK, va="top", zorder=5)
+    ax.text(p1_x + 0.012, 0.174, "Flight-Line Operations Data (London)", fontsize=9.2, fontweight="bold", color=GC_GREEN_DARK, va="top", zorder=5)
     add_lines(
         ax, p1_x + 0.012, 0.148,
         [
@@ -440,7 +440,7 @@ def generate_executive_capability_slide(output_path: Path) -> None:
 
     # Foundation Box 2
     add_box(ax, p2_x, 0.034, p_w, 0.152, facecolor=BG_WHITE, edgecolor=GC_YELLOW, lw=1.4, radius=0.008, zorder=3)
-    ax.text(p2_x + 0.012, 0.174, "Supply & Readiness Data (EU)", fontsize=9.2, fontweight="bold", color=GC_AMBER_DARK, va="top", zorder=5)
+    ax.text(p2_x + 0.012, 0.174, "Supply & Readiness Data (London)", fontsize=9.2, fontweight="bold", color=GC_AMBER_DARK, va="top", zorder=5)
     add_lines(
         ax, p2_x + 0.012, 0.148,
         [
@@ -454,7 +454,7 @@ def generate_executive_capability_slide(output_path: Path) -> None:
 
     # Foundation Box 3
     add_box(ax, p3_x, 0.034, p_w, 0.152, facecolor=BG_WHITE, edgecolor=GC_RED, lw=1.4, radius=0.008, zorder=3)
-    ax.text(p3_x + 0.012, 0.174, "Coalition Fleet Memory (eu)", fontsize=9.2, fontweight="bold", color=GC_RED_DARK, va="top", zorder=5)
+    ax.text(p3_x + 0.012, 0.174, "Coalition Fleet Memory (London)", fontsize=9.2, fontweight="bold", color=GC_RED_DARK, va="top", zorder=5)
     add_lines(
         ax, p3_x + 0.012, 0.148,
         [
@@ -536,16 +536,16 @@ def generate_executive_capability_slide(output_path: Path) -> None:
         line_step=0.022,
     )
 
-    # Sidebar Card 4: Sovereign EU Cloud Posture
+    # Sidebar Card 4: Sovereign UK Cloud Posture
     add_box(ax, c_x, 0.034, c_w, 0.192, facecolor=BG_WHITE, edgecolor=GC_RED, lw=1.4, radius=0.008, top_stripe_color=GC_RED, zorder=3)
-    ax.text(c_x + 0.010, 0.209, "Sovereign EU Cloud Posture", fontsize=9.2, fontweight="bold", color=GC_RED_DARK, va="top", zorder=5)
+    ax.text(c_x + 0.010, 0.209, "Sovereign UK Cloud Posture", fontsize=9.2, fontweight="bold", color=GC_RED_DARK, va="top", zorder=5)
     add_lines(
         ax, c_x + 0.010, 0.183,
         [
             ("• Agent Runtime & Compute:", 8.0, "normal", TEXT_BODY),
-            ("  europe-west1 (Belgium)", 8.0, "bold", TEXT_CHARCOAL),
+            ("  europe-west2 (London)", 8.0, "bold", TEXT_CHARCOAL),
             ("• Warehouse & Search UI:", 8.0, "normal", TEXT_BODY),
-            ("  EU / eu Multi-Region", 8.0, "bold", TEXT_CHARCOAL),
+            ("  europe-west2 (London)", 8.0, "bold", TEXT_CHARCOAL),
             ("• Full Audit Traceability", 8.2, "bold", GC_RED_DARK),
             ("  & Zero Data Egress", 8.0, "normal", TEXT_BODY),
         ],
@@ -578,7 +578,7 @@ def generate_technical_architecture_slide(output_path: Path) -> None:
     )
     ax.text(
         0.028, 0.938,
-        "Google Cloud Agent Platform | ADK 2.0 Runtime (Engine: 5022570215192395776) | Aligned to 3-Act, 6-Prompt Storyboard | Sovereign EU (europe-west1 & EU)",
+        "Google Cloud Agent Platform | ADK 2.0 Runtime (Engine: 5022570215192395776) | Aligned to 3-Act, 6-Prompt Storyboard | Sovereign Region: europe-west2 (London)",
         fontsize=10.2, fontweight="normal", color=TEXT_BODY, ha="left", va="top", zorder=5
     )
 
@@ -611,7 +611,7 @@ def generate_technical_architecture_slide(output_path: Path) -> None:
     )
     ax.text(
         left_x + 0.014, 0.888,
-        "1. OPERATIONAL USER & EXPERIENCE LAYER — GEMINI ENTERPRISE (eu MULTI-REGION)",
+        "1. OPERATIONAL USER & EXPERIENCE LAYER — GEMINI ENTERPRISE (europe-west2 London)",
         fontsize=10.2, fontweight="bold", color=GC_BLUE_DARK, ha="left", va="top", zorder=5
     )
 
@@ -631,13 +631,13 @@ def generate_technical_architecture_slide(output_path: Path) -> None:
     add_arrow(ax, 0.256, 0.816, 0.280, 0.816, color=GC_BLUE, lw=2.0)
 
     add_box(ax, 0.280, 0.764, 0.240, 0.105, facecolor=GC_BLUE_FILL, edgecolor=GC_BLUE, lw=1.5, radius=0.008, zorder=3)
-    ax.text(0.290, 0.855, "Gemini Enterprise Conversation UI (eu)", fontsize=9.2, fontweight="bold", color=GC_BLUE_DARK, va="top", zorder=5)
+    ax.text(0.290, 0.855, "Gemini Enterprise Conversation UI", fontsize=9.2, fontweight="bold", color=GC_BLUE_DARK, va="top", zorder=5)
     add_lines(
         ax, 0.290, 0.830,
         [
             ("• App: Agents (F35 Support) via ADK Native", 8.0, "normal", TEXT_CHARCOAL),
             ("• Streaming Endpoint: :streamQuery (SSE)", 8.0, "normal", TEXT_CHARCOAL),
-            ("• Agent Registry: europe-west1 (Belgium)", 8.0, "normal", TEXT_CHARCOAL),
+            ("• Agent Registry: europe-west2 (London)", 8.0, "normal", TEXT_CHARCOAL),
         ],
         line_step=0.021,
     )
@@ -663,7 +663,7 @@ def generate_technical_architecture_slide(output_path: Path) -> None:
     )
     ax.text(
         left_x + 0.014, 0.722,
-        "2. AGENTIC ORCHESTRATION LAYER — VERTEX AI AGENT RUNTIME (europe-west1)",
+        "2. AGENTIC ORCHESTRATION LAYER — VERTEX AI AGENT RUNTIME (europe-west2 London)",
         fontsize=10.2, fontweight="bold", color=GC_BLUE_DARK, ha="left", va="top", zorder=5
     )
     ax.text(
@@ -785,14 +785,14 @@ def generate_technical_architecture_slide(output_path: Path) -> None:
     ax.text(s3_x + s_w / 2, s_y + 0.049, "Tool: search_technical_manuals...", fontsize=8.0, fontweight="bold", color=GC_RED_DARK, ha="center", va="top", zorder=5)
     ax.text(s3_x + s_w / 2, s_y + 0.029, "Parallel REST (pageSize=15) + 100% Citations", fontsize=7.5, fontweight="normal", color=TEXT_CHARCOAL, ha="center", va="top", zorder=5)
 
-    # --- TIER 3: SOVEREIGN EU DATA & SEARCH LAYER (y: 0.020 -> 0.264) ---
+    # --- TIER 3: SOVEREIGN UK DATA & SEARCH LAYER (y: 0.020 -> 0.264) ---
     add_box(
         ax, left_x, 0.020, left_w, 0.244,
         facecolor=BG_CONTAINER, edgecolor=BORDER_GREY, lw=1.5, radius=0.010
     )
     ax.text(
         left_x + 0.014, 0.251,
-        "3. SOVEREIGN EU DATA & SEARCH LAYER — MAPPED DIRECTLY TO STORYBOARD ACTS 1, 2 & 3 (Prompts 1–6)",
+        "3. SOVEREIGN UK DATA & SEARCH LAYER — MAPPED DIRECTLY TO STORYBOARD ACTS 1, 2 & 3 (Prompts 1–6)",
         fontsize=10.2, fontweight="bold", color=GC_BLUE_DARK, ha="left", va="top", zorder=8,
         bbox=dict(boxstyle="round,pad=0.15", facecolor=BG_CONTAINER, edgecolor="none"),
     )
@@ -806,7 +806,7 @@ def generate_technical_architecture_slide(output_path: Path) -> None:
 
     # BigQuery Container (x: 0.028 -> 0.382)
     add_box(ax, 0.028, 0.032, 0.354, 0.192, facecolor=BG_WHITE, edgecolor=BORDER_GREY, lw=1.4, radius=0.008, zorder=3)
-    ax.text(0.038, 0.214, "F35 Data Warehouse — BigQuery (EU Multi-Region)", fontsize=8.8, fontweight="bold", color=GC_GREEN_DARK, va="top", zorder=5)
+    ax.text(0.038, 0.214, "F35 Data Warehouse — BigQuery (europe-west2 London)", fontsize=8.8, fontweight="bold", color=GC_GREEN_DARK, va="top", zorder=5)
     ax.text(0.038, 0.195, "antig-dave.ukd_f35_sustainment_demo (6 Tables × 100 Rows = 600 Live Rows)", fontsize=7.5, fontweight="normal", color=TEXT_MUTED, va="top", zorder=5)
 
     # BQ Sub-Box 1: Act 1 Tables
@@ -843,13 +843,13 @@ def generate_technical_architecture_slide(output_path: Path) -> None:
 
     # Cloud Storage Container (x: 0.394 -> 0.542)
     add_box(ax, 0.394, 0.032, 0.148, 0.192, facecolor=BG_WHITE, edgecolor=GC_BLUE, lw=1.4, radius=0.008, zorder=3)
-    ax.text(0.404, 0.214, "Cloud Storage (EU)", fontsize=8.8, fontweight="bold", color=GC_BLUE_DARK, va="top", zorder=5)
-    ax.text(0.404, 0.195, "europe-west1 (Belgium)", fontsize=7.5, fontweight="normal", color=TEXT_MUTED, va="top", zorder=5)
+    ax.text(0.404, 0.214, "Cloud Storage (UK)", fontsize=8.8, fontweight="bold", color=GC_BLUE_DARK, va="top", zorder=5)
+    ax.text(0.404, 0.195, "europe-west2 (London)", fontsize=7.5, fontweight="normal", color=TEXT_MUTED, va="top", zorder=5)
     add_lines(
         ax, 0.404, 0.172,
         [
             ("Bucket: antig-dave-f35-", 7.4, "bold", TEXT_CHARCOAL),
-            ("staging-europe-west1", 7.4, "bold", TEXT_CHARCOAL),
+            ("staging-europe-west2", 7.4, "bold", TEXT_CHARCOAL),
             ("• Act 1 (Prompts 1–3):", 7.4, "normal", TEXT_BODY),
             ("  /exports/*.csv (Async)", 7.4, "normal", TEXT_BODY),
             ("• Act 2 (Prompt 5):", 7.4, "normal", TEXT_BODY),
@@ -862,7 +862,7 @@ def generate_technical_architecture_slide(output_path: Path) -> None:
 
     # Discovery Engine Container (x: 0.554 -> 0.772)
     add_box(ax, 0.554, 0.032, 0.218, 0.192, facecolor=BG_WHITE, edgecolor=GC_RED, lw=1.4, radius=0.008, zorder=3)
-    ax.text(0.564, 0.214, "Act 3 Search — Discovery Engine (eu)", fontsize=8.8, fontweight="bold", color=GC_RED_DARK, va="top", zorder=5)
+    ax.text(0.564, 0.214, "Act 3 Search — Discovery Engine (London)", fontsize=8.8, fontweight="bold", color=GC_RED_DARK, va="top", zorder=5)
     ax.text(0.564, 0.195, "Prompt 6: Allied Fleet Memory & JTD Manuals", fontsize=7.5, fontweight="normal", color=TEXT_MUTED, va="top", zorder=5)
     add_lines(
         ax, 0.564, 0.172,
@@ -901,18 +901,18 @@ def generate_technical_architecture_slide(output_path: Path) -> None:
     c_x = side_x + 0.010
     c_w = side_w - 0.020
 
-    # Card 1: EU Sovereignty (REG-01)
+    # Card 1: UK Sovereignty (REG-01)
     add_box(ax, c_x, 0.672, c_w, 0.175, facecolor=BG_WHITE, edgecolor=GC_BLUE, lw=1.4, radius=0.008, top_stripe_color=GC_BLUE, zorder=3)
-    ax.text(c_x + 0.010, 0.832, "EU Sovereignty (REG-01)", fontsize=9.0, fontweight="bold", color=GC_BLUE_DARK, va="top", zorder=5)
+    ax.text(c_x + 0.010, 0.832, "UK Sovereignty (REG-01)", fontsize=9.0, fontweight="bold", color=GC_BLUE_DARK, va="top", zorder=5)
     add_lines(
         ax, c_x + 0.010, 0.806,
         [
             ("• Compute & Runtime:", 7.8, "normal", TEXT_BODY),
-            ("  europe-west1 (Belgium)", 7.8, "bold", TEXT_CHARCOAL),
+            ("  europe-west2 (London)", 7.8, "bold", TEXT_CHARCOAL),
             ("• BigQuery Dataset:", 7.8, "normal", TEXT_BODY),
-            ("  EU Multi-Region", 7.8, "bold", TEXT_CHARCOAL),
+            ("  europe-west2 (London)", 7.8, "bold", TEXT_CHARCOAL),
             ("• Discovery Engine & UI:", 7.8, "normal", TEXT_BODY),
-            ("  eu Multi-Region", 7.8, "bold", TEXT_CHARCOAL),
+            ("  europe-west2 (London)", 7.8, "bold", TEXT_CHARCOAL),
         ],
         line_step=0.020,
     )
@@ -960,7 +960,7 @@ def generate_technical_architecture_slide(output_path: Path) -> None:
             ("• DEPLOY-01: Clean PyPI Lock", 7.7, "normal", TEXT_BODY),
             ("  + google-agents-cli", 7.7, "normal", TEXT_BODY),
             ("• Cloud Build & Artifact", 7.7, "normal", TEXT_BODY),
-            ("  Registry (europe-west1)", 7.7, "normal", TEXT_BODY),
+            ("  Registry (europe-west2)", 7.7, "normal", TEXT_BODY),
             ("• OpenTelemetry GenAI Spans", 7.7, "normal", TEXT_BODY),
             ("  -> Cloud Trace & Logging", 7.7, "normal", TEXT_BODY),
             ("• Automated Unit/E2E/Eval", 7.8, "bold", GC_RED_DARK),

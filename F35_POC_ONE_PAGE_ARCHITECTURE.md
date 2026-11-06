@@ -1,10 +1,10 @@
 # F-35 Fleet Sustainment Agent Platform — One-Page POC Architecture & Executive Briefing
 
 > [!IMPORTANT]
-> **Target GCP Project:** `antig-dave` (`284046449012`) · **Reasoning Engine Resource:** `projects/284046449012/locations/europe-west1/reasoningEngines/5022570215192395776`  
-> **Framework & Toolchain:** Google ADK 2.0 (`google-adk >= 2.0.0`), `google-genai` · **Runtime:** Vertex AI Agent Runtime (`europe-west1` Belgium)  
+> **Target GCP Project:** `antig-dave` (`284046449012`) · **Reasoning Engine Resource:** `projects/284046449012/locations/europe-west2/reasoningEngines/5022570215192395776`  
+> **Framework & Toolchain:** Google ADK 2.0 (`google-adk >= 2.0.0`), `google-genai` · **Runtime:** Vertex AI Agent Runtime (`europe-west2` London)  
 > **Foundation Model Tier:** `gemini-3.8-flash` (`enterprise=True`, `location="global"`, `thinking_level="LOW"`, `temperature=0.0`)  
-> **Sovereign Data Residency:** **`europe-west1` (Belgium)** compute & storage · **`EU` / `eu` Multi-Region** (BigQuery `EU` & Discovery Engine `eu`)  
+> **Sovereign Data Residency:** **`europe-west2` (London)** compute, storage, BigQuery & Discovery Engine  
 > **Storyboard Alignment:** Mapped 1-to-1 with **Acts 1, 2, & 3 (Prompts 1–6)** of [DEMO_STORYBOARD.md](./DEMO_STORYBOARD.md).
 
 ---
@@ -23,13 +23,13 @@
 ---
 
 ### Slide B: Updated Technical Deployment & Multi-Agent Architecture (Engineering & SRE Blueprint)
-*Designed for Enterprise Architects, Defence AI Engineers, and SREs detailing the ADK 2.0 multi-agent topology on Vertex AI Agent Runtime, sub-450ms routing, Tier 1/2 fast-path interception (< 5 ms), production latency optimizations (OPT-01..06), and strict EU data residency.*
+*Designed for Enterprise Architects, Defence AI Engineers, and SREs detailing the ADK 2.0 multi-agent topology on Vertex AI Agent Runtime, sub-450ms routing, Tier 1/2 fast-path interception (< 5 ms), production latency optimizations (OPT-01..06), and strict UK data residency (`europe-west2` London).*
 
 ![F-35 Fleet Sustainment POC Technical Architecture (White Background · Google Cloud Palette)](./docs/assets/f35_poc_architecture_16x9_white_gcloud.png)
 
 * **Cloud Storage URI:** `gs://f35sa/f35_poc_architecture_16x9_white_gcloud.png`
 * **Direct Cloud Storage Link:** [📥 Download Technical Deployment Architecture Slide (PNG)](https://storage.cloud.google.com/f35sa/f35_poc_architecture_16x9_white_gcloud.png)
-* **Technical Summary:** Live managed Reasoning Engine (`5022570215192395776`) in `europe-west1` orchestrated via ADK 2.0 `App(name="app", resumability=True)`. Fronted by `f35_sustainment_coordinator` with sub-5ms fast-path callbacks delegating to 3 domain specialists (`@F35-Maintenance-Data`, `@F35-Sustainment-Analytics`, `@F35-JTD-Search`) querying BigQuery (`EU`), Discovery Engine (`eu`), and Cloud Storage (`europe-west1`).
+* **Technical Summary:** Live managed Reasoning Engine (`5022570215192395776`) in `europe-west2 (London)` orchestrated via ADK 2.0 `App(name="app", resumability=True)`. Fronted by `f35_sustainment_coordinator` with sub-5ms fast-path callbacks delegating to 3 domain specialists (`@F35-Maintenance-Data`, `@F35-Sustainment-Analytics`, `@F35-JTD-Search`) querying BigQuery, Discovery Engine, and Cloud Storage in `europe-west2 (London)`.
 
 ---
 
@@ -40,10 +40,10 @@ flowchart TB
     %% -------------------------------------------------------------------------
     %% TIER 1: USER & CONVERSATION EXPERIENCE LAYER
     %% -------------------------------------------------------------------------
-    subgraph T1["1. OPERATIONAL USER & EXPERIENCE LAYER — GEMINI ENTERPRISE (eu Multi-Region)"]
+    subgraph T1["1. OPERATIONAL USER & EXPERIENCE LAYER — GEMINI ENTERPRISE (europe-west2 London)"]
         direction LR
         USERS["<b>UK Lightning Force Personas</b><br/>• Act 1 (06:45Z): Sqn Maint Officer &amp; Wing Controller<br/>• Act 2 (06:52Z): Sqn Logistics Officer &amp; Commander<br/>• Act 3 (06:56Z): Flight-Line Maintenance Chief"]
-        GE_UI["<b>Gemini Enterprise Web UI (eu)</b><br/>• App: Agents (F35 Support) via ADK Native<br/>• Streaming Endpoint: :streamQuery (SSE)<br/>• Fleet Registry: Agent Registry (europe-west1)"]
+        GE_UI["<b>Gemini Enterprise Web UI (London)</b><br/>• App: Agents (F35 Support) via ADK Native<br/>• Streaming Endpoint: :streamQuery (SSE)<br/>• Fleet Registry: Agent Registry (europe-west2 London)"]
         OUTPUTS["<b>Storyboard Output Modalities</b><br/>• Act 1: Screen-Fitted Spreadsheet Cards + GCS CSV<br/>• Act 2: Full HD 16:9 Presentation Slides (chart_painter.py)<br/>• Act 3: 100% Verbatim S1000D Cited Manual Procedures"]
         USERS --> GE_UI --> OUTPUTS
     end
@@ -51,7 +51,7 @@ flowchart TB
     %% -------------------------------------------------------------------------
     %% TIER 2: AGENTIC ORCHESTRATION LAYER (VERTEX AI AGENT RUNTIME)
     %% -------------------------------------------------------------------------
-    subgraph T2["2. AGENTIC ORCHESTRATION LAYER — VERTEX AI AGENT RUNTIME (europe-west1 Belgium) · ADK 2.0"]
+    subgraph T2["2. AGENTIC ORCHESTRATION LAYER — VERTEX AI AGENT RUNTIME (europe-west2 London) · ADK 2.0"]
         direction TB
         ROOT["<b>Root Coordinator: f35_sustainment_coordinator</b><br/>Model: gemini-3.8-flash (enterprise=True, location='global', thinking_level='LOW', temp=0.0)<br/>• Sub-450ms Intent Router | Reasoning Engine: 5022570215192395776 | App(name='app', resumability=True)<br/>• <b>before_model_callback:</b> Tier 1 &amp; Tier 2 Fast-Path Interception (&lt; 5 ms Greetings, Capabilities &amp; BI Comparisons)<br/>• <b>OPT-06:</b> High-Confidence Pre-Dispatched transfer_to_agent &amp; Tool Function Calls"]
 
@@ -68,19 +68,19 @@ flowchart TB
     end
 
     %% -------------------------------------------------------------------------
-    %% TIER 3: SOVEREIGN EU DATA, SEARCH & STORAGE LAYER
+    %% TIER 3: SOVEREIGN UK DATA, SEARCH & STORAGE LAYER
     %% -------------------------------------------------------------------------
-    subgraph T3["3. SOVEREIGN EU DATA, SEARCH & STORAGE LAYER — STRICT DATA RESIDENCY (EU / eu Multi-Region)"]
+    subgraph T3["3. SOVEREIGN UK DATA, SEARCH & STORAGE LAYER — STRICT DATA RESIDENCY (europe-west2 London)"]
         direction LR
-        subgraph BQ["F35 Data Warehouse — BigQuery (Location: EU)<br/>Dataset: antig-dave.ukd_f35_sustainment_demo (6 Tables × 100 Rows = 600 Rows)"]
+        subgraph BQ["F35 Data Warehouse — BigQuery (Location: europe-west2 London)<br/>Dataset: antig-dave.ukd_f35_sustainment_demo (6 Tables × 100 Rows = 600 Rows)"]
             direction TB
             BQ_ACT1["<b>Act 1 Maintenance &amp; Shift Tables (Prompts 1–3)</b><br/>• <b>Prompt 1 (Urgent Stand-Up):</b> maintenance_work_orders (100)<br/>• <b>Prompt 2 (Post-Sortie Triage):</b> phm_bit_fault_events (100)<br/>• <b>Prompt 3 (Crews &amp; Tool Cal):</b> work_center_tooling_and_sqep (100)"]
             BQ_ACT2["<b>Act 2 Readiness, Spares &amp; Sortie Tables (Prompt 4)</b><br/>• <b>Actuator Hours (ZM151/ZM154):</b> airframe_component_telemetry (100)<br/>• <b>30-Day Regional Depot Spares:</b> global_depot_inventory (100)<br/>• <b>07:30Z Sortie Tail Swap:</b> squadron_sortie_schedule (100)"]
         end
 
-        GCS["<b>Cloud Storage (europe-west1)</b><br/><i>gs://antig-dave-f35-staging-europe-west1</i><br/>• <b>Act 1 (Prompts 1–3):</b> /exports/*.csv (Async upload, OPT-03)<br/>• <b>Act 2 (Prompt 5):</b> /charts/*.png 16:9 Widescreen Slide<br/>• <b>Act 3 (Prompt 6):</b> /unstructured/docs/*.pdf Reference Manuals<br/>• In-memory 60s TTL SQL &amp; rendered slide cache"]
+        GCS["<b>Cloud Storage (europe-west2 London)</b><br/><i>gs://antig-dave-f35-staging-europe-west2</i><br/>• <b>Act 1 (Prompts 1–3):</b> /exports/*.csv (Async upload, OPT-03)<br/>• <b>Act 2 (Prompt 5):</b> /charts/*.png 16:9 Widescreen Slide<br/>• <b>Act 3 (Prompt 6):</b> /unstructured/docs/*.pdf Reference Manuals<br/>• In-memory 60s TTL SQL &amp; rendered slide cache"]
 
-        DE["<b>Act 3 Technical Pubs &amp; Logs — Discovery Engine (eu)</b><br/><i>Single-Pass REST Search (pageSize=15, 100% Cited, locations/eu)</i><br/>• <b>ukd-f35-narrative-logs-ds (Fleet Memory):</b><br/>  DOC-02 (USMC VMFA-211 Silicon Debris), DOC-03 (RAF 617 Hydraulic Log)<br/>• <b>ukd-f35-jtd-ietm-ds (Approved Procedures):</b><br/>  DOC-01 (JTD 53-30-01 18.5 N·m Torque), DOC-09 (MAM 9-1 Fastener Integrity)"]
+        DE["<b>Act 3 Technical Pubs &amp; Logs — Discovery Engine (London)</b><br/><i>Single-Pass REST Search (pageSize=15, 100% Cited, europe-west2)</i><br/>• <b>ukd-f35-narrative-logs-ds (Fleet Memory):</b><br/>  DOC-02 (USMC VMFA-211 Silicon Debris), DOC-03 (RAF 617 Hydraulic Log)<br/>• <b>ukd-f35-jtd-ietm-ds (Approved Procedures):</b><br/>  DOC-01 (JTD 53-30-01 18.5 N·m Torque), DOC-09 (MAM 9-1 Fastener Integrity)"]
     end
 
     %% -------------------------------------------------------------------------
@@ -91,7 +91,7 @@ flowchart TB
         SLIM["<b>OPT-01 Tool Payload Slimming</b><br/>• slim_tool_response_after_tool_callback<br/>• Limits LLM tool context to &lt;= 4 KB<br/>• Strips duplicate raw JSON blobs"]
         PARALLEL["<b>OPT-03 Parallel I/O &amp; Caching</b><br/>• Thread-pooled BQ (_UC1_BQ_POOL)<br/>• Thread-pooled DE (_UC2_DE_POOL)<br/>• Background non-blocking CSV export<br/>• ADK Context Caching (&gt;90% hit rate)"]
         FAST["<b>OPT-04/05/06 Fast-Path Acceleration</b><br/>• Tier 1/2 interception (&lt; 5 ms)<br/>• Pre-model deterministic format (&lt; 10 ms)<br/>• Pre-dispatched transfer &amp; FunctionCalls"]
-        SECURITY["<b>Sovereign Security Envelope</b><br/>• Strict EU residency (REG-01)<br/>• In-Memory ADC token refresh (PERF-01)<br/>• Read-only SQL AST SELECT-only gate<br/>• ADK State duck-typing (SAFE-ADK-01)"]
+        SECURITY["<b>Sovereign Security Envelope</b><br/>• Strict UK residency (europe-west2 London)<br/>• In-Memory ADC token refresh (PERF-01)<br/>• Read-only SQL AST SELECT-only gate<br/>• ADK State duck-typing (SAFE-ADK-01)"]
     end
 
     GE_UI ==>|":streamQuery (SSE)"| ROOT
@@ -127,14 +127,14 @@ flowchart TB
 
 ## 3. Demo Storyboard (`Acts 1–3` / `Prompts 1–6`) to Data & Agent Layer Mapping
 
-| Storyboard Act & Step ([DEMO_STORYBOARD.md](./DEMO_STORYBOARD.md)) | Operational Persona & Timeline | Specialist Sub-Agent & Primary Tool | Authoritative Data Table / Datastore (`EU` / `eu`) | Operational Output & Baseline vs. Optimized Production SLA |
+| Storyboard Act & Step ([DEMO_STORYBOARD.md](./DEMO_STORYBOARD.md)) | Operational Persona & Timeline | Specialist Sub-Agent & Primary Tool | Authoritative Data Table / Datastore (`europe-west2` London) | Operational Output & Baseline vs. Optimized Production SLA |
 | :--- | :--- | :--- | :--- | :--- |
-| **Act 1 · Prompt 1**<br/>*Urgent Jobs & Grounded Aircraft* | Squadron Maintenance Officer (`06:45Z`) | `@F35-Maintenance-Data`<br/>(`execute_maintenance_sql`) | **BigQuery (`EU`) Table 1:**<br/>`maintenance_work_orders` (`100` rows) | Screen-fitted Spreadsheet Card (`A..F`) + automatic `.csv` export. Highlights grounded jets, identifying lead aircraft **`ZM151`** on dual work orders `WO-2026-88401` and `WO-2026-88402`.<br/>*Latency:* `4.80s` → **`1.42s`** (70.4% speedup). |
-| **Act 1 · Prompt 2**<br/>*Post-Sortie Faults & Fleet Warnings* | Flight-Line Avionics Lead (`06:47Z`) | `@F35-Maintenance-Data`<br/>(`execute_maintenance_sql`) | **BigQuery (`EU`) Table 2:**<br/>`phm_bit_fault_events` (`100` rows) | Spreadsheet Card isolating **`ZM151`**'s dual post-sortie faults: `1,000.4-hr` actuator fatigue breach (`PHM-2026-99101`) and repeat zero-diagnostic CND canopy latch report (`PHM-2026-99102`).<br/>*Latency:* `5.40s` → **`1.45s`** (73.1% speedup). |
-| **Act 1 · Prompt 3**<br/>*Shift Crews, Inspector & Tooling* | Wing Maintenance Controller (`06:50Z`) | `@F35-Maintenance-Data`<br/>(`execute_maintenance_sql` multi-table `JOIN`) | **BigQuery (`EU`) Table 3 + Table 1:**<br/>`work_center_tooling_and_sqep` (`100` rows) `JOIN` `maintenance_work_orders` | Cross-checked Shift Readiness Card confirming **`ZM151`** bay crew, QAR independent inspector, and calibrated spanner **`JTD-53-30-T14`** are `🟢 READY_TO_DISPATCH`.<br/>*Latency:* `5.20s` → **`1.58s`** (69.6% speedup). |
-| **Act 2 · Prompt 4**<br/>*Spares Check & Sortie Tail Swap* | Squadron Logistics Officer (`06:52Z`) | `@F35-Sustainment-Analytics`<br/>(`check_actuator_fatigue_and_depot_inventory`) | **BigQuery (`EU`) Tables 4, 5 & 6:**<br/>`airframe_component_telemetry` (`100`),<br/>`global_depot_inventory` (`100`),<br/>`squadron_sortie_schedule` (`100`) | Verifies `4` spare actuators at RAF Marham (`18-hr` road transfer ETA) and automatically recommends swapping `07:30Z` combat sortie `SRT-MAR-20261103-01` from **`ZM151`** (`1,000.4h`) to clean spare **`ZM154`** (`842.0h`) in a single turn (`OPT-02`).<br/>*Latency:* `6.80s` → **`1.18s`** (82.6% speedup). |
-| **Act 2 · Prompt 5**<br/>*Executive Briefing Slide Deck* | Squadron Logistics Officer (`06:54Z`) | `@F35-Sustainment-Analytics`<br/>(`render_sustainment_chart` via [chart_painter.py](./app/tools/chart_painter.py)) | **Cloud Storage (`europe-west1`):**<br/>`gs://antig-dave-f35-staging-europe-west1/charts/` | Synthesizes publication-quality Full HD 16:9 widescreen PNG briefing slide (`ZM151` Red breach vs `ZM154` Green spare + Regional Depot Stock) with instant authenticated download link.<br/>*Latency:* `1.60s` → **`0.78s`** (51.2% speedup). |
-| **Act 3 · Prompt 6**<br/>*Allied Fleet Memory & Defect Fix* | Flight-Line Maintenance Chief (`06:56Z`) | `@F35-JTD-Search`<br/>(`search_technical_manuals_and_repair_logs`) | **Discovery Engine (`eu`) Datastores:**<br/>`ukd-f35-narrative-logs-ds` (`DOC-02`, `DOC-03`) &<br/>`ukd-f35-jtd-ietm-ds` (`DOC-01`, `DOC-09`) | Bridges UK/US dialects (`catch` ↔ `latch`, `spanner` ↔ `wrench`). Surfaces **USMC `VMFA-211`** cured silicone sealant debris repair log (`DOC-02`) and cites official **JTD Section `53-30-01`** (`DOC-01`) `18.5 N·m` torque spec for spanner `JTD-53-30-T14` with 100% verbatim citations.<br/>*Latency:* `2.40s` → **`0.38s`** (84.2% speedup). |
+| **Act 1 · Prompt 1**<br/>*Urgent Jobs & Grounded Aircraft* | Squadron Maintenance Officer (`06:45Z`) | `@F35-Maintenance-Data`<br/>(`execute_maintenance_sql`) | **BigQuery (`europe-west2`) Table 1:**<br/>`maintenance_work_orders` (`100` rows) | Screen-fitted Spreadsheet Card (`A..F`) + automatic `.csv` export. Highlights grounded jets, identifying lead aircraft **`ZM151`** on dual work orders `WO-2026-88401` and `WO-2026-88402`.<br/>*Latency:* `4.80s` → **`1.42s`** (70.4% speedup). |
+| **Act 1 · Prompt 2**<br/>*Post-Sortie Faults & Fleet Warnings* | Flight-Line Avionics Lead (`06:47Z`) | `@F35-Maintenance-Data`<br/>(`execute_maintenance_sql`) | **BigQuery (`europe-west2`) Table 2:**<br/>`phm_bit_fault_events` (`100` rows) | Spreadsheet Card isolating **`ZM151`**'s dual post-sortie faults: `1,000.4-hr` actuator fatigue breach (`PHM-2026-99101`) and repeat zero-diagnostic CND canopy latch report (`PHM-2026-99102`).<br/>*Latency:* `5.40s` → **`1.45s`** (73.1% speedup). |
+| **Act 1 · Prompt 3**<br/>*Shift Crews, Inspector & Tooling* | Wing Maintenance Controller (`06:50Z`) | `@F35-Maintenance-Data`<br/>(`execute_maintenance_sql` multi-table `JOIN`) | **BigQuery (`europe-west2`) Table 3 + Table 1:**<br/>`work_center_tooling_and_sqep` (`100` rows) `JOIN` `maintenance_work_orders` | Cross-checked Shift Readiness Card confirming **`ZM151`** bay crew, QAR independent inspector, and calibrated spanner **`JTD-53-30-T14`** are `🟢 READY_TO_DISPATCH`.<br/>*Latency:* `5.20s` → **`1.58s`** (69.6% speedup). |
+| **Act 2 · Prompt 4**<br/>*Spares Check & Sortie Tail Swap* | Squadron Logistics Officer (`06:52Z`) | `@F35-Sustainment-Analytics`<br/>(`check_actuator_fatigue_and_depot_inventory`) | **BigQuery (`europe-west2`) Tables 4, 5 & 6:**<br/>`airframe_component_telemetry` (`100`),<br/>`global_depot_inventory` (`100`),<br/>`squadron_sortie_schedule` (`100`) | Verifies `4` spare actuators at RAF Marham (`18-hr` road transfer ETA) and automatically recommends swapping `07:30Z` combat sortie `SRT-MAR-20261103-01` from **`ZM151`** (`1,000.4h`) to clean spare **`ZM154`** (`842.0h`) in a single turn (`OPT-02`).<br/>*Latency:* `6.80s` → **`1.18s`** (82.6% speedup). |
+| **Act 2 · Prompt 5**<br/>*Executive Briefing Slide Deck* | Squadron Logistics Officer (`06:54Z`) | `@F35-Sustainment-Analytics`<br/>(`render_sustainment_chart` via [chart_painter.py](./app/tools/chart_painter.py)) | **Cloud Storage (`europe-west2`):**<br/>`gs://antig-dave-f35-staging-europe-west2/charts/` | Synthesizes publication-quality Full HD 16:9 widescreen PNG briefing slide (`ZM151` Red breach vs `ZM154` Green spare + Regional Depot Stock) with instant authenticated download link.<br/>*Latency:* `1.60s` → **`0.78s`** (51.2% speedup). |
+| **Act 3 · Prompt 6**<br/>*Allied Fleet Memory & Defect Fix* | Flight-Line Maintenance Chief (`06:56Z`) | `@F35-JTD-Search`<br/>(`search_technical_manuals_and_repair_logs`) | **Discovery Engine (`europe-west2`) Datastores:**<br/>`ukd-f35-narrative-logs-ds` (`DOC-02`, `DOC-03`) &<br/>`ukd-f35-jtd-ietm-ds` (`DOC-01`, `DOC-09`) | Bridges UK/US dialects (`catch` ↔ `latch`, `spanner` ↔ `wrench`). Surfaces **USMC `VMFA-211`** cured silicone sealant debris repair log (`DOC-02`) and cites official **JTD Section `53-30-01`** (`DOC-01`) `18.5 N·m` torque spec for spanner `JTD-53-30-T14` with 100% verbatim citations.<br/>*Latency:* `2.40s` → **`0.38s`** (84.2% speedup). |
 
 ---
 
@@ -153,15 +153,15 @@ Under **`ISS-017`**, the platform underwent comprehensive production latency opt
 
 ---
 
-## 5. Sovereign EU Data Residency, Security Envelopes & Safety Invariants
+## 5. Sovereign UK Data Residency (`europe-west2` London), Security Envelopes & Safety Invariants
 
 Every layer of the platform strictly enforces defence-grade sovereign governance and security envelopes:
 
-* **Strict EU Data Residency (`REG-01`)**:
-  * **Compute & Runtime:** Vertex AI Agent Runtime, Cloud Build, and Artifact Registry deployed strictly to **`europe-west1` (Belgium)**.
-  * **Structured Data:** BigQuery dataset `antig-dave.ukd_f35_sustainment_demo` provisioned in multi-region **`EU`** (`europe-west1`).
-  * **Unstructured Manuals:** Discovery Engine datastores (`ukd-f35-jtd-ietm-ds`, `ukd-f35-narrative-logs-ds`) and Gemini Enterprise engine provisioned in multi-region **`eu`** (`eu-discoveryengine.googleapis.com`).
-  * **Object Storage:** Staging bucket `gs://antig-dave-f35-staging-europe-west1` in **`europe-west1`**.
+* **Strict UK Data Residency (`REG-01`)**:
+  * **Compute & Runtime:** Vertex AI Agent Runtime, Cloud Build, and Artifact Registry deployed strictly to **`europe-west2` (London)**.
+  * **Structured Data:** BigQuery dataset `antig-dave.ukd_f35_sustainment_demo` provisioned in **`europe-west2` (London)**.
+  * **Unstructured Manuals:** Discovery Engine datastores (`ukd-f35-jtd-ietm-ds`, `ukd-f35-narrative-logs-ds`) and Gemini Enterprise engine provisioned in **`europe-west2` (London)**.
+  * **Object Storage:** Staging bucket `gs://antig-dave-f35-staging-europe-west2` in **`europe-west2` (London)**.
 * **Zero Credential Overhead (`PERF-01`)**:
   * Dedicated Service Account (`f35-sustainment-runtime-sa@antig-dave.iam.gserviceaccount.com`) using in-memory cached Application Default Credentials (`google.auth.default()`). Zero external subprocess or `gcloud` CLI calls.
 * **Read-Only Safety Envelope**:
